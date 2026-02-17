@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siana Memento - Design Directions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FAFAFA; color: #09090B; }
+        .clash-style { font-weight: 800; letter-spacing: -0.02em; }
+        .focus-card { border: 1px solid #E5E7EB; background: white; border-radius: 16px; box-shadow: 0 4px 20px -1px rgb(0 0 0 / 0.05); }
+        .btn-primary { background-color: #2D4A3E; color: white; transition: all 0.2s; }
+        .btn-primary:hover { background-color: #1F332B; transform: translateY(-1px); }
+        .accent-text { color: #2D4A3E; }
+        .progress-bar { height: 4px; background-color: #F3F4F6; border-radius: 2px; overflow: hidden; }
+        .progress-fill { height: 100%; background-color: #2D4A3E; }
+    </style>
+</head>
+<body class="p-8">
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-12 border-b border-gray-100 pb-8">
+            <h1 class="text-4xl clash-style mb-2">Siana Memento</h1>
+            <p class="text-gray-500">Exploration des directions de design (Design Directions)</p>
+        </header>
+
+        <div class="grid lg:grid-cols-2 gap-16">
+            
+            <!-- DIRECTION 1: MINIMALISME ABSOLU -->
+            <div class="space-y-4">
+                <h2 class="text-sm font-bold uppercase tracking-widest text-gray-400">Direction 1 : Minimalisme Absolu</h2>
+                <div class="focus-card p-12 space-y-8 min-h-[500px] flex flex-col justify-center text-center">
+                    <div class="space-y-2">
+                        <h3 class="text-3xl clash-style">Votre histoire.</h3>
+                        <p class="text-gray-400">Commençons par vos plus beaux souvenirs.</p>
+                    </div>
+                    <div class="w-full h-40 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors">
+                        <svg class="w-8 h-8 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        <span class="text-xs font-semibold text-gray-400">DÉPOSER VOS PHOTOS</span>
+                    </div>
+                    <button class="btn-primary w-full py-4 rounded-full font-bold">Suivant</button>
+                </div>
+            </div>
+
+            <!-- DIRECTION 2: GALERIE ÉLÉGANTE -->
+            <div class="space-y-4">
+                <h2 class="text-sm font-bold uppercase tracking-widest text-gray-400">Direction 2 : Galerie Élégante</h2>
+                <div class="focus-card p-10 space-y-6">
+                    <div class="progress-bar w-full"><div class="progress-fill" style="width: 25%"></div></div>
+                    <h3 class="text-2xl clash-style">Choisissez un univers</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="aspect-square bg-gray-100 rounded-lg border-2 border-[#2D4A3E] relative overflow-hidden group">
+                            <div class="absolute inset-0 bg-[#2D4A3E]/10 flex items-end p-3">
+                                <span class="text-xs font-bold text-[#2D4A3E]">BOHÈME</span>
+                            </div>
+                        </div>
+                        <div class="aspect-square bg-gray-50 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"></div>
+                        <div class="aspect-square bg-gray-50 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"></div>
+                        <div class="aspect-square bg-gray-50 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"></div>
+                    </div>
+                    <div class="flex justify-between items-center pt-4">
+                        <button class="text-sm font-bold text-gray-400">Retour</button>
+                        <button class="btn-primary px-8 py-3 rounded-lg font-bold">Confirmer</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DIRECTION 3: FOCUS ÉDITORIAL -->
+            <div class="space-y-4">
+                <h2 class="text-sm font-bold uppercase tracking-widest text-gray-400">Direction 3 : Focus Éditorial</h2>
+                <div class="focus-card p-0 overflow-hidden">
+                    <div class="bg-[#2D4A3E] p-8 text-white">
+                        <h3 class="text-3xl clash-style">Étape Finale.</h3>
+                        <p class="opacity-80 text-sm">Votre Save the Date est prêt.</p>
+                    </div>
+                    <div class="p-8 space-y-6">
+                        <div class="aspect-[3/4] bg-gray-50 rounded-lg border border-gray-100 shadow-inner flex items-center justify-center">
+                            <span class="text-gray-300 italic">Illustration générée ici</span>
+                        </div>
+                        <div class="flex gap-4">
+                            <button class="flex-1 border border-[#2D4A3E] text-[#2D4A3E] py-3 rounded-lg font-bold">Ajuster</button>
+                            <button class="flex-1 btn-primary py-3 rounded-lg font-bold">Commander</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DIRECTION 4: CONVERSATIONNEL (MASCOTTE) -->
+            <div class="space-y-4">
+                <h2 class="text-sm font-bold uppercase tracking-widest text-gray-400">Direction 4 : Conversationnel</h2>
+                <div class="focus-card p-10 space-y-8">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-[#2D4A3E]/10 flex items-center justify-center text-[#2D4A3E] animate-bounce">
+                            ✨
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-2xl rounded-tl-none text-sm leading-relaxed">
+                            Bonjour ! Je suis votre assistant créatif. <br> <strong>Quelle est la date de votre grand jour ?</strong>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <input type="text" placeholder="Ex: 20 Septembre 2026" class="w-full border-b-2 border-gray-100 focus:border-[#2D4A3E] outline-none py-2 text-xl clash-style transition-colors">
+                        <p class="text-[10px] text-gray-400 uppercase font-bold">Appuyez sur ENTRÉE pour continuer</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DIRECTION 5: TABLEAU DE BORD ÉPURÉ -->
+            <div class="space-y-4">
+                <h2 class="text-sm font-bold uppercase tracking-widest text-gray-400">Direction 5 : Dashboard</h2>
+                <div class="focus-card p-8 space-y-6">
+                    <div class="flex items-center justify-between border-b border-gray-50 pb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-gray-100 rounded-md"></div>
+                            <div>
+                                <h4 class="text-xs font-bold uppercase">Projet Islande</h4>
+                                <p class="text-[10px] text-gray-400 italic">Dernière modif: il y a 2 min</p>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-bold text-[#2D4A3E] bg-[#2D4A3E]/10 px-2 py-1 rounded">BROUILLON</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="h-20 bg-gray-50 rounded border border-gray-100"></div>
+                        <div class="h-20 bg-gray-50 rounded border border-gray-100"></div>
+                        <div class="h-20 bg-gray-50 rounded border border-dashed border-gray-200 flex items-center justify-center text-gray-300 text-xs">+</div>
+                    </div>
+                    <button class="w-full btn-primary py-3 rounded-lg text-sm font-bold">Reprendre la création</button>
+                </div>
+            </div>
+
+            <!-- DIRECTION 6: SPLIT-SCREEN MODERNE -->
+            <div class="space-y-4">
+                <h2 class="text-sm font-bold uppercase tracking-widest text-gray-400">Direction 6 : Split-Screen</h2>
+                <div class="focus-card overflow-hidden flex h-[500px]">
+                    <div class="w-1/3 bg-[#2D4A3E] p-6 text-white flex flex-col justify-between">
+                        <h3 class="text-xl clash-style">Siana Memento</h3>
+                        <div class="space-y-4">
+                            <div class="w-full h-1 bg-white/20 rounded"><div class="h-full bg-white" style="width: 75%"></div></div>
+                            <p class="text-[10px] font-bold opacity-60">PERSONNALISATION</p>
+                        </div>
+                    </div>
+                    <div class="w-2/3 p-8 flex flex-col justify-center space-y-6">
+                        <h4 class="text-lg font-bold">Quels sont vos noms ?</h4>
+                        <div class="space-y-4">
+                            <input type="text" placeholder="Sophie" class="w-full border border-gray-200 rounded-lg p-3 text-sm focus:border-[#2D4A3E] outline-none">
+                            <input type="text" placeholder="Thomas" class="w-full border border-gray-200 rounded-lg p-3 text-sm focus:border-[#2D4A3E] outline-none">
+                        </div>
+                        <button class="btn-primary py-3 rounded-lg font-bold text-sm">Continuer</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <footer class="mt-20 border-t border-gray-100 pt-8 text-center">
+            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Fondations Visuelles & Directions de Design - Siana Memento</p>
+        </footer>
+    </div>
+</body>
+</html>
