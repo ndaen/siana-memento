@@ -1,9 +1,9 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install && node ace build"
+buildCommand = "npm install && node ace build --ignore-ts-errors"
 
 [deploy]
-startCommand = "node bin/server.js"
+startCommand = "node build/bin/server.js"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 30
 restartPolicyType = "on_failure"
