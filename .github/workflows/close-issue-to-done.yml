@@ -1,0 +1,63 @@
+name: Move closed issue to Terminé
+
+on:
+  issues:
+    types: [closed]
+
+jobs:
+  move-to-done:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move issue to Terminé in project
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          PROJECT_ID: PVT_kwHOBdyAuM4BPd_t
+          STATUS_FIELD_ID: PVTSSF_lAHOBdyAuM4BPd_tzg93l90
+          STATUS_OPTION_ID: e1cc86be
+          ISSUE_NODE_ID: ${{ github.event.issue.node_id }}
+        run: |
+          # Get the project item ID for this issue
+          ITEM_ID=$(gh api graphql -f query='
+            query($projectId: ID!, $issueId: ID!) {
+              node(id: $projectId) {
+                ... on ProjectV2 {
+                  items(first: 100) {
+                    nodes {
+                      id
+                      content {
+                        ... on Issue {
+                          id
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }' \
+            -f projectId="$PROJECT_ID" \
+            -f issueId="$ISSUE_NODE_ID" \
+            --jq ".data.node.items.nodes[] | select(.content.id == \"$ISSUE_NODE_ID\") | .id")
+
+          if [ -z "$ITEM_ID" ]; then
+            echo "Issue not found in project, skipping."
+            exit 0
+          fi
+
+          # Update the Status field to Terminé
+          gh api graphql -f query='
+            mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+              updateProjectV2ItemFieldValue(input: {
+                projectId: $projectId
+                itemId: $itemId
+                fieldId: $fieldId
+                value: { singleSelectOptionId: $optionId }
+              }) {
+                projectV2Item { id }
+              }
+            }' \
+            -f projectId="$PROJECT_ID" \
+            -f itemId="$ITEM_ID" \
+            -f fieldId="$STATUS_FIELD_ID" \
+            -f optionId="$STATUS_OPTION_ID"
+
+          echo "Issue moved to Terminé."
