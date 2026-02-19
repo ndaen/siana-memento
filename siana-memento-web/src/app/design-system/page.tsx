@@ -1,4 +1,5 @@
 import FocusCard from "@/components/siana/FocusCard";
+import { ThemeToggle } from "@/components/siana/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,18 +26,23 @@ const colors = [
 
 export default function DesignSystemPage() {
   return (
-    <div className="bg-cream min-h-screen p-8">
+    <div className="bg-background min-h-screen p-8">
       {/* Header */}
       <div className="max-w-4xl mx-auto mb-12">
-        <p className="text-sm font-medium tracking-[0.2em] uppercase text-taupe mb-2">
-          Design System
-        </p>
-        <h1 className="text-5xl font-bold text-deep-black leading-tight">
-          Siana Memento
-        </h1>
-        <p className="text-lg text-taupe mt-2">
-          Tokens, typographie, composants & FocusCard
-        </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-sm font-medium tracking-[0.2em] uppercase text-taupe mb-2">
+              Design System
+            </p>
+            <h1 className="text-5xl font-bold text-deep-black leading-tight">
+              Siana Memento
+            </h1>
+            <p className="text-lg text-taupe mt-2">
+              Tokens, typographie, composants & FocusCard
+            </p>
+          </div>
+          <ThemeToggle />
+        </div>
       </div>
 
       <div className="max-w-4xl mx-auto space-y-16">
