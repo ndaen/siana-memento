@@ -74,6 +74,14 @@ All specs in `_bmad-output/planning-artifacts/`:
 
 Template visual specs: `docs/template-design-specs.md`
 
+## Commit Convention
+
+- **Format:** Conventional Commits (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`, etc.)
+- **Language:** English
+- **Style:** Single line, short and clear — no body, no footer
+- **No** `Co-Authored-By` or any trailer
+- **Example:** `feat: add shadcn button component`
+
 ## BMAD Framework
 
 This project uses BMAD v6.0.0-Beta.7 for workflow management. Agents and workflows are in `_bmad/`. All documentation and AI communication should be in **French**.
