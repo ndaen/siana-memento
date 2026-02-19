@@ -18,7 +18,7 @@ jobs:
         run: |
           # Get the project item ID for this issue
           ITEM_ID=$(gh api graphql -f query='
-            query($projectId: ID!, $issueId: ID!) {
+            query($projectId: ID!) {
               node(id: $projectId) {
                 ... on ProjectV2 {
                   items(first: 100) {
@@ -35,7 +35,6 @@ jobs:
               }
             }' \
             -f projectId="$PROJECT_ID" \
-            -f issueId="$ISSUE_NODE_ID" \
             --jq ".data.node.items.nodes[] | select(.content.id == \"$ISSUE_NODE_ID\") | .id")
 
           if [ -z "$ITEM_ID" ]; then
