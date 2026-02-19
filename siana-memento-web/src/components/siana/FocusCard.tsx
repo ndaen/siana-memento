@@ -14,11 +14,11 @@ interface FocusCardProps {
  */
 export default function FocusCard({ children, className }: FocusCardProps) {
   return (
-    <div className="min-h-screen bg-ice-white flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
       <div
         className={cn(
           "w-full max-w-[450px]",
-          "bg-white rounded-2xl",
+          "bg-card rounded-2xl",
           "shadow-[0_4px_24px_rgba(9,9,11,0.08)]",
           "overflow-hidden",
           className

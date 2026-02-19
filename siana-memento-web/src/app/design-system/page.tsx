@@ -31,13 +31,13 @@ export default function DesignSystemPage() {
       <div className="max-w-4xl mx-auto mb-12">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-sm font-medium tracking-[0.2em] uppercase text-taupe mb-2">
+            <p className="text-sm font-medium tracking-[0.2em] uppercase text-muted-foreground mb-2">
               Design System
             </p>
-            <h1 className="text-5xl font-bold text-deep-black leading-tight">
+            <h1 className="text-5xl font-bold text-foreground leading-tight">
               Siana Memento
             </h1>
-            <p className="text-lg text-taupe mt-2">
+            <p className="text-lg text-muted-foreground mt-2">
               Tokens, typographie, composants & FocusCard
             </p>
           </div>
@@ -82,29 +82,29 @@ export default function DesignSystemPage() {
         {/* ── Typographie ── */}
         <section>
           <SectionTitle>Typographie</SectionTitle>
-          <div className="bg-white rounded-2xl p-8 shadow-sm space-y-8">
+          <div className="bg-card rounded-2xl p-8 shadow-sm space-y-8">
             <div>
-              <Label className="text-xs tracking-[0.15em] uppercase text-taupe">
+              <Label className="text-xs tracking-[0.15em] uppercase text-muted-foreground">
                 Display — Clash Display
               </Label>
               <div className="space-y-1 mt-3">
-                <p className="text-5xl font-bold text-deep-black" style={{ fontFamily: "var(--font-display)" }}>Aa — Titre principal</p>
-                <p className="text-3xl font-semibold text-deep-black" style={{ fontFamily: "var(--font-display)" }}>Aa — Titre secondaire</p>
-                <p className="text-xl font-medium text-deep-black" style={{ fontFamily: "var(--font-display)" }}>Aa — Titre tertiaire</p>
+                <p className="text-5xl font-bold text-foreground" style={{ fontFamily: "var(--font-display)" }}>Aa — Titre principal</p>
+                <p className="text-3xl font-semibold text-foreground" style={{ fontFamily: "var(--font-display)" }}>Aa — Titre secondaire</p>
+                <p className="text-xl font-medium text-foreground" style={{ fontFamily: "var(--font-display)" }}>Aa — Titre tertiaire</p>
               </div>
             </div>
             <div>
-              <Label className="text-xs tracking-[0.15em] uppercase text-taupe">
+              <Label className="text-xs tracking-[0.15em] uppercase text-muted-foreground">
                 Body — Satoshi
               </Label>
               <div className="space-y-1 mt-3">
-                <p className="text-base font-normal text-deep-black">
+                <p className="text-base font-normal text-foreground">
                   Regular — Votre faire-part de mariage, unique et personnalisé en 15 minutes.
                 </p>
-                <p className="text-base font-medium text-deep-black">
+                <p className="text-base font-medium text-foreground">
                   Medium — Créez un souvenir inoubliable pour vos invités.
                 </p>
-                <p className="text-sm text-taupe">
+                <p className="text-sm text-muted-foreground">
                   Small / muted — À partir de 19,90€ · Livraison par email · 3 itérations incluses
                 </p>
               </div>
@@ -116,8 +116,8 @@ export default function DesignSystemPage() {
         <section>
           <SectionTitle>Composants shadcn/ui</SectionTitle>
 
-          {/* Buttons */}
-          <div className="bg-white rounded-2xl p-8 shadow-sm space-y-6">
+          <div className="bg-card rounded-2xl p-8 shadow-sm space-y-6">
+            {/* Buttons */}
             <div>
               <SubTitle>Buttons</SubTitle>
               <div className="flex flex-wrap gap-3 items-center">
@@ -173,11 +173,11 @@ export default function DesignSystemPage() {
               <SubTitle>Progress</SubTitle>
               <div className="space-y-3 max-w-sm">
                 <div className="space-y-1">
-                  <p className="text-xs text-taupe">Génération en cours... 65%</p>
+                  <p className="text-xs text-muted-foreground">Génération en cours... 65%</p>
                   <Progress value={65} />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-taupe">Étape 2 / 3</p>
+                  <p className="text-xs text-muted-foreground">Étape 2 / 3</p>
                   <Progress value={66} />
                 </div>
               </div>
@@ -218,22 +218,22 @@ export default function DesignSystemPage() {
         {/* ── FocusCard ── */}
         <section>
           <SectionTitle>FocusCard — Shell du tunnel</SectionTitle>
-          <p className="text-sm text-taupe mb-6">
+          <p className="text-sm text-muted-foreground mb-6">
             Wrapper de layout pour toutes les étapes — max-w-[450px] desktop, 100% mobile.
           </p>
           <FocusCard>
             <div className="p-8">
-              <p className="text-xs font-medium tracking-[0.15em] uppercase text-taupe mb-3">
+              <p className="text-xs font-medium tracking-[0.15em] uppercase text-muted-foreground mb-3">
                 Étape 1 / 3
               </p>
-              <h2 className="text-2xl font-bold text-deep-black mb-2" style={{ fontFamily: "var(--font-display)" }}>
+              <h2 className="text-2xl font-bold text-foreground mb-2" style={{ fontFamily: "var(--font-display)" }}>
                 Vos photos
               </h2>
-              <p className="text-sm text-taupe leading-relaxed mb-6">
+              <p className="text-sm text-muted-foreground leading-relaxed mb-6">
                 Uploadez jusqu'à 2 photos pour que notre IA crée votre illustration personnalisée.
               </p>
-              <div className="h-32 rounded-xl border-2 border-dashed border-sage flex items-center justify-center bg-ice-white mb-6">
-                <span className="text-sm text-taupe">Zone d&apos;upload</span>
+              <div className="h-32 rounded-xl border-2 border-dashed border-border flex items-center justify-center bg-muted mb-6">
+                <span className="text-sm text-muted-foreground">Zone d&apos;upload</span>
               </div>
               <Button className="w-full">Continuer →</Button>
             </div>
@@ -241,7 +241,7 @@ export default function DesignSystemPage() {
         </section>
 
         <footer className="pb-8 text-center">
-          <p className="text-xs text-taupe">Siana Memento Design System · v0.1.0</p>
+          <p className="text-xs text-muted-foreground">Siana Memento Design System · v0.1.0</p>
         </footer>
       </div>
     </div>
@@ -250,7 +250,7 @@ export default function DesignSystemPage() {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-xl font-bold text-deep-black mb-6 pb-3 border-b border-sage" style={{ fontFamily: "var(--font-display)" }}>
+    <h2 className="text-xl font-bold text-foreground mb-6 pb-3 border-b border-border" style={{ fontFamily: "var(--font-display)" }}>
       {children}
     </h2>
   );
@@ -258,7 +258,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 function SubTitle({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-xs font-medium tracking-[0.15em] uppercase text-taupe mb-3">
+    <p className="text-xs font-medium tracking-[0.15em] uppercase text-muted-foreground mb-3">
       {children}
     </p>
   );
@@ -269,8 +269,8 @@ function ColorSwatch({ name, token, hex }: { name: string; token: string; hex: s
     <div className="flex flex-col gap-1.5">
       <div className="w-20 h-20 rounded-xl shadow-sm border border-black/5" style={{ backgroundColor: hex }} />
       <div>
-        <p className="text-xs font-semibold text-deep-black leading-tight">{name}</p>
-        <p className="text-[10px] text-taupe font-mono">{hex}</p>
+        <p className="text-xs font-semibold text-foreground leading-tight">{name}</p>
+        <p className="text-[10px] text-muted-foreground font-mono">{hex}</p>
       </div>
     </div>
   );
