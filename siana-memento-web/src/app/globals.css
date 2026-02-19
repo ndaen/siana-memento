@@ -2,12 +2,29 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+@font-face {
+  font-family: "ClashDisplay";
+  src: url("/fonts/ClashDisplay-Variable.woff2") format("woff2");
+  font-weight: 200 700;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi-Variable.woff2") format("woff2");
+  font-weight: 300 900;
+  font-display: swap;
+  font-style: normal;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* shadcn/ui tokens — ne pas modifier */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-siana-body);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -45,75 +62,106 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+
+  /* ─────────────────────────────────────────────────
+     Siana Memento — Design Tokens
+     ───────────────────────────────────────────────── */
+
+  /* Palette principale */
+  --color-sage-green: #2d4a3e;
+  --color-ice-white: #fafafa;
+  --color-deep-black: #09090b;
+
+  /* Palette des templates */
+  --color-terracotta: #c17a6f;
+  --color-cream: #f5efe6;
+  --color-gold: #c9a84c;
+  --color-burgundy: #6b2737;
+  --color-ochre: #c4922a;
+  --color-nude: #e8d5c4;
+  --color-taupe: #8b7355;
+  --color-olive: #6b7c47;
+  --color-sage: #b5c4b1;
+
+  /* Typographie
+     NOTE: Clash Display + Satoshi sont les polices officielles.
+     En attendant les fichiers locaux, Syne ≈ Clash Display
+     et DM Sans ≈ Satoshi (substituts Google Fonts).
+  */
+  --font-display: var(--font-siana-display);
+  --font-body: var(--font-siana-body);
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.75rem;
+
+  /* ── Siana Memento — shadcn token overrides ── */
+  --background: #fafafa;           /* Ice White */
+  --foreground: #09090b;           /* Deep Black */
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
+  --primary: #2d4a3e;              /* Sage Green */
+  --primary-foreground: #fafafa;   /* Ice White */
+  --secondary: #f5efe6;            /* Cream */
+  --secondary-foreground: #2d4a3e;
+  --muted: #f5efe6;                /* Cream */
+  --muted-foreground: #8b7355;     /* Taupe */
+  --accent: #f5efe6;               /* Cream */
+  --accent-foreground: #2d4a3e;
+  --destructive: #c0392b;
+  --border: #e8d5c4;               /* Nude */
+  --input: #e8d5c4;                /* Nude */
+  --ring: #2d4a3e;                 /* Sage Green */
+  --chart-1: #c17a6f;              /* Terracotta */
+  --chart-2: #6b7c47;              /* Olive */
+  --chart-3: #c9a84c;              /* Gold */
+  --chart-4: #6b2737;              /* Burgundy */
+  --chart-5: #c4922a;              /* Ochre */
+  --sidebar: #fafafa;
+  --sidebar-foreground: #09090b;
+  --sidebar-primary: #2d4a3e;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #f5efe6;
+  --sidebar-accent-foreground: #2d4a3e;
+  --sidebar-border: #e8d5c4;
+  --sidebar-ring: #2d4a3e;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* ── Siana Memento Dark — Forêt Botanique ── */
+  --background: #0f1a16;           /* Très sombre, teinté vert forêt */
+  --foreground: #fafafa;
+  --card: #162218;
+  --card-foreground: #fafafa;
+  --popover: #162218;
+  --popover-foreground: #fafafa;
+  --primary: #6baf8e;              /* Sage Green clair — lisible sur fond sombre */
+  --primary-foreground: #0f1a16;
+  --secondary: #1e2d26;
+  --secondary-foreground: #b5c4b1; /* Sage clair */
+  --muted: #1a2920;
+  --muted-foreground: #b5a090;     /* Taupe clair */
+  --accent: #1e2d26;
+  --accent-foreground: #b5c4b1;
+  --destructive: #e05252;
+  --border: #2d4a3e;               /* Sage Green — bordure subtile */
+  --input: #1e2d26;
+  --ring: #6baf8e;
+  --chart-1: #d4948a;              /* Terracotta clair */
+  --chart-2: #8aad6a;              /* Olive clair */
+  --chart-3: #d4b870;              /* Gold clair */
+  --chart-4: #a0506a;              /* Burgundy clair */
+  --chart-5: #d4a852;              /* Ochre clair */
+  --sidebar: #0f1a16;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #6baf8e;
+  --sidebar-primary-foreground: #0f1a16;
+  --sidebar-accent: #1e2d26;
+  --sidebar-accent-foreground: #b5c4b1;
+  --sidebar-border: #2d4a3e;
+  --sidebar-ring: #6baf8e;
 }
 
 @layer base {
@@ -122,5 +170,11 @@
   }
   body {
     @apply bg-background text-foreground;
+    --font-display: "ClashDisplay", sans-serif;
+    --font-body: "Satoshi", sans-serif;
+    font-family: var(--font-body);
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
   }
 }
