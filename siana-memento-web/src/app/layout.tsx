@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/siana/ThemeProvider";
+import { Toaster } from "@/components/ui/sonner";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://siana-memento.com";
 
@@ -43,7 +44,10 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className="antialiased">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <Toaster richColors position="bottom-center" />
+        </ThemeProvider>
       </body>
     </html>
   );

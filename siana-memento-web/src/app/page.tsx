@@ -30,7 +30,7 @@ export default function Home() {
             Bientôt disponible
           </span>
 
-          <h1 className="font-display text-5xl font-bold leading-tight tracking-tight text-foreground sm:text-6xl md:text-7xl">
+          <h1 className="text-5xl font-bold leading-tight tracking-tight text-foreground sm:text-6xl md:text-7xl">
             Siana&nbsp;
             <span className="text-primary">Memento</span>
           </h1>
@@ -44,9 +44,9 @@ export default function Home() {
 
         {/* Pricing */}
         <div className="mb-12 flex items-baseline gap-1.5">
-          <span className="font-display text-5xl font-bold text-foreground">
+          <h2 className="text-5xl font-bold text-foreground">
             19,90&nbsp;€
-          </span>
+          </h2>
           <span className="text-base text-muted-foreground">par design</span>
         </div>
 
@@ -61,12 +61,12 @@ export default function Home() {
             { n: "3", label: "L'IA crée votre design" },
           ].map(({ n, label }) => (
             <li key={n} className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span
+              <h3
                 className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground"
                 aria-hidden="true"
               >
                 {n}
-              </span>
+              </h3>
               {label}
             </li>
           ))}
