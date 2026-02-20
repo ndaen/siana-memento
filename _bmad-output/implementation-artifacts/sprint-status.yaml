@@ -1,0 +1,91 @@
+# generated: 2026-02-20
+# project: poster-generator
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: /Users/ndaen/siana-memento/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-02-20
+project: poster-generator
+project_key: NOKEY
+tracking_system: file-system
+story_location: /Users/ndaen/siana-memento/_bmad-output/implementation-artifacts
+
+development_status:
+  epic-1: done
+  1-1-initialisation-des-repositories-avec-les-starters-officiels: done
+  1-2-configuration-de-linfrastructure-de-deploiement: done
+  1-3-design-system-siana-memento: done
+  1-4-smoke-page-statique-signal-marche-precoce: done
+  epic-1-retrospective: optional
+
+  epic-2: in-progress
+  2-1-inscription-par-email-et-mot-de-passe: done
+  2-2-connexion-par-email-et-mot-de-passe: backlog
+  2-3-connexion-et-inscription-via-google-oauth: backlog
+  2-4-deconnexion: backlog
+  2-5-modal-auth-juste-a-temps: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-upload-de-photos: backlog
+  3-2-galerie-de-selection-de-template: backlog
+  3-3-form-conversationnel-enrichi-avec-preview-texte: backlog
+  3-4-generation-ia-avec-progress-mascotte: backlog
+  3-5-revelation-du-design-avec-effet-wow: backlog
+  3-6-iterations-et-feedback-simple: backlog
+  3-7-cron-rgpd-suppression-automatique-des-photos: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-checkout-stripe: backlog
+  4-2-delivery-email-avec-fichier-haute-resolution: backlog
+  4-3-page-de-confirmation-post-achat: backlog
+  4-4-historique-de-commandes: backlog
+  4-5-re-telechargement-dans-les-7-jours: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-hero-section-et-proposition-de-valeur: backlog
+  5-2-galerie-dexemples-et-section-comment-ca-marche: backlog
+  5-3-temoignages-clients: backlog
+  5-4-footer-contact-et-politique-rgpd: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-healthcheck-endpoint-et-monitoring: backlog
+  6-2-dashboard-metriques-business-et-export-csv: backlog
+  6-3-logs-de-generation-et-historique-erreurs-ia: backlog
+  6-4-alertes-automatiques-admin: backlog
+  6-5-renvoi-manuel-de-designs-et-backups-db: backlog
+  6-6-gestion-des-testimonials-crud-admin: backlog
+  6-7-survey-de-satisfaction-post-achat: backlog
+  epic-6-retrospective: optional
