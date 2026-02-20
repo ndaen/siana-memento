@@ -64,6 +64,12 @@ Full specs in `docs/template-design-specs.md`:
 - **Components:** shadcn/ui copied into project and customized (not used as external dep)
 - **Accessibility:** WCAG 2.1 Level AA, keyboard navigation, ≥4.5:1 contrast
 
+### Frontend Conventions
+
+- **Toasts:** `<Toaster>` is mounted globally in `layout.tsx`. Use `toast()` from `sonner` for system/network errors (API down, service unavailable) and non-field confirmations.
+- **Forms:** Use controlled React state + server actions. Field validation errors (invalid email, required field) → inline `<p>` below the input with `aria-describedby`. System errors (server failure, API error) → `toast.error()`. Success → inline success state when the UI needs to change significantly.
+- **`sr-only`:** Use on labels/headings that are implicit visually but required for screen readers.
+
 ## Planning Artifacts
 
 All specs in `_bmad-output/planning-artifacts/`:
