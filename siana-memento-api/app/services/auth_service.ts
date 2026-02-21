@@ -14,4 +14,8 @@ export default class AuthService {
   async findByEmail(email: string) {
     return User.findBy('email', email)
   }
+
+  async login(email: string, password: string) {
+    return User.verifyCredentials(email, password)
+  }
 }

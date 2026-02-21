@@ -38,3 +38,47 @@ export async function registerUser(payload: RegisterPayload): Promise<RegisterRe
     }
   }
 }
+
+export interface User {
+  id: number
+  email: string
+  fullName: string | null
+}
+
+interface LoginPayload {
+  email: string
+  password: string
+}
+
+type LoginResult =
+  | { success: true; user: User }
+  | { success: false; errorCode: string; message: string }
+
+export async function loginUser(payload: LoginPayload): Promise<LoginResult> {
+  try {
+    const res = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+    })
+
+    const json = await res.json()
+
+    if (json.success) {
+      return { success: true, user: json.data.user }
+    }
+
+    return {
+      success: false,
+      errorCode: json.error?.code ?? 'UNKNOWN',
+      message: json.error?.message ?? 'Une erreur est survenue.',
+    }
+  } catch {
+    return {
+      success: false,
+      errorCode: 'NETWORK_ERROR',
+      message: 'Service indisponible. Vérifiez votre connexion et réessayez.',
+    }
+  }
+}
