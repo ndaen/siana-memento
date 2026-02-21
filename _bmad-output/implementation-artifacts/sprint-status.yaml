@@ -49,7 +49,7 @@ development_status:
 
   epic-2: in-progress
   2-1-inscription-par-email-et-mot-de-passe: done
-  2-2-connexion-par-email-et-mot-de-passe: backlog
+  2-2-connexion-par-email-et-mot-de-passe: done
   2-3-connexion-et-inscription-via-google-oauth: backlog
   2-4-deconnexion: backlog
   2-5-modal-auth-juste-a-temps: backlog

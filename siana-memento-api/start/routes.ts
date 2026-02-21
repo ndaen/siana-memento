@@ -17,6 +17,10 @@ const registerThrottle = limiter.define('register', () =>
   limiter.allowRequests(3).every('1 hour')
 )
 
+const loginThrottle = limiter.define('login', () =>
+  limiter.allowRequests(10).every('15 minutes')
+)
+
 router.get('/api/health', async ({ response }) => {
   return response.ok({
     status: 'ok',
@@ -29,5 +33,9 @@ router
     router
       .post('/register', [AuthController, 'register'])
       .use([registerThrottle, middleware.guest()])
+
+    router
+      .post('/login', [AuthController, 'login'])
+      .use(loginThrottle)
   })
   .prefix('/auth')

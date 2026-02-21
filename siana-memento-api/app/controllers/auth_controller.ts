@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
-import { registerValidator } from '#validators/auth_validator'
+import { registerValidator, loginValidator } from '#validators/auth_validator'
 import AuthService from '#services/auth_service'
 
 @inject()
@@ -39,5 +39,33 @@ export default class AuthController {
         },
       },
     })
+  }
+
+  async login({ request, auth, response }: HttpContext) {
+    const data = await request.validateUsing(loginValidator)
+
+    try {
+      const user = await this.authService.login(data.email, data.password)
+      await auth.use('web').login(user)
+
+      return response.ok({
+        success: true,
+        data: {
+          user: {
+            id: user.id,
+            email: user.email,
+            fullName: user.fullName,
+          },
+        },
+      })
+    } catch {
+      return response.unauthorized({
+        success: false,
+        error: {
+          code: 'INVALID_CREDENTIALS',
+          message: 'Email ou mot de passe incorrect',
+        },
+      })
+    }
   }
 }
