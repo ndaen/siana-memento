@@ -30,6 +30,16 @@ export default function RegisterPage() {
         </div>
 
         <RegisterForm onSuccess={() => router.push("/")} />
+
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          Déjà un compte ?{" "}
+          <a
+            href="/login"
+            className="underline underline-offset-4 hover:text-foreground transition-colors"
+          >
+            Se connecter
+          </a>
+        </p>
       </div>
     </FocusCard>
   );

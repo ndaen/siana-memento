@@ -70,11 +70,15 @@ export default class AuthController {
     }
   }
 
-  async redirectToGoogle({ ally }: HttpContext) {
+  async redirectToGoogle({ ally, request, session }: HttpContext) {
+    const returnTo = request.input('returnTo', '/')
+    // Sécurité : returnTo doit être un chemin relatif pour éviter les open redirects
+    const safeReturnTo = typeof returnTo === 'string' && returnTo.startsWith('/') ? returnTo : '/'
+    session.put('oauth_return_to', safeReturnTo)
     return ally.use('google').redirect()
   }
 
-  async googleCallback({ ally, auth, response }: HttpContext) {
+  async googleCallback({ ally, auth, response, session }: HttpContext) {
     const google = ally.use('google')
 
     if (google.accessDenied()) {
@@ -107,7 +111,9 @@ export default class AuthController {
 
     await auth.use('web').login(user)
 
-    return response.redirect(`${env.get('FRONTEND_URL')}/?oauth=success`)
+    // Lire et supprimer returnTo en une opération (idempotent)
+    const returnTo = session.pull('oauth_return_to', '/')
+    return response.redirect(`${env.get('FRONTEND_URL')}${returnTo}`)
   }
 
   async me({ auth, response }: HttpContext) {
