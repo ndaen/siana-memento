@@ -1,5 +1,6 @@
 import WaitlistForm from "@/components/siana/WaitlistForm";
 import { ThemeToggle } from "@/components/siana/ThemeToggle";
+import UserMenu from "@/components/siana/UserMenu";
 
 export default function Home() {
   return (
@@ -14,9 +15,10 @@ export default function Home() {
         <div className="absolute top-1/2 left-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f5efe6]/40 blur-3xl dark:bg-[#1e2d26]/40" />
       </div>
 
-      {/* Theme toggle */}
-      <header className="relative z-10 flex justify-end p-4 sm:p-6">
+      {/* Header */}
+      <header className="relative z-10 flex items-center justify-between p-4 sm:p-6">
         <ThemeToggle />
+        <UserMenu />
       </header>
 
       {/* Main content */}
