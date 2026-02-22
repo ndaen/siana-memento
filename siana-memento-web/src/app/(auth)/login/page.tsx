@@ -30,6 +30,16 @@ export default function LoginPage() {
         </div>
 
         <LoginForm onSuccess={() => router.push("/")} />
+
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          Pas encore de compte ?{" "}
+          <a
+            href="/register"
+            className="underline underline-offset-4 hover:text-foreground transition-colors"
+          >
+            Créer un compte
+          </a>
+        </p>
       </div>
     </FocusCard>
   );
