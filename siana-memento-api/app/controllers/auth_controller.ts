@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
+import env from '#start/env'
 import { registerValidator, loginValidator } from '#validators/auth_validator'
 import AuthService from '#services/auth_service'
 
@@ -67,5 +68,59 @@ export default class AuthController {
         },
       })
     }
+  }
+
+  async redirectToGoogle({ ally }: HttpContext) {
+    return ally.use('google').redirect()
+  }
+
+  async googleCallback({ ally, auth, response }: HttpContext) {
+    const google = ally.use('google')
+
+    if (google.accessDenied()) {
+      return response.redirect(`${env.get('FRONTEND_URL')}/login?oauth=denied`)
+    }
+    if (google.stateMisMatch()) {
+      return response.redirect(`${env.get('FRONTEND_URL')}/login?oauth=state_mismatch`)
+    }
+    if (google.hasError()) {
+      return response.redirect(`${env.get('FRONTEND_URL')}/login?oauth=error`)
+    }
+
+    let googleUser: Awaited<ReturnType<typeof google.user>>
+    try {
+      googleUser = await google.user()
+      // NFR-S7 : token OAuth utilisé côté serveur uniquement, jamais exposé au client
+    } catch {
+      return response.redirect(`${env.get('FRONTEND_URL')}/login?oauth=error`)
+    }
+
+    if (!googleUser.email) {
+      return response.redirect(`${env.get('FRONTEND_URL')}/login?oauth=no_email`)
+    }
+
+    const user = await this.authService.findOrCreateOAuthUser({
+      email: googleUser.email,
+      fullName: googleUser.name ?? null,
+      providerId: googleUser.id,
+    })
+
+    await auth.use('web').login(user)
+
+    return response.redirect(`${env.get('FRONTEND_URL')}/?oauth=success`)
+  }
+
+  async me({ auth, response }: HttpContext) {
+    const user = auth.user!
+    return response.ok({
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+        },
+      },
+    })
   }
 }

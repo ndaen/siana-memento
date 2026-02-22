@@ -54,6 +54,21 @@ type LoginResult =
   | { success: true; user: User }
   | { success: false; errorCode: string; message: string }
 
+type MeResult = { success: true; user: User } | { success: false; errorCode: string }
+
+export async function getMe(): Promise<MeResult> {
+  try {
+    const res = await fetch(`${API_URL}/auth/me`, {
+      credentials: 'include',
+    })
+    const json = await res.json()
+    if (json.success) return { success: true, user: json.data.user }
+    return { success: false, errorCode: json.error?.code ?? 'UNAUTHORIZED' }
+  } catch {
+    return { success: false, errorCode: 'NETWORK_ERROR' }
+  }
+}
+
 export async function loginUser(payload: LoginPayload): Promise<LoginResult> {
   try {
     const res = await fetch(`${API_URL}/auth/login`, {

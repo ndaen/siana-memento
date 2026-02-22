@@ -18,4 +18,20 @@ export default class AuthService {
   async login(email: string, password: string) {
     return User.verifyCredentials(email, password)
   }
+
+  async findOrCreateOAuthUser(data: { email: string; fullName: string | null; providerId: string }) {
+    let user = await User.findBy('email', data.email)
+
+    if (!user) {
+      user = await User.create({
+        email: data.email,
+        fullName: data.fullName,
+        provider: 'google',
+        providerId: data.providerId,
+        password: null,
+      })
+    }
+
+    return user
+  }
 }

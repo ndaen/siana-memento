@@ -37,5 +37,10 @@ router
     router
       .post('/login', [AuthController, 'login'])
       .use(loginThrottle)
+
+    router.get('/google', [AuthController, 'redirectToGoogle'])
+    router.get('/google/callback', [AuthController, 'googleCallback'])
+
+    router.get('/me', [AuthController, 'me']).use(middleware.auth())
   })
   .prefix('/auth')
