@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import FocusCard from "@/components/siana/FocusCard";
 import RegisterForm from "@/components/siana/RegisterForm";
+import GoogleButton from "@/components/siana/GoogleButton";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -17,6 +18,15 @@ export default function RegisterPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             Rejoignez Siana Memento
           </p>
+        </div>
+
+        <div className="flex flex-col gap-3 mb-4">
+          <GoogleButton label="S'inscrire avec Google" />
+          <div className="relative flex items-center gap-3 py-1">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">ou</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
         </div>
 
         <RegisterForm onSuccess={() => router.push("/")} />
