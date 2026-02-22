@@ -1,6 +1,7 @@
 import WaitlistForm from "@/components/siana/WaitlistForm";
 import { ThemeToggle } from "@/components/siana/ThemeToggle";
 import UserMenu from "@/components/siana/UserMenu";
+import AuthModalTrigger from "@/components/siana/AuthModalTrigger";
 
 export default function Home() {
   return (
@@ -88,6 +89,11 @@ export default function Home() {
             sur demande.
           </p>
         </section>
+
+        {/* Demo auth modal — à remplacer dans Epic 3 par le déclencheur réel */}
+        <div className="mt-4">
+          <AuthModalTrigger />
+        </div>
       </main>
 
       {/* Footer */}

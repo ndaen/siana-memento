@@ -6,13 +6,21 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
 
 interface GoogleButtonProps {
   label?: string
+  returnTo?: string
 }
 
-export default function GoogleButton({ label = 'Continuer avec Google' }: GoogleButtonProps) {
+export default function GoogleButton({
+  label = 'Continuer avec Google',
+  returnTo,
+}: GoogleButtonProps) {
   function handleClick() {
     // OAuth = redirection navigateur complète (pas un fetch)
     // La session cookie sera posée par le backend lors du callback → redirect
-    window.location.href = `${API_URL}/auth/google`
+    // Fallback sur window.location.origin si NEXT_PUBLIC_API_URL est vide (évite crash new URL)
+    const base = API_URL || window.location.origin
+    const url = new URL('/auth/google', base)
+    if (returnTo) url.searchParams.set('returnTo', returnTo)
+    window.location.href = url.toString()
   }
 
   return (

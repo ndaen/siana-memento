@@ -1,5 +1,5 @@
 import { test } from '@japa/runner'
-import vine from '@vinejs/vine'
+import { errors } from '@vinejs/vine'
 import { registerValidator, loginValidator } from '#validators/auth_validator'
 
 test.group('registerValidator', () => {
@@ -34,28 +34,28 @@ test.group('registerValidator', () => {
   test('rejects invalid email format', async ({ assert }) => {
     await assert.rejects(
       () => registerValidator.validate({ email: 'not-an-email', password: 'motdepasse123' }),
-      vine.SimpleMessagesProvider
+      errors.E_VALIDATION_ERROR
     )
   })
 
   test('rejects password shorter than 8 characters', async ({ assert }) => {
     await assert.rejects(
       () => registerValidator.validate({ email: 'test@example.com', password: 'court' }),
-      vine.SimpleMessagesProvider
+      errors.E_VALIDATION_ERROR
     )
   })
 
   test('rejects missing email', async ({ assert }) => {
     await assert.rejects(
       () => registerValidator.validate({ password: 'motdepasse123' } as any),
-      vine.SimpleMessagesProvider
+      errors.E_VALIDATION_ERROR
     )
   })
 
   test('rejects missing password', async ({ assert }) => {
     await assert.rejects(
       () => registerValidator.validate({ email: 'test@example.com' } as any),
-      vine.SimpleMessagesProvider
+      errors.E_VALIDATION_ERROR
     )
   })
 })
@@ -89,21 +89,21 @@ test.group('loginValidator', () => {
   test('rejects invalid email format', async ({ assert }) => {
     await assert.rejects(
       () => loginValidator.validate({ email: 'not-an-email', password: 'motdepasse123' }),
-      vine.SimpleMessagesProvider
+      errors.E_VALIDATION_ERROR
     )
   })
 
   test('rejects missing email', async ({ assert }) => {
     await assert.rejects(
       () => loginValidator.validate({ password: 'motdepasse123' } as any),
-      vine.SimpleMessagesProvider
+      errors.E_VALIDATION_ERROR
     )
   })
 
   test('rejects missing password', async ({ assert }) => {
     await assert.rejects(
       () => loginValidator.validate({ email: 'test@example.com' } as any),
-      vine.SimpleMessagesProvider
+      errors.E_VALIDATION_ERROR
     )
   })
 })

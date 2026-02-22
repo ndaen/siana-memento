@@ -52,7 +52,7 @@ development_status:
   2-2-connexion-par-email-et-mot-de-passe: done
   2-3-connexion-et-inscription-via-google-oauth: done
   2-4-deconnexion: done
-  2-5-modal-auth-juste-a-temps: backlog
+  2-5-modal-auth-juste-a-temps: review
   epic-2-retrospective: optional
 
   epic-3: backlog
