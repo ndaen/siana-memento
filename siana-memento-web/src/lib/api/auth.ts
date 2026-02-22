@@ -69,6 +69,22 @@ export async function getMe(): Promise<MeResult> {
   }
 }
 
+type LogoutResult = { success: true } | { success: false; errorCode: string }
+
+export async function logoutUser(): Promise<LogoutResult> {
+  try {
+    const res = await fetch(`${API_URL}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+    const json = await res.json()
+    if (json.success) return { success: true }
+    return { success: false, errorCode: json.error?.code ?? 'LOGOUT_FAILED' }
+  } catch {
+    return { success: false, errorCode: 'NETWORK_ERROR' }
+  }
+}
+
 export async function loginUser(payload: LoginPayload): Promise<LoginResult> {
   try {
     const res = await fetch(`${API_URL}/auth/login`, {

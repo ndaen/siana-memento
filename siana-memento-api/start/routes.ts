@@ -42,5 +42,7 @@ router
     router.get('/google/callback', [AuthController, 'googleCallback'])
 
     router.get('/me', [AuthController, 'me']).use(middleware.auth())
+
+    router.post('/logout', [AuthController, 'logout'])
   })
   .prefix('/auth')
