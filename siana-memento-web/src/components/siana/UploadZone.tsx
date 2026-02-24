@@ -18,26 +18,41 @@ const MAX_SIZE = 10 * 1024 * 1024 // 10MB
 const ACCEPTED_TYPES = { 'image/jpeg': ['.jpg', '.jpeg'], 'image/png': ['.png'] }
 
 interface PhotoPreview {
-  file: File
+  file: File | null
   previewUrl: string
 }
 
 export default function UploadZone() {
   const router = useRouter()
-  const { setDesign, setPhotos, setStep } = useGenerationStore()
+  const { designId, setDesign, setPhotos, setStep, photos: storePhotos, _hasHydrated } = useGenerationStore()
 
   const [previews, setPreviews] = useState<PhotoPreview[]>([])
   const [uploadProgress, setUploadProgress] = useState<number[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [mascotteMessage, setMascotteMessage] = useState<string | null>(null)
 
+  // Initialiser les previews depuis le store au montage (Retour en arrière ou Rafraîchissement)
+  useEffect(() => {
+    if (_hasHydrated && storePhotos.length > 0 && previews.length === 0) {
+      const initialPreviews: PhotoPreview[] = storePhotos.map((p) => ({
+        file: p.file, 
+        previewUrl: p.previewUrl || p.url, // Fallback sur l'URL Cloudinary si previewUrl (blob) perdu
+      }))
+      setPreviews(initialPreviews)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [_hasHydrated, storePhotos])
+
   // Libérer les ObjectURLs au démontage pour éviter les memory leaks
   useEffect(() => {
     return () => {
-      previews.forEach((p) => URL.revokeObjectURL(p.previewUrl))
+      previews.forEach((p) => {
+        if (p.previewUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(p.previewUrl)
+        }
+      })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [previews])
 
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
@@ -98,52 +113,79 @@ export default function UploadZone() {
     if (previews.length === 0 || isUploading) return
 
     setIsUploading(true)
-    setUploadProgress(previews.map(() => 0))
 
     try {
-      // 1. Obtenir la signature Cloudinary
-      const signResult = await getUploadSignature()
-      if (!signResult.success) {
-        toast.error(signResult.message)
-        setIsUploading(false)
-        return
-      }
-
-      // 2. Upload toutes les photos en parallèle vers Cloudinary avec progress par photo (NFR-P6)
-      const uploaded = await Promise.all(
-        previews.map((preview, i) =>
-          uploadToCloudinary(preview.file, signResult.data, (percent) => {
-            setUploadProgress((prev) => {
-              const next = [...prev]
-              next[i] = percent
-              return next
-            })
-          })
-        )
+      // Identifier les photos qui ont besoin d'être uploadées (celles qui ont un objet File)
+      const toUpload = previews.filter((p) => p.file !== null)
+      const alreadyUploaded = storePhotos.filter((sp) => 
+        previews.some((p) => p.file === null && p.previewUrl === (sp.previewUrl || sp.url))
       )
 
-      // 3. Créer le design en DB avec les photos
-      const createResult = await createDesignWithPhotos(uploaded)
-      if (!createResult.success) {
-        toast.error(createResult.message)
-        setIsUploading(false)
-        return
+      let newlyUploaded: { publicId: string; url: string }[] = []
+
+      if (toUpload.length > 0) {
+        setUploadProgress(toUpload.map(() => 0))
+        
+        // 1. Obtenir la signature Cloudinary
+        const signResult = await getUploadSignature()
+        if (!signResult.success) {
+          toast.error(signResult.message)
+          setIsUploading(false)
+          return
+        }
+
+        // 2. Upload seulement les nouvelles photos
+        newlyUploaded = await Promise.all(
+          toUpload.map((preview, i) =>
+            uploadToCloudinary(preview.file as File, signResult.data, (percent) => {
+              setUploadProgress((prev) => {
+                const next = [...prev]
+                next[i] = percent
+                return next
+              })
+            })
+          )
+        )
       }
 
-      // 4. Sauvegarder dans le store Zustand
-      setDesign(createResult.designId, createResult.sessionToken)
-      const storePhotos: UploadedPhoto[] = previews.map((p, i) => ({
-        publicId: uploaded[i].publicId,
-        url: uploaded[i].url,
-        previewUrl: p.previewUrl,
-        file: p.file,
-      }))
-      setPhotos(storePhotos)
+      // Fusionner les photos déjà présentes et les nouvelles
+      const finalPhotos = [...alreadyUploaded.map(p => ({ publicId: p.publicId, url: p.url }))]
+      
+      // Si on a de nouvelles photos ou si c'est la première création
+      if (toUpload.length > 0 || !designId) {
+        const createResult = await createDesignWithPhotos([...finalPhotos, ...newlyUploaded])
+        if (!createResult.success) {
+          toast.error(createResult.message)
+          setIsUploading(false)
+          return
+        }
+        setDesign(createResult.designId, createResult.sessionToken)
+      }
+
+      // 4. Mettre à jour le store Zustand avec les previews locales
+      const updatedStorePhotos: UploadedPhoto[] = previews.map((p) => {
+        // Chercher dans les nouvelles
+        const isNewIdx = toUpload.findIndex(tu => tu === p)
+        if (isNewIdx !== -1) {
+          return {
+            publicId: newlyUploaded[isNewIdx].publicId,
+            url: newlyUploaded[isNewIdx].url,
+            previewUrl: p.previewUrl,
+            file: p.file,
+          }
+        }
+        // Chercher dans les anciennes
+        const existing = storePhotos.find(sp => (sp.previewUrl || sp.url) === p.previewUrl)
+        return existing || { publicId: '', url: p.previewUrl, previewUrl: p.previewUrl, file: p.file }
+      })
+      
+      setPhotos(updatedStorePhotos)
       setStep('template')
 
-      // 5. Naviguer vers l'étape suivante (Story 3.2)
+      // 5. Naviguer vers l'étape suivante
       router.push('/generate/template')
-    } catch {
+    } catch (error) {
+      console.error('Upload error:', error)
       toast.error("Une erreur est survenue lors de l'upload. Réessayez.")
       setIsUploading(false)
     }

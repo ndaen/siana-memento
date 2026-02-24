@@ -37,6 +37,12 @@ test.group('POST /api/designs', (group) => {
     assert.equal(design!.status, 'draft')
     assert.isNull(design!.userId)
     assert.isNull(design!.template)
+
+    // Vérifier expiration du design (RGPD)
+    const expectedMin = DateTime.now().plus({ days: 6, hours: 23 })
+    const expectedMax = DateTime.now().plus({ days: 7, hours: 1 })
+    assert.isTrue(design!.expiresAt! >= expectedMin)
+    assert.isTrue(design!.expiresAt! <= expectedMax)
   })
 
   test('crée un design avec 2 photos et les 2 sont en DB', async ({ client, assert }) => {

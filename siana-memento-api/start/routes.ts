@@ -23,6 +23,10 @@ const loginThrottle = limiter.define('login', () =>
   limiter.allowRequests(10).every('15 minutes')
 )
 
+const designsThrottle = limiter.define('designs', () =>
+  limiter.allowRequests(20).every('1 hour')
+)
+
 router.get('/api/health', async ({ response }) => {
   return response.ok({
     status: 'ok',
@@ -33,7 +37,12 @@ router.get('/api/health', async ({ response }) => {
 // API routes — upload et designs
 router.get('/api/upload/sign', [UploadController, 'sign'])
 // silentAuth : populer auth.user si connecté, sans bloquer si anonyme
-router.post('/api/designs', [DesignsController, 'store']).use(middleware.silentAuth())
+router
+  .post('/api/designs', [DesignsController, 'store'])
+  .use([designsThrottle, middleware.silentAuth()])
+router
+  .patch('/api/designs/:id/template', [DesignsController, 'updateTemplate'])
+  .use([designsThrottle, middleware.silentAuth()])
 
 router
   .group(() => {

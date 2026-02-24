@@ -1,5 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { createDesignValidator } from '#validators/design_validator'
+import { createDesignValidator, updateDesignTemplateValidator } from '#validators/design_validator'
 import Design from '#models/design'
 import Photo from '#models/photo'
 import { randomBytes } from 'node:crypto'
@@ -20,14 +20,15 @@ export default class DesignsController {
 
     const sessionToken = randomBytes(32).toString('hex')
 
+    // expires_at J+7 pour conformité RGPD (FR31) — base du cron Story 3.7
+    const expiresAt = DateTime.now().plus({ days: 7 })
+
     const design = await Design.create({
       userId,
       sessionToken,
       status: 'draft',
+      expiresAt,
     })
-
-    // expires_at J+7 pour conformité RGPD (FR31) — base du cron Story 3.7
-    const expiresAt = DateTime.now().plus({ days: 7 })
 
     await Photo.createMany(
       payload.photos.map((photo, index) => ({
@@ -44,6 +45,50 @@ export default class DesignsController {
       data: {
         designId: design.id,
         sessionToken: design.sessionToken,
+      },
+    })
+  }
+
+  /**
+   * PATCH /api/designs/:id/template
+   * Met à jour le template du design. Auth optionnelle.
+   * Ownership check : userId si connecté, sessionToken si anonyme.
+   */
+  async updateTemplate({ params, request, auth, response }: HttpContext) {
+    const payload = await request.validateUsing(updateDesignTemplateValidator)
+    const design = await Design.find(params.id)
+
+    if (!design) {
+      return response.notFound({
+        success: false,
+        error: { code: 'DESIGN_NOT_FOUND', message: 'Design introuvable.' },
+      })
+    }
+
+    const userId = auth.user?.id ?? null
+    if (userId) {
+      if (design.userId !== userId) {
+        return response.forbidden({
+          success: false,
+          error: { code: 'FORBIDDEN', message: 'Accès interdit.' },
+        })
+      }
+    } else {
+      if (!payload.sessionToken || design.sessionToken !== payload.sessionToken) {
+        return response.forbidden({
+          success: false,
+          error: { code: 'FORBIDDEN', message: 'Accès interdit.' },
+        })
+      }
+    }
+
+    await design.merge({ template: payload.template }).save()
+
+    return response.ok({
+      success: true,
+      data: {
+        designId: design.id,
+        template: design.template,
       },
     })
   }

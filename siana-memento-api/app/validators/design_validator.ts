@@ -10,3 +10,10 @@ export const createDesignValidator = vine.compile(
     photos: vine.array(photoSchema).minLength(1).maxLength(2),
   })
 )
+
+export const updateDesignTemplateValidator = vine.compile(
+  vine.object({
+    template: vine.enum(['boheme', 'moderne', 'classique', 'vintage', 'minimaliste'] as const),
+    sessionToken: vine.string().minLength(64).maxLength(64).optional(),
+  })
+)

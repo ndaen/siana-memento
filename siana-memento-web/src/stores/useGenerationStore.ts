@@ -12,40 +12,57 @@ export interface UploadedPhoto {
 
 export type GenerationStep = 'upload' | 'template' | 'configure' | 'generating' | 'result'
 
-interface GenerationStore {
+interface GenerationState {
   designId: number | null
   sessionToken: string | null
   photos: UploadedPhoto[]
   currentStep: GenerationStep
+  selectedTemplate: string | null
+  _hasHydrated: boolean
+}
 
+const initialState: GenerationState = {
+  designId: null,
+  sessionToken: null,
+  photos: [],
+  currentStep: 'upload',
+  selectedTemplate: null,
+  _hasHydrated: false,
+}
+
+interface GenerationStore extends GenerationState {
   setDesign: (id: number, token: string) => void
   setPhotos: (photos: UploadedPhoto[]) => void
   setStep: (step: GenerationStep) => void
+  setTemplate: (template: string) => void
+  setHasHydrated: (val: boolean) => void
   reset: () => void
 }
 
 export const useGenerationStore = create<GenerationStore>()(
   persist(
     (set) => ({
-      designId: null,
-      sessionToken: null,
-      photos: [],
-      currentStep: 'upload',
+      ...initialState,
 
       setDesign: (id, token) => set({ designId: id, sessionToken: token }),
       setPhotos: (photos) => set({ photos }),
       setStep: (step) => set({ currentStep: step }),
-      reset: () =>
-        set({ designId: null, sessionToken: null, photos: [], currentStep: 'upload' }),
+      setTemplate: (template) => set({ selectedTemplate: template }),
+      setHasHydrated: (val) => set({ _hasHydrated: val }),
+      reset: () => set({ ...initialState, _hasHydrated: true }),
     }),
     {
       name: 'siana-generation-store',
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true)
+      },
       // previewUrl (objectURL) et file (File non sérialisable) non persistés — comportement attendu
       partialize: (state) => ({
         designId: state.designId,
         sessionToken: state.sessionToken,
         photos: state.photos.map((p) => ({ ...p, previewUrl: '', file: null })),
         currentStep: state.currentStep,
+        selectedTemplate: state.selectedTemplate,
       }),
     }
   )
