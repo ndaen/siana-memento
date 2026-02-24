@@ -1,8 +1,8 @@
 import { test } from '@japa/runner'
 
-test.group('POST /api/upload/sign', () => {
+test.group('GET /api/upload/sign', () => {
   test('retourne 200 avec les champs de signature Cloudinary', async ({ client, assert }) => {
-    const response = await client.post('/api/upload/sign')
+    const response = await client.get('/api/upload/sign')
 
     response.assertStatus(200)
     const body = response.body()
@@ -18,7 +18,7 @@ test.group('POST /api/upload/sign', () => {
   })
 
   test('inclut session_token dans le folder quand fourni', async ({ client, assert }) => {
-    const response = await client.post('/api/upload/sign?session_token=abc123')
+    const response = await client.get('/api/upload/sign?session_token=abc123')
 
     response.assertStatus(200)
     const body = response.body()
@@ -28,7 +28,7 @@ test.group('POST /api/upload/sign', () => {
   })
 
   test('assainit le session_token pour éviter le Path Traversal', async ({ client, assert }) => {
-    const response = await client.post('/api/upload/sign?session_token=../../../etc/passwd')
+    const response = await client.get('/api/upload/sign?session_token=../../../etc/passwd')
 
     response.assertStatus(200)
     const body = response.body()
@@ -43,7 +43,7 @@ test.group('POST /api/upload/sign', () => {
     client,
     assert,
   }) => {
-    const response = await client.post('/api/upload/sign')
+    const response = await client.get('/api/upload/sign')
 
     response.assertStatus(200)
     const body = response.body()
@@ -54,7 +54,7 @@ test.group('POST /api/upload/sign', () => {
 
   test('est accessible sans authentification', async ({ client }) => {
     // Aucun cookie de session — doit quand même retourner 200
-    const response = await client.post('/api/upload/sign')
+    const response = await client.get('/api/upload/sign')
     response.assertStatus(200)
   })
 })

@@ -31,7 +31,7 @@ router.get('/api/health', async ({ response }) => {
 })
 
 // API routes — upload et designs
-router.post('/api/upload/sign', [UploadController, 'sign'])
+router.get('/api/upload/sign', [UploadController, 'sign'])
 // silentAuth : populer auth.user si connecté, sans bloquer si anonyme
 router.post('/api/designs', [DesignsController, 'store']).use(middleware.silentAuth())
 
