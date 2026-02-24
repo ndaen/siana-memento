@@ -12,6 +12,8 @@ import { middleware } from '#start/kernel'
 import limiter from '@adonisjs/limiter/services/main'
 
 const AuthController = () => import('#controllers/auth_controller')
+const UploadController = () => import('#controllers/upload_controller')
+const DesignsController = () => import('#controllers/designs_controller')
 
 const registerThrottle = limiter.define('register', () =>
   limiter.allowRequests(3).every('1 hour')
@@ -27,6 +29,11 @@ router.get('/api/health', async ({ response }) => {
     timestamp: new Date().toISOString(),
   })
 })
+
+// API routes — upload et designs
+router.post('/api/upload/sign', [UploadController, 'sign'])
+// silentAuth : populer auth.user si connecté, sans bloquer si anonyme
+router.post('/api/designs', [DesignsController, 'store']).use(middleware.silentAuth())
 
 router
   .group(() => {
