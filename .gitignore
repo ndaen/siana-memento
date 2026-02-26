@@ -54,3 +54,6 @@ coverage/
 .claude/
 .gemini/
 _bmad/
+siana-google-generation/
+.agent/
+.agents/
