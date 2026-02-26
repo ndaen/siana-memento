@@ -1,5 +1,9 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { createDesignValidator, updateDesignTemplateValidator } from '#validators/design_validator'
+import {
+  createDesignValidator,
+  updateDesignTemplateValidator,
+  updateDesignConfigureValidator,
+} from '#validators/design_validator'
 import Design from '#models/design'
 import Photo from '#models/photo'
 import { randomBytes } from 'node:crypto'
@@ -89,6 +93,57 @@ export default class DesignsController {
       data: {
         designId: design.id,
         template: design.template,
+      },
+    })
+  }
+
+  /**
+   * PATCH /api/designs/:id/configure
+   * Met à jour les données du mariage (noms, date, lieu). Auth optionnelle.
+   * Ownership check : userId si connecté, sessionToken si anonyme.
+   */
+  async updateConfigure({ params, request, auth, response }: HttpContext) {
+    const payload = await request.validateUsing(updateDesignConfigureValidator)
+    const design = await Design.find(params.id)
+
+    if (!design) {
+      return response.notFound({
+        success: false,
+        error: { code: 'DESIGN_NOT_FOUND', message: 'Design introuvable.' },
+      })
+    }
+
+    // Vérification propriété — même logique que updateTemplate
+    const userId = auth.user?.id ?? null
+    if (userId) {
+      if (design.userId !== userId) {
+        return response.forbidden({
+          success: false,
+          error: { code: 'FORBIDDEN', message: 'Accès interdit.' },
+        })
+      }
+    } else {
+      if (!payload.sessionToken || design.sessionToken !== payload.sessionToken) {
+        return response.forbidden({
+          success: false,
+          error: { code: 'FORBIDDEN', message: 'Accès interdit.' },
+        })
+      }
+    }
+
+    await design
+      .merge({
+        partner1Name: payload.partner1Name,
+        partner2Name: payload.partner2Name,
+        weddingDate: DateTime.fromISO(payload.weddingDate),
+        weddingLocation: payload.weddingLocation,
+      })
+      .save()
+
+    return response.ok({
+      success: true,
+      data: {
+        designId: design.id,
       },
     })
   }

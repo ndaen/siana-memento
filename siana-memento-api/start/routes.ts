@@ -43,6 +43,9 @@ router
 router
   .patch('/api/designs/:id/template', [DesignsController, 'updateTemplate'])
   .use([designsThrottle, middleware.silentAuth()])
+router
+  .patch('/api/designs/:id/configure', [DesignsController, 'updateConfigure'])
+  .use([designsThrottle, middleware.silentAuth()])
 
 router
   .group(() => {

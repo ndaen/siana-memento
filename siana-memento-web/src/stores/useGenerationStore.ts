@@ -18,6 +18,10 @@ interface GenerationState {
   photos: UploadedPhoto[]
   currentStep: GenerationStep
   selectedTemplate: string | null
+  partner1Name: string | null
+  partner2Name: string | null
+  weddingDate: string | null // Format ISO YYYY-MM-DD — sérialisable
+  weddingLocation: string | null
   _hasHydrated: boolean
 }
 
@@ -27,6 +31,10 @@ const initialState: GenerationState = {
   photos: [],
   currentStep: 'upload',
   selectedTemplate: null,
+  partner1Name: null,
+  partner2Name: null,
+  weddingDate: null,
+  weddingLocation: null,
   _hasHydrated: false,
 }
 
@@ -35,6 +43,12 @@ interface GenerationStore extends GenerationState {
   setPhotos: (photos: UploadedPhoto[]) => void
   setStep: (step: GenerationStep) => void
   setTemplate: (template: string) => void
+  setWeddingData: (data: {
+    partner1Name: string
+    partner2Name: string
+    weddingDate: string
+    weddingLocation: string
+  }) => void
   setHasHydrated: (val: boolean) => void
   reset: () => void
 }
@@ -48,6 +62,13 @@ export const useGenerationStore = create<GenerationStore>()(
       setPhotos: (photos) => set({ photos }),
       setStep: (step) => set({ currentStep: step }),
       setTemplate: (template) => set({ selectedTemplate: template }),
+      setWeddingData: (data) =>
+        set({
+          partner1Name: data.partner1Name,
+          partner2Name: data.partner2Name,
+          weddingDate: data.weddingDate,
+          weddingLocation: data.weddingLocation,
+        }),
       setHasHydrated: (val) => set({ _hasHydrated: val }),
       reset: () => set({ ...initialState, _hasHydrated: true }),
     }),
@@ -63,6 +84,10 @@ export const useGenerationStore = create<GenerationStore>()(
         photos: state.photos.map((p) => ({ ...p, previewUrl: '', file: null })),
         currentStep: state.currentStep,
         selectedTemplate: state.selectedTemplate,
+        partner1Name: state.partner1Name,
+        partner2Name: state.partner2Name,
+        weddingDate: state.weddingDate,
+        weddingLocation: state.weddingLocation,
       }),
     }
   )

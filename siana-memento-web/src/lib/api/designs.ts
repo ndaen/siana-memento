@@ -33,3 +33,40 @@ export async function updateDesignTemplate(
     }
   }
 }
+
+type UpdateConfigureResult =
+  | { success: true; designId: number }
+  | { success: false; errorCode: string; message: string }
+
+export async function updateDesignConfigure(
+  designId: number,
+  data: {
+    partner1Name: string
+    partner2Name: string
+    weddingDate: string
+    weddingLocation: string
+  },
+  sessionToken?: string | null
+): Promise<UpdateConfigureResult> {
+  try {
+    const res = await fetch(`${API_URL}/api/designs/${designId}/configure`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ ...data, ...(sessionToken ? { sessionToken } : {}) }),
+    })
+    const json = await res.json()
+    if (json.success) return { success: true, designId: json.data.designId }
+    return {
+      success: false,
+      errorCode: json.error?.code ?? 'UPDATE_FAILED',
+      message: json.error?.message ?? 'Erreur lors de la configuration.',
+    }
+  } catch {
+    return {
+      success: false,
+      errorCode: 'NETWORK_ERROR',
+      message: 'Service indisponible. Vérifiez votre connexion et réessayez.',
+    }
+  }
+}
