@@ -61,6 +61,7 @@
     "@adonisjs/limiter": "^2.4.0",
     "@adonisjs/lucid": "^21.6.1",
     "@adonisjs/session": "^7.7.1",
+    "@google/genai": "^1.43.0",
     "@vinejs/vine": "^3.0.1",
     "cloudinary": "^2.9.0",
     "luxon": "^3.7.2",
