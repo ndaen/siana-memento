@@ -70,3 +70,77 @@ export async function updateDesignConfigure(
     }
   }
 }
+
+type TriggerGenerationResult =
+  | { success: true; designId: number; status: string; iterationsUsed: number; generatedImageUrl: string | null }
+  | { success: false; errorCode: string; message: string }
+
+export async function triggerGeneration(
+  designId: number,
+  sessionToken?: string | null
+): Promise<TriggerGenerationResult> {
+  try {
+    const res = await fetch(`${API_URL}/api/designs/${designId}/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(sessionToken ? { sessionToken } : {}),
+    })
+    const json = await res.json()
+    if (json.success) {
+      return {
+        success: true,
+        designId: json.data.designId,
+        status: json.data.status,
+        iterationsUsed: json.data.iterationsUsed,
+        generatedImageUrl: json.data.generatedImageUrl ?? null,
+      }
+    }
+    return {
+      success: false,
+      errorCode: json.error?.code ?? 'GENERATION_FAILED',
+      message: json.error?.message ?? 'La génération a échoué.',
+    }
+  } catch {
+    return {
+      success: false,
+      errorCode: 'NETWORK_ERROR',
+      message: 'Service indisponible. Vérifiez votre connexion et réessayez.',
+    }
+  }
+}
+
+type PollStatusResult =
+  | { success: true; status: string; iterationsUsed: number }
+  | { success: false; errorCode: string; message: string }
+
+export async function pollDesignStatus(
+  designId: number,
+  sessionToken?: string | null
+): Promise<PollStatusResult> {
+  try {
+    const params = sessionToken ? `?sessionToken=${encodeURIComponent(sessionToken)}` : ''
+    const res = await fetch(`${API_URL}/api/designs/${designId}/status${params}`, {
+      credentials: 'include',
+    })
+    const json = await res.json()
+    if (json.success) {
+      return {
+        success: true,
+        status: json.data.status,
+        iterationsUsed: json.data.iterationsUsed,
+      }
+    }
+    return {
+      success: false,
+      errorCode: json.error?.code ?? 'STATUS_FAILED',
+      message: json.error?.message ?? 'Impossible de vérifier le statut.',
+    }
+  } catch {
+    return {
+      success: false,
+      errorCode: 'NETWORK_ERROR',
+      message: 'Service indisponible.',
+    }
+  }
+}

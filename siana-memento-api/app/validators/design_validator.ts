@@ -33,8 +33,17 @@ export const updateDesignConfigureValidator = vine.compile(
   vine.object({
     partner1Name: vine.string().trim().minLength(1).maxLength(100),
     partner2Name: vine.string().trim().minLength(1).maxLength(100),
-    weddingDate: vine.string().regex(/^\d{4}-\d{2}-\d{2}$/).use(validDateRule()),
+    weddingDate: vine
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .use(validDateRule()),
     weddingLocation: vine.string().trim().minLength(1).maxLength(255),
+    sessionToken: vine.string().minLength(64).maxLength(64).optional(),
+  })
+)
+
+export const triggerGenerationValidator = vine.compile(
+  vine.object({
     sessionToken: vine.string().minLength(64).maxLength(64).optional(),
   })
 )

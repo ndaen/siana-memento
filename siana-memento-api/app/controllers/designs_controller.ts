@@ -3,9 +3,11 @@ import {
   createDesignValidator,
   updateDesignTemplateValidator,
   updateDesignConfigureValidator,
+  triggerGenerationValidator,
 } from '#validators/design_validator'
 import Design from '#models/design'
 import Photo from '#models/photo'
+import { generateDesignImage, getTemplate } from '#services/generation_service'
 import { randomBytes } from 'node:crypto'
 import { DateTime } from 'luxon'
 
@@ -144,6 +146,172 @@ export default class DesignsController {
       success: true,
       data: {
         designId: design.id,
+      },
+    })
+  }
+
+  /**
+   * POST /api/designs/:id/generate
+   * Lance la génération IA de l'illustration. Auth optionnelle.
+   * Ownership check : userId si connecté, sessionToken si anonyme.
+   * Synchrone MVP — bloque jusqu'à la réponse Gemini (~20-30s).
+   * TODO Growth : remplacer par queue BullMQ + polling /status
+   */
+  async generate({ params, request, auth, response }: HttpContext) {
+    const payload = await request.validateUsing(triggerGenerationValidator)
+    const design = await Design.query().where('id', params.id).preload('photos').firstOrFail()
+
+    // Vérification propriété — même logique que updateConfigure
+    const userId = auth.user?.id ?? null
+    if (userId) {
+      if (design.userId !== userId) {
+        return response.forbidden({
+          success: false,
+          error: { code: 'FORBIDDEN', message: 'Accès interdit.' },
+        })
+      }
+    } else {
+      if (!payload.sessionToken || design.sessionToken !== payload.sessionToken) {
+        return response.forbidden({
+          success: false,
+          error: { code: 'FORBIDDEN', message: 'Accès interdit.' },
+        })
+      }
+    }
+
+    // Vérifications métier
+    if (
+      !design.partner1Name ||
+      !design.partner2Name ||
+      !design.weddingDate ||
+      !design.weddingLocation ||
+      !design.template
+    ) {
+      return response.badRequest({
+        success: false,
+        error: {
+          code: 'DESIGN_NOT_CONFIGURED',
+          message: "Le design n'est pas encore configuré.",
+        },
+      })
+    }
+
+    if (design.iterationsUsed >= 3) {
+      return response.badRequest({
+        success: false,
+        error: {
+          code: 'MAX_ITERATIONS_REACHED',
+          message: 'Vous avez utilisé vos 3 itérations incluses.',
+        },
+      })
+    }
+
+    // Marquer le design comme en cours de génération
+    await design.merge({ status: 'generating' }).save()
+
+    try {
+      // Charger les photos depuis leurs URLs Cloudinary en base64
+      const photoInputs = await Promise.all(
+        design.photos.map(async (photo) => {
+          const res = await fetch(photo.cloudinaryUrl)
+          const buffer = await res.arrayBuffer()
+          const base64 = Buffer.from(buffer).toString('base64')
+          const mimeType = photo.cloudinaryUrl.toLowerCase().endsWith('.png')
+            ? 'image/png'
+            : 'image/jpeg'
+          return { base64, mimeType }
+        })
+      )
+
+      // Obtenir la config du template
+      const theme = getTemplate(design.template)
+
+      // Formater la date du mariage en français lisible pour le prompt
+      const formattedDate = design.weddingDate.setLocale('fr').toFormat('d MMMM yyyy')
+
+      const weddingData = {
+        partner1Name: design.partner1Name,
+        partner2Name: design.partner2Name,
+        weddingDate: formattedDate,
+        weddingLocation: design.weddingLocation,
+      }
+
+      // Générer via Gemini (retry 3× avec backoff exponentiel dans generateDesignImage)
+      const imageDataUrl = await generateDesignImage(photoInputs, theme, weddingData)
+
+      // Mettre à jour le design avec l'image générée et incrémenter le compteur
+      await design
+        .merge({
+          status: 'completed',
+          generatedImageUrl: imageDataUrl,
+          iterationsUsed: design.iterationsUsed + 1,
+        })
+        .save()
+
+      return response.ok({
+        success: true,
+        data: {
+          designId: design.id,
+          status: 'completed',
+          iterationsUsed: design.iterationsUsed,
+          generatedImageUrl: design.generatedImageUrl,
+        },
+      })
+    } catch (error) {
+      // Remettre le status à 'draft' pour permettre un retry
+      await design.merge({ status: 'draft' }).save()
+
+      return response.internalServerError({
+        success: false,
+        error: {
+          code: 'GENERATION_FAILED',
+          message: 'La génération a échoué. Veuillez réessayer.',
+        },
+      })
+    }
+  }
+
+  /**
+   * GET /api/designs/:id/status
+   * Retourne le statut actuel du design pour le polling frontend.
+   * Auth optionnelle via sessionToken en query param.
+   */
+  async status({ params, request, auth, response }: HttpContext) {
+    const sessionToken = request.qs().sessionToken as string | undefined
+    const design = await Design.find(params.id)
+
+    if (!design) {
+      return response.notFound({
+        success: false,
+        error: { code: 'DESIGN_NOT_FOUND', message: 'Design introuvable.' },
+      })
+    }
+
+    // Vérification propriété légère
+    const userId = auth.user?.id ?? null
+    if (userId) {
+      if (design.userId !== userId) {
+        return response.forbidden({
+          success: false,
+          error: { code: 'FORBIDDEN', message: 'Accès interdit.' },
+        })
+      }
+    } else {
+      if (!sessionToken || design.sessionToken !== sessionToken) {
+        return response.forbidden({
+          success: false,
+          error: { code: 'FORBIDDEN', message: 'Accès interdit.' },
+        })
+      }
+    }
+
+    return response.ok({
+      success: true,
+      data: {
+        designId: design.id,
+        status: design.status,
+        iterationsUsed: design.iterationsUsed,
+        generatedImageUrl: design.generatedImageUrl,
       },
     })
   }

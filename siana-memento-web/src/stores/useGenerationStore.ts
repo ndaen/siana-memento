@@ -22,6 +22,8 @@ interface GenerationState {
   partner2Name: string | null
   weddingDate: string | null // Format ISO YYYY-MM-DD — sérialisable
   weddingLocation: string | null
+  iterationsUsed: number
+  generatedImageUrl: string | null
   _hasHydrated: boolean
 }
 
@@ -35,6 +37,8 @@ const initialState: GenerationState = {
   partner2Name: null,
   weddingDate: null,
   weddingLocation: null,
+  iterationsUsed: 0,
+  generatedImageUrl: null,
   _hasHydrated: false,
 }
 
@@ -49,6 +53,7 @@ interface GenerationStore extends GenerationState {
     weddingDate: string
     weddingLocation: string
   }) => void
+  setGenerationResult: (iterationsUsed: number, imageUrl: string) => void
   setHasHydrated: (val: boolean) => void
   reset: () => void
 }
@@ -69,6 +74,8 @@ export const useGenerationStore = create<GenerationStore>()(
           weddingDate: data.weddingDate,
           weddingLocation: data.weddingLocation,
         }),
+      setGenerationResult: (iterationsUsed, imageUrl) =>
+        set({ iterationsUsed, generatedImageUrl: imageUrl }),
       setHasHydrated: (val) => set({ _hasHydrated: val }),
       reset: () => set({ ...initialState, _hasHydrated: true }),
     }),
@@ -88,6 +95,8 @@ export const useGenerationStore = create<GenerationStore>()(
         partner2Name: state.partner2Name,
         weddingDate: state.weddingDate,
         weddingLocation: state.weddingLocation,
+        iterationsUsed: state.iterationsUsed,
+        generatedImageUrl: state.generatedImageUrl,
       }),
     }
   )

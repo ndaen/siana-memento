@@ -34,6 +34,9 @@ export default class Design extends BaseModel {
   @column()
   declare iterationsUsed: number
 
+  @column()
+  declare generatedImageUrl: string | null
+
   @column.dateTime()
   declare expiresAt: DateTime | null
 

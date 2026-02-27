@@ -27,6 +27,11 @@ const designsThrottle = limiter.define('designs', () =>
   limiter.allowRequests(20).every('1 hour')
 )
 
+// Rate limit strict pour les générations IA — coût Gemini par requête
+const generationsThrottle = limiter.define('generations', () =>
+  limiter.allowRequests(5).every('1 minute')
+)
+
 router.get('/api/health', async ({ response }) => {
   return response.ok({
     status: 'ok',
@@ -46,6 +51,16 @@ router
 router
   .patch('/api/designs/:id/configure', [DesignsController, 'updateConfigure'])
   .use([designsThrottle, middleware.silentAuth()])
+
+// Génération IA — throttle strict (5/min) pour limiter les coûts API Gemini
+router
+  .post('/api/designs/:id/generate', [DesignsController, 'generate'])
+  .use([generationsThrottle, middleware.silentAuth()])
+
+// Polling statut — sans throttle strict (légère, retourne juste un statut)
+router
+  .get('/api/designs/:id/status', [DesignsController, 'status'])
+  .use(middleware.silentAuth())
 
 router
   .group(() => {
