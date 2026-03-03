@@ -87,8 +87,8 @@ export default function GeneratingView() {
 
         // Succès : compléter la progress bar avant la navigation
         setProgress(100)
-        // Stocker l'image générée et le compteur d'itérations dans le store
-        setGenerationResult(result.iterationsUsed, result.generatedImageUrl ?? '')
+        // Stocker la preview watermarquée (URL Cloudinary) et le compteur d'itérations dans le store
+        setGenerationResult(result.iterationsUsed, result.previewUrl ?? '')
         setStep('result')
 
         // Laisser 500ms pour voir 100% avant la navigation

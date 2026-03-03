@@ -37,6 +37,12 @@ export default class Design extends BaseModel {
   @column()
   declare generatedImageUrl: string | null
 
+  @column()
+  declare cloudinaryPublicId: string | null
+
+  @column()
+  declare previewUrl: string | null
+
   @column.dateTime()
   declare expiresAt: DateTime | null
 

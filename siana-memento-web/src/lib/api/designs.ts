@@ -72,7 +72,7 @@ export async function updateDesignConfigure(
 }
 
 type TriggerGenerationResult =
-  | { success: true; designId: number; status: string; iterationsUsed: number; generatedImageUrl: string | null }
+  | { success: true; designId: number; status: string; iterationsUsed: number; previewUrl: string | null }
   | { success: false; errorCode: string; message: string }
 
 export async function triggerGeneration(
@@ -93,7 +93,7 @@ export async function triggerGeneration(
         designId: json.data.designId,
         status: json.data.status,
         iterationsUsed: json.data.iterationsUsed,
-        generatedImageUrl: json.data.generatedImageUrl ?? null,
+        previewUrl: json.data.previewUrl ?? null,
       }
     }
     return {

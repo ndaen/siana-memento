@@ -8,6 +8,7 @@ import {
 import Design from '#models/design'
 import Photo from '#models/photo'
 import { generateDesignImage, getTemplate } from '#services/generation_service'
+import { uploadDesign } from '#services/cloudinary_service'
 import { randomBytes } from 'node:crypto'
 import { DateTime } from 'luxon'
 
@@ -214,11 +215,16 @@ export default class DesignsController {
       const photoInputs = await Promise.all(
         design.photos.map(async (photo) => {
           const res = await fetch(photo.cloudinaryUrl)
+          if (!res.ok) {
+            throw new Error(`Impossible de charger la photo (HTTP ${res.status})`)
+          }
+          const contentType = res.headers.get('content-type') ?? ''
+          if (!contentType.startsWith('image/')) {
+            throw new Error(`Type de contenu inattendu pour la photo: ${contentType}`)
+          }
           const buffer = await res.arrayBuffer()
           const base64 = Buffer.from(buffer).toString('base64')
-          const mimeType = photo.cloudinaryUrl.toLowerCase().endsWith('.png')
-            ? 'image/png'
-            : 'image/jpeg'
+          const mimeType = contentType.split(';')[0].trim() as 'image/png' | 'image/jpeg'
           return { base64, mimeType }
         })
       )
@@ -239,11 +245,16 @@ export default class DesignsController {
       // Générer via Gemini (retry 3× avec backoff exponentiel dans generateDesignImage)
       const imageDataUrl = await generateDesignImage(photoInputs, theme, weddingData)
 
-      // Mettre à jour le design avec l'image générée et incrémenter le compteur
+      // Upload vers Cloudinary et récupération de la preview watermarquée
+      const { publicId, previewUrl } = await uploadDesign(imageDataUrl, design.id)
+
+      // Mettre à jour le design avec les références Cloudinary et incrémenter le compteur
       await design
         .merge({
           status: 'completed',
           generatedImageUrl: imageDataUrl,
+          cloudinaryPublicId: publicId,
+          previewUrl: previewUrl,
           iterationsUsed: design.iterationsUsed + 1,
         })
         .save()
@@ -254,7 +265,7 @@ export default class DesignsController {
           designId: design.id,
           status: 'completed',
           iterationsUsed: design.iterationsUsed,
-          generatedImageUrl: design.generatedImageUrl,
+          previewUrl: design.previewUrl,
         },
       })
     } catch (error) {
@@ -311,7 +322,7 @@ export default class DesignsController {
         designId: design.id,
         status: design.status,
         iterationsUsed: design.iterationsUsed,
-        generatedImageUrl: design.generatedImageUrl,
+        previewUrl: design.previewUrl,
       },
     })
   }

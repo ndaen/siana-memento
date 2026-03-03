@@ -55,4 +55,6 @@ export default await Env.create(new URL('../', import.meta.url), {
   CLOUDINARY_CLOUD_NAME: Env.schema.string(),
   CLOUDINARY_API_KEY: Env.schema.string(),
   CLOUDINARY_API_SECRET: Env.schema.string(),
+  // public_id du logo uploadé dans Cloudinary (ex: "watermarks/siana-logo")
+  CLOUDINARY_WATERMARK_PUBLIC_ID: Env.schema.string.optional(),
 })
