@@ -60,9 +60,10 @@ development_status:
   3-2-galerie-de-selection-de-template: done
   3-3-form-conversationnel-enrichi-avec-preview-texte: done
   3-4-generation-ia-avec-progress-mascotte: done
-  3-5-revelation-du-design-avec-effet-wow: review
-  3-6-iterations-et-feedback-simple: backlog
-  3-7-cron-rgpd-suppression-automatique-des-photos: backlog
+  3-5-revelation-du-design-avec-effet-wow: done
+  3-6-upload-cloudinary-et-watermark-design: ready-for-dev
+  3-7-iterations-et-feedback-simple: backlog
+  3-8-cron-rgpd-suppression-automatique-des-photos: backlog
   epic-3-retrospective: optional
 
   epic-4: backlog

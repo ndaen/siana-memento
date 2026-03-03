@@ -469,9 +469,9 @@ afin de finaliser mon achat sans avoir été bloqué par un login wall dès l'ar
 
 ### Epic 3 : Création & Génération de Design IA
 
-Les utilisateurs peuvent uploader leurs photos, configurer leur Save the Date via un form conversationnel enrichi avec preview texte, choisir un style parmi 5 templates, lancer la génération IA avec progress mascotte, prévisualiser le résultat avec révélation + confettis, et itérer jusqu'à 3 fois. Les photos sont automatiquement supprimées après 7 jours (RGPD).
+Les utilisateurs peuvent uploader leurs photos, configurer leur Save the Date via un form conversationnel enrichi avec preview texte, choisir un style parmi 5 templates, lancer la génération IA avec progress mascotte, prévisualiser le résultat via une preview watermarquée Cloudinary avec révélation + confettis, et itérer jusqu'à 3 fois. Les photos et designs sont automatiquement supprimés après 7 jours (RGPD).
 
-FRs couverts : FR9, FR10, FR11, FR12, FR13, FR14, FR15, FR16, FR17, FR18, FR23 (simplifié mascotte), FR31 (cron RGPD photos), FR40, FR41, FR43, FR44
+FRs couverts : FR9, FR10, FR11, FR12, FR13, FR14, FR15, FR16, FR17, FR18, FR23 (simplifié mascotte), FR31 (cron RGPD photos + designs), FR40, FR41, FR43, FR44
 Growth documentés : FR19, FR20, FR21, FR22 (feedback guidé IA-powered — TODO Growth)
 NFRs clés : NFR-P1, NFR-P3, NFR-P4, NFR-P5, NFR-P6, NFR-SC1, NFR-SC6, NFR-I1, NFR-I4, NFR-I5, NFR-I7, NFR-A1-A7, NFR-S5, NFR-S9
 
@@ -603,7 +603,33 @@ afin de vivre le moment émotionnel fort qui est au cœur de l'expérience Siana
 
 ---
 
-### Story 3.6 : Itérations et Feedback Simple
+### Story 3.6 : Upload Cloudinary & Watermark Design Preview
+
+En tant que système,
+je veux uploader le design généré sur Cloudinary et ne retourner au frontend qu'une preview watermarquée,
+afin que les utilisateurs ne puissent pas accéder au design pleine résolution avant paiement et que le base64 volumineuse disparaisse du localStorage.
+
+**Acceptance Criteria:**
+
+**Given** la génération Gemini terminée avec succès
+**When** le backend obtient le PNG base64
+**Then** il l'uploade sur Cloudinary (dossier `designs/`) et retourne un `previewUrl` watermarqué (redimensionné 1000px, watermark texte centré semi-transparent) — jamais le base64 ni l'URL full-res originale
+
+**Given** l'upload Cloudinary réussi
+**When** on inspecte la table `designs`
+**Then** les champs `cloudinary_public_id` et `preview_url` sont renseignés — le full-res propre est accessible uniquement côté serveur (pour Story 4.2 delivery email)
+
+**Given** le localStorage de l'utilisateur
+**When** il inspecte `siana-generation-store`
+**Then** `generatedImageUrl` contient une URL `https://res.cloudinary.com/...` — aucun base64 en localStorage
+
+**Given** l'upload Cloudinary qui échoue
+**When** après 3 tentatives
+**Then** le backend retourne une erreur 500 et la génération est marquée en échec
+
+---
+
+### Story 3.7 : Itérations et Feedback Simple
 
 En tant qu'utilisateur non satisfait du premier résultat,
 je veux ajuster ma demande et regénérer,
@@ -629,10 +655,10 @@ afin d'obtenir une illustration plus proche de mes attentes dans la limite de 3 
 
 ---
 
-### Story 3.7 : Cron RGPD — Suppression Automatique des Photos
+### Story 3.8 : Cron RGPD — Suppression Automatique des Photos & Designs
 
 En tant que système,
-je veux supprimer automatiquement les photos des utilisateurs après 7 jours,
+je veux supprimer automatiquement les photos et designs des utilisateurs après 7 jours,
 afin d'être conforme au RGPD et à la politique de confidentialité affichée.
 
 **Acceptance Criteria:**
@@ -640,6 +666,14 @@ afin d'être conforme au RGPD et à la politique de confidentialité affichée.
 **Given** une photo uploadée sur Cloudinary
 **When** 7 jours se sont écoulés depuis l'upload
 **Then** la photo est automatiquement supprimée de Cloudinary via un cron job quotidien (FR31, NFR-S5)
+
+**Given** un design généré (non acheté) stocké sur Cloudinary
+**When** 7 jours se sont écoulés depuis la génération
+**Then** le design est automatiquement supprimé de Cloudinary via le même cron job (utilise `cloudinary_public_id` de la table `designs`)
+
+**Given** un design acheté stocké sur Cloudinary
+**When** 7 jours se sont écoulés depuis la date d'achat
+**Then** le design est automatiquement supprimé de Cloudinary (dépendance Story 4.1 pour `purchased_at`)
 
 **Given** le cron job exécuté
 **When** j'inspecte les logs backend

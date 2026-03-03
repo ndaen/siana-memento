@@ -1,6 +1,6 @@
 # Story 3.5 : Révélation du Design avec Effet Wow
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -294,6 +294,13 @@ afin de vivre le moment émotionnel fort qui est au cœur de l'expérience Siana
 - [x] Task 5 : Vérification qualité (AC: ensemble)
   - [x] `npx tsc --noEmit` depuis `siana-memento-web/` — zéro erreur TypeScript
   - [x] `npx eslint src/components/siana/ResultGuard.tsx src/components/siana/ResultView.tsx src/app/\(public\)/generate/result/page.tsx` — zéro warning ESLint
+
+### Review Follow-ups (AI)
+
+- [ ] [AI-Review][High] Story File List non vérifiable : Git ne montre aucun changement alors que 5 fichiers sont revendiqués. Corriger la liste ou fournir les diff réels.
+- [ ] [AI-Review][High] AC #2 : la modal doit inclure un bouton de fermeture explicite. Ajouter un bouton "Fermer" (DialogClose).
+- [ ] [AI-Review][Medium] Accessibilité clavier : gérer aussi la touche Espace sur l’illustration (role=button).
+- [ ] [AI-Review][Medium] Nettoyer le `setTimeout` des confettis pour éviter un déclenchement après un unmount rapide.
 
 ## Dev Notes
 

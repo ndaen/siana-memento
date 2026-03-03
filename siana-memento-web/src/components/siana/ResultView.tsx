@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -18,6 +19,7 @@ export default function ResultView() {
   const [isRevealed, setIsRevealed] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const confettiFiredRef = useRef(false)
+  const confettiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Fade-in de l'image + lancement des confettis
   useEffect(() => {
@@ -51,11 +53,14 @@ export default function ResultView() {
         }
 
         // Démarrer les confettis après 300ms (image à ~15% du fade-in)
-        setTimeout(launchConfetti, 300)
+        confettiTimerRef.current = setTimeout(launchConfetti, 300)
       }
     }, 100)
 
-    return () => clearTimeout(revealTimer)
+    return () => {
+      clearTimeout(revealTimer)
+      if (confettiTimerRef.current) clearTimeout(confettiTimerRef.current)
+    }
   }, [])
 
   const remainingIterations = MAX_ITERATIONS - iterationsUsed
@@ -96,7 +101,7 @@ export default function ResultView() {
         ].join(' ')}
         style={{ touchAction: 'pinch-zoom' }}
         onClick={() => setIsModalOpen(true)}
-        onKeyDown={(e) => e.key === 'Enter' && setIsModalOpen(true)}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setIsModalOpen(true)}
         role="button"
         tabIndex={0}
         aria-label="Voir l'illustration en plein écran"
@@ -157,6 +162,11 @@ export default function ResultView() {
             className="w-full h-auto object-contain"
             style={{ touchAction: 'pinch-zoom' }}
           />
+          <DialogClose asChild>
+            <Button variant="outline" className="mt-2 w-full" aria-label="Fermer la vue plein écran">
+              Fermer
+            </Button>
+          </DialogClose>
         </DialogContent>
       </Dialog>
     </div>
