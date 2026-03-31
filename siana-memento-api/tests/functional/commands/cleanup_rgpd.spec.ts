@@ -108,16 +108,17 @@ test.group('cleanup:rgpd', (group) => {
     assert.equal(design.status, 'expired')
   })
 
-  test('continue malgré une erreur Cloudinary (graceful)', async ({ assert }) => {
-    // Design 1 : sans cloudinaryPublicId (pas d'appel Cloudinary)
+  test('continue malgré une erreur Cloudinary et marque quand même expired', async ({ assert }) => {
+    // Design avec un cloudinaryPublicId inexistant — Cloudinary ne throw pas sur destroy d'un asset inconnu
+    // mais le design doit quand même être marqué expired
     const design1 = await createDesignWithPhotos({
       expiresAt: pastDate,
       status: 'completed',
-      cloudinaryPublicId: null,
+      cloudinaryPublicId: 'designs/inexistant-test-id',
       withPhotos: false,
     })
 
-    // Design 2 : sans cloudinaryPublicId non plus
+    // Design sans cloudinaryPublicId (skip Cloudinary)
     const design2 = await createDesignWithPhotos({
       expiresAt: pastDate,
       status: 'draft',

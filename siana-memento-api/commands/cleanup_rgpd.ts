@@ -19,7 +19,8 @@ export default class CleanupRgpd extends BaseCommand {
     const now = DateTime.now()
 
     // Phase 1 : Photos expirées
-    const expiredPhotos = await Photo.query().where('expiresAt', '<', now.toSQL()!)
+    // TODO Growth: paginate si volume > 1000 rows
+    const expiredPhotos = await Photo.query().where('expiresAt', '<', now.toSQL({ includeOffset: false }))
 
     for (const photo of expiredPhotos) {
       try {
@@ -40,15 +41,24 @@ export default class CleanupRgpd extends BaseCommand {
     }
 
     // Phase 2 : Designs expirés non achetés
+    // TODO Growth: paginate si volume > 1000 rows
     const expiredDesigns = await Design.query()
-      .where('expiresAt', '<', now.toSQL()!)
+      .where('expiresAt', '<', now.toSQL({ includeOffset: false }))
       .whereNot('status', 'paid')
       .whereNot('status', 'expired')
 
     for (const design of expiredDesigns) {
       try {
         if (design.cloudinaryPublicId) {
-          await deleteDesign(design.cloudinaryPublicId)
+          try {
+            await deleteDesign(design.cloudinaryPublicId)
+          } catch (cloudinaryErr) {
+            errorsCount++
+            logger.error(
+              { event: 'rgpd_cleanup_error', type: 'design_cloudinary', id: design.id, cloudinaryPublicId: design.cloudinaryPublicId, error: String(cloudinaryErr) },
+              'Échec suppression Cloudinary design — design marqué expired quand même'
+            )
+          }
         }
         design.status = 'expired'
         await design.save()
