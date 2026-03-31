@@ -52,7 +52,17 @@ function buildPreviewText(
 
 export default function ConfigForm() {
   const router = useRouter()
-  const { designId, sessionToken, setWeddingData, setStep } = useGenerationStore()
+  const {
+    designId,
+    sessionToken,
+    setWeddingData,
+    setStep,
+    reset,
+    partner1Name: storedPartner1Name,
+    partner2Name: storedPartner2Name,
+    weddingDate: storedWeddingDate,
+    weddingLocation: storedWeddingLocation,
+  } = useGenerationStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const {
@@ -65,10 +75,10 @@ export default function ConfigForm() {
     resolver: zodResolver(configSchema),
     mode: 'onChange',
     defaultValues: {
-      partner1Name: '',
-      partner2Name: '',
-      weddingDate: '',
-      weddingLocation: '',
+      partner1Name: storedPartner1Name ?? '',
+      partner2Name: storedPartner2Name ?? '',
+      weddingDate: storedWeddingDate ?? '',
+      weddingLocation: storedWeddingLocation ?? '',
     },
   })
 
@@ -87,6 +97,12 @@ export default function ConfigForm() {
     const result = await updateDesignConfigure(designId, values, sessionToken)
 
     if (!result.success) {
+      if (result.errorCode === 'DESIGN_NOT_FOUND' || result.errorCode === 'FORBIDDEN') {
+        toast.error('Ce design n\'est plus accessible. Veuillez recommencer.')
+        reset()
+        router.push('/generate/upload')
+        return
+      }
       toast.error(result.message)
       setIsSubmitting(false)
       return

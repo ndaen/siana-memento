@@ -55,6 +55,7 @@ interface GenerationStore extends GenerationState {
   }) => void
   setGenerationResult: (iterationsUsed: number, imageUrl: string) => void
   setHasHydrated: (val: boolean) => void
+  resetForPhotoChange: () => void
   reset: () => void
 }
 
@@ -77,6 +78,16 @@ export const useGenerationStore = create<GenerationStore>()(
       setGenerationResult: (iterationsUsed, imageUrl) =>
         set({ iterationsUsed, generatedImageUrl: imageUrl }),
       setHasHydrated: (val) => set({ _hasHydrated: val }),
+      resetForPhotoChange: () =>
+        set({
+          designId: null,
+          sessionToken: null,
+          photos: [],
+          currentStep: 'upload',
+          iterationsUsed: 0,
+          generatedImageUrl: null,
+          // Conserver : selectedTemplate, partner1Name, partner2Name, weddingDate, weddingLocation
+        }),
       reset: () => set({ ...initialState, _hasHydrated: true }),
     }),
     {

@@ -38,35 +38,75 @@ test.group('POST /api/designs/:id/generate', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   const SESSION_TOKEN = 'a'.repeat(64)
+  const TEST_USER = { email: 'test-gen@example.com', password: 'motdepasse123', provider: 'email' as const }
+
+  /**
+   * Helper : crée un utilisateur, le connecte et retourne le cookie header.
+   * Le endpoint generate requiert middleware.auth() (Story 3-7).
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async function loginAsUser(client: any, userOverrides?: { email: string; password: string }): Promise<{ cookie: string; userId: number }> {
+    const creds = userOverrides ?? TEST_USER
+    const user = await User.create({ ...creds, provider: 'email' })
+    const loginResponse = await client.post('/auth/login').json({ email: creds.email, password: creds.password })
+    const rawCookies = loginResponse.headers()['set-cookie'] as unknown as string[] | undefined
+    const cookie = rawCookies?.map((c: string) => c.split(';')[0]).join('; ') ?? ''
+    return { cookie, userId: user.id }
+  }
 
   // ─────────────────────────────────────────────────────────────────────
-  // Tests des cas d'erreur métier — ne requièrent PAS de mock Gemini
+  // Auth middleware — requiert authentification (Story 3-7)
   // ─────────────────────────────────────────────────────────────────────
 
-  test('retourne 403 avec un sessionToken incorrect', async ({ client, assert }) => {
+  test('retourne 401 sans authentification', async ({ client }) => {
+    const design = await createConfiguredDesign(SESSION_TOKEN)
+
+    const response = await client
+      .post(`/api/designs/${design.id}/generate`)
+      .json({ sessionToken: SESSION_TOKEN })
+
+    response.assertStatus(401)
+  })
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Tests des cas d'erreur métier — requièrent authentification
+  // Les designs doivent appartenir à l'utilisateur connecté (userId match)
+  // ─────────────────────────────────────────────────────────────────────
+
+  test('retourne 403 avec un sessionToken incorrect pour design anonyme', async ({ client, assert }) => {
+    const { cookie } = await loginAsUser(client)
+    // Design anonyme (userId = null) → auth user ne match pas → 403
     const design = await createConfiguredDesign(SESSION_TOKEN)
 
     const response = await client
       .post(`/api/designs/${design.id}/generate`)
       .json({ sessionToken: 'b'.repeat(64) })
+      .header('Cookie', cookie)
 
     response.assertStatus(403)
     assert.equal(response.body().error.code, 'FORBIDDEN')
   })
 
   test('retourne 403 sans sessionToken pour un design anonyme', async ({ client, assert }) => {
+    const { cookie } = await loginAsUser(client)
     const design = await createConfiguredDesign(SESSION_TOKEN)
 
-    const response = await client.post(`/api/designs/${design.id}/generate`).json({})
+    const response = await client
+      .post(`/api/designs/${design.id}/generate`)
+      .json({})
+      .header('Cookie', cookie)
 
     response.assertStatus(403)
     assert.equal(response.body().error.code, 'FORBIDDEN')
   })
 
   test('retourne 404 pour un design inexistant (firstOrFail)', async ({ client }) => {
+    const { cookie } = await loginAsUser(client)
+
     const response = await client
       .post('/api/designs/999999/generate')
       .json({ sessionToken: SESSION_TOKEN })
+      .header('Cookie', cookie)
 
     response.assertStatus(404)
   })
@@ -75,8 +115,10 @@ test.group('POST /api/designs/:id/generate', (group) => {
     client,
     assert,
   }) => {
+    const { cookie, userId } = await loginAsUser(client)
     const expiresAt = DateTime.now().plus({ days: 7 })
     const design = await Design.create({
+      userId,
       sessionToken: SESSION_TOKEN,
       status: 'draft',
       expiresAt,
@@ -86,6 +128,7 @@ test.group('POST /api/designs/:id/generate', (group) => {
     const response = await client
       .post(`/api/designs/${design.id}/generate`)
       .json({ sessionToken: SESSION_TOKEN })
+      .header('Cookie', cookie)
 
     response.assertStatus(400)
     assert.equal(response.body().error.code, 'DESIGN_NOT_CONFIGURED')
@@ -95,12 +138,14 @@ test.group('POST /api/designs/:id/generate', (group) => {
     client,
     assert,
   }) => {
-    const design = await createConfiguredDesign(SESSION_TOKEN)
+    const { cookie, userId } = await loginAsUser(client)
+    const design = await createConfiguredDesign(SESSION_TOKEN, userId)
     await design.merge({ iterationsUsed: 3 }).save()
 
     const response = await client
       .post(`/api/designs/${design.id}/generate`)
       .json({ sessionToken: SESSION_TOKEN })
+      .header('Cookie', cookie)
 
     response.assertStatus(400)
     assert.equal(response.body().error.code, 'MAX_ITERATIONS_REACHED')
@@ -117,24 +162,12 @@ test.group('POST /api/designs/:id/generate', (group) => {
     })
     const design = await createConfiguredDesign(SESSION_TOKEN, user1.id)
 
-    const user2 = await User.create({
-      email: 'thomas@example.com',
-      password: 'autremotdepasse',
-      provider: 'email',
-    })
-    const loginResponse = await client.post('/auth/login').json({
-      email: 'thomas@example.com',
-      password: 'autremotdepasse',
-    })
-    const rawCookies = loginResponse.headers()['set-cookie'] as unknown as string[] | undefined
-    const cookieHeader = rawCookies?.map((c: string) => c.split(';')[0]).join('; ') ?? ''
-
-    assert.isDefined(user2.id) // Évite le warning
+    const { cookie } = await loginAsUser(client, { email: 'thomas@example.com', password: 'autremotdepasse' })
 
     const response = await client
       .post(`/api/designs/${design.id}/generate`)
       .json({})
-      .header('Cookie', cookieHeader)
+      .header('Cookie', cookie)
 
     response.assertStatus(403)
     assert.equal(response.body().error.code, 'FORBIDDEN')
@@ -144,9 +177,10 @@ test.group('POST /api/designs/:id/generate', (group) => {
     client,
     assert,
   }) => {
-    // Design avec une photo dont l'URL fetch va échouer (URL non joignable)
+    const { cookie, userId } = await loginAsUser(client)
     const expiresAt = DateTime.now().plus({ days: 7 })
     const design = await Design.create({
+      userId,
       sessionToken: SESSION_TOKEN,
       status: 'draft',
       expiresAt,
@@ -156,7 +190,6 @@ test.group('POST /api/designs/:id/generate', (group) => {
       weddingDate: DateTime.fromISO('2026-09-20'),
       weddingLocation: 'Château de Lastours',
     })
-    // URL invalide → fetch() va échouer → catch → status revient à 'draft'
     await Photo.create({
       designId: design.id,
       position: 1,
@@ -168,9 +201,9 @@ test.group('POST /api/designs/:id/generate', (group) => {
     const response = await client
       .post(`/api/designs/${design.id}/generate`)
       .json({ sessionToken: SESSION_TOKEN })
+      .header('Cookie', cookie)
 
     // Soit 500 GENERATION_FAILED (fetch échoue) soit 500 Gemini (API key manquante en test)
-    // Dans les deux cas, le status doit revenir à 'draft'
     assert.isTrue([500].includes(response.status()), `Status attendu 500, reçu ${response.status()}`)
 
     const updatedDesign = await Design.find(design.id)
@@ -181,26 +214,23 @@ test.group('POST /api/designs/:id/generate', (group) => {
     client,
     assert,
   }) => {
-    // Test d'intégration : vérifie le flux complet sans mocker Gemini.
-    // En environnement de test (pas de GEMINI_API_KEY), on accepte le 500 + rollback draft.
-    // En environnement avec clé réelle (CI/CD avec secret), on vérifie le 200 + status completed.
-    const design = await createConfiguredDesign(SESSION_TOKEN)
+    const { cookie, userId } = await loginAsUser(client)
+    const design = await createConfiguredDesign(SESSION_TOKEN, userId)
 
     const response = await client
       .post(`/api/designs/${design.id}/generate`)
       .json({ sessionToken: SESSION_TOKEN })
+      .header('Cookie', cookie)
 
     const updatedDesign = await Design.find(design.id)
 
     if (response.status() === 200) {
-      // Génération réussie (clé API Gemini disponible)
       const body = response.body()
       assert.isTrue(body.success)
       assert.equal(body.data.status, 'completed')
       assert.equal(updatedDesign!.status, 'completed')
       assert.isNotNull(updatedDesign!.generatedImageUrl)
     } else {
-      // Génération échouée (env de test sans API key) — vérifier le rollback
       assert.equal(response.status(), 500)
       assert.equal(response.body().error.code, 'GENERATION_FAILED')
       assert.equal(updatedDesign!.status, 'draft', 'Rollback status vers draft attendu')

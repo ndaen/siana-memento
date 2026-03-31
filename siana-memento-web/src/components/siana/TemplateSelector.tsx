@@ -12,8 +12,8 @@ export type { TemplateId }
 
 export default function TemplateSelector() {
   const router = useRouter()
-  const { designId, sessionToken, setTemplate, setStep, reset } = useGenerationStore()
-  const [selected, setSelected] = useState<TemplateId | null>(null)
+  const { designId, sessionToken, selectedTemplate, setTemplate, setStep, reset } = useGenerationStore()
+  const [selected, setSelected] = useState<TemplateId | null>(selectedTemplate as TemplateId | null)
   const [isLoading, setIsLoading] = useState(false)
 
   async function handleContinue() {

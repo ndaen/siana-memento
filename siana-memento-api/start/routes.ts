@@ -52,10 +52,10 @@ router
   .patch('/api/designs/:id/configure', [DesignsController, 'updateConfigure'])
   .use([designsThrottle, middleware.silentAuth()])
 
-// Génération IA — throttle strict (5/min) pour limiter les coûts API Gemini
+// Génération IA — auth obligatoire + throttle strict (5/min) pour limiter les coûts API Gemini
 router
   .post('/api/designs/:id/generate', [DesignsController, 'generate'])
-  .use([generationsThrottle, middleware.silentAuth()])
+  .use([generationsThrottle, middleware.auth()])
 
 // Polling statut — sans throttle strict (légère, retourne juste un statut)
 router

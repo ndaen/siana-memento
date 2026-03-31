@@ -19,6 +19,7 @@ interface AuthModalProps {
   onClose: () => void
   onAuthSuccess: (user: User) => void
   returnTo?: string
+  description?: string
 }
 
 type View = 'login' | 'register'
@@ -28,6 +29,7 @@ export default function AuthModal({
   onClose,
   onAuthSuccess,
   returnTo,
+  description,
 }: AuthModalProps) {
   const [view, setView] = useState<View>('login')
 
@@ -54,9 +56,9 @@ export default function AuthModal({
             {view === 'login' ? 'Se connecter' : 'Créer un compte'}
           </DialogTitle>
           <DialogDescription className="text-center">
-            {view === 'login'
+            {description ?? (view === 'login'
               ? 'Connectez-vous pour finaliser votre achat'
-              : 'Créez votre compte pour recevoir votre design'}
+              : 'Créez votre compte pour recevoir votre design')}
           </DialogDescription>
         </DialogHeader>
 
