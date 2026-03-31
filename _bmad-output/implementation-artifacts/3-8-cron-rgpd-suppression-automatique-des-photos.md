@@ -1,6 +1,6 @@
 # Story 3.8 : Cron RGPD — Suppression Automatique des Photos & Designs
 
-Status: review
+Status: done
 
 ## Story
 
@@ -258,3 +258,7 @@ claude-opus-4-6
 - feat(S3-8): commande Ace cleanup:rgpd pour suppression RGPD J+7 des photos et designs
 - feat(S3-8): ajout deletePhoto() dans cloudinary_service.ts
 - test(S3-8): 6 tests fonctionnels Japa pour cleanup:rgpd
+- fix(S3-8): design marqué expired même si Cloudinary delete échoue (code review)
+- fix(S3-8): toSQL({ includeOffset: false }) au lieu de toSQL()! (code review)
+- fix(S3-8): test graceful error avec vrai cloudinaryPublicId (code review)
+- chore(S3-8): TODO Growth pagination sur les queries (code review)
