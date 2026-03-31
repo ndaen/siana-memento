@@ -62,8 +62,8 @@ development_status:
   3-4-generation-ia-avec-progress-mascotte: done
   3-5-revelation-du-design-avec-effet-wow: done
   3-6-upload-cloudinary-et-watermark-design: done
-  3-7-iterations-et-feedback-simple: backlog
-  3-8-cron-rgpd-suppression-automatique-des-photos: backlog
+  3-7-iterations-et-feedback-simple: done
+  3-8-cron-rgpd-suppression-automatique-des-photos: review
   epic-3-retrospective: optional
 
   epic-4: backlog

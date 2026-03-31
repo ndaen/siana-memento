@@ -103,6 +103,10 @@ export async function uploadDesign(
   }
 }
 
+export async function deletePhoto(publicId: string): Promise<void> {
+  await withRetry(() => cloudinary.uploader.destroy(publicId, { resource_type: 'image' }))
+}
+
 export async function deleteDesign(publicId: string): Promise<void> {
   // Supprimer l'original et la preview (deux assets distincts)
   const previewPublicId = publicId.replace('designs/', 'previews/')
