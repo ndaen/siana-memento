@@ -14,6 +14,8 @@ import limiter from '@adonisjs/limiter/services/main'
 const AuthController = () => import('#controllers/auth_controller')
 const UploadController = () => import('#controllers/upload_controller')
 const DesignsController = () => import('#controllers/designs_controller')
+const OrdersController = () => import('#controllers/orders_controller')
+const WebhooksController = () => import('#controllers/webhooks_controller')
 
 const registerThrottle = limiter.define('register', () =>
   limiter.allowRequests(3).every('1 hour')
@@ -30,6 +32,10 @@ const designsThrottle = limiter.define('designs', () =>
 // Rate limit strict pour les générations IA — coût Gemini par requête
 const generationsThrottle = limiter.define('generations', () =>
   limiter.allowRequests(5).every('1 minute')
+)
+
+const ordersThrottle = limiter.define('orders', () =>
+  limiter.allowRequests(5).every('15 minutes')
 )
 
 router.get('/api/health', async ({ response }) => {
@@ -61,6 +67,17 @@ router
 router
   .get('/api/designs/:id/status', [DesignsController, 'status'])
   .use(middleware.silentAuth())
+
+// Orders — auth obligatoire + throttle
+router
+  .post('/api/orders', [OrdersController, 'store'])
+  .use([ordersThrottle, middleware.auth()])
+router
+  .get('/api/orders/:id', [OrdersController, 'show'])
+  .use(middleware.auth())
+
+// Stripe webhook — pas d'auth, pas de rate limiter, signature validée dans le controller
+router.post('/api/webhooks/stripe', [WebhooksController, 'handle'])
 
 router
   .group(() => {

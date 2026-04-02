@@ -57,4 +57,13 @@ export default await Env.create(new URL('../', import.meta.url), {
   CLOUDINARY_API_SECRET: Env.schema.string(),
   // public_id du logo uploadé dans Cloudinary (ex: "watermarks/siana-logo")
   CLOUDINARY_WATERMARK_PUBLIC_ID: Env.schema.string.optional(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring Stripe
+  |----------------------------------------------------------
+  */
+  STRIPE_SECRET_KEY: Env.schema.string(),
+  STRIPE_WEBHOOK_SECRET: Env.schema.string(),
+  STRIPE_PRICE_ID: Env.schema.string(),
 })

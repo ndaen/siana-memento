@@ -47,7 +47,7 @@ development_status:
   1-4-smoke-page-statique-signal-marche-precoce: done
   epic-1-retrospective: optional
 
-  epic-2: in-progress
+  epic-2: done
   2-1-inscription-par-email-et-mot-de-passe: done
   2-2-connexion-par-email-et-mot-de-passe: done
   2-3-connexion-et-inscription-via-google-oauth: done
@@ -66,8 +66,8 @@ development_status:
   3-8-cron-rgpd-suppression-automatique-des-photos: done
   epic-3-retrospective: done
 
-  epic-4: backlog
-  4-1-checkout-stripe: backlog
+  epic-4: in-progress
+  4-1-checkout-stripe: in-progress
   4-2-delivery-email-avec-fichier-haute-resolution: backlog
   4-3-page-de-confirmation-post-achat: backlog
   4-4-historique-de-commandes: backlog

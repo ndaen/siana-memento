@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
@@ -14,6 +14,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useGenerationStore } from '@/stores/useGenerationStore'
+import AuthModal from '@/components/siana/AuthModal'
+import { getMe, type User } from '@/lib/api/auth'
+import { createOrder } from '@/lib/api/orders'
+import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
 import confetti from 'canvas-confetti'
 
 const MAX_ITERATIONS = 3
@@ -41,17 +46,75 @@ function buildReformulation(options: string[], freeText: string): string {
 }
 
 export default function ResultView() {
-  const { generatedImageUrl, partner1Name, partner2Name, iterationsUsed, resetForPhotoChange } =
+  const { generatedImageUrl, partner1Name, partner2Name, iterationsUsed, designId, resetForPhotoChange } =
     useGenerationStore()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isRevealed, setIsRevealed] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isAdjustOpen, setIsAdjustOpen] = useState(false)
   const [adjustStep, setAdjustStep] = useState<'form' | 'confirm'>('form')
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
   const [freeText, setFreeText] = useState('')
+  const [isOrdering, setIsOrdering] = useState(false)
+  const [isPaid, setIsPaid] = useState(false)
+  const [isAuthOpen, setIsAuthOpen] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
   const confettiFiredRef = useRef(false)
   const confettiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const stripeToastFiredRef = useRef(false)
+
+  // Check auth status on mount
+  useEffect(() => {
+    getMe().then((result) => setIsLoggedIn(result.success))
+  }, [])
+
+  // Handle Stripe return (success or cancel) — ref prevents double toast in Strict Mode
+  useEffect(() => {
+    if (stripeToastFiredRef.current) return
+    if (searchParams.get('session_id')) {
+      stripeToastFiredRef.current = true
+      setIsPaid(true)
+      toast.success('Paiement confirmé ! Votre design est en route.')
+    } else if (searchParams.get('canceled') === 'true') {
+      stripeToastFiredRef.current = true
+      toast.info('Paiement annulé. Vous pouvez réessayer quand vous le souhaitez.')
+    }
+  }, [searchParams])
+
+  async function handleOrder() {
+    if (!designId) return
+
+    if (!isLoggedIn) {
+      setIsAuthOpen(true)
+      return
+    }
+
+    setIsOrdering(true)
+    const result = await createOrder(designId)
+    if (result.success) {
+      window.location.href = result.checkoutUrl
+    } else {
+      toast.error(result.message)
+      setIsOrdering(false)
+    }
+  }
+
+  async function handleAuthSuccess(_user: User) {
+    setIsAuthOpen(false)
+    setIsLoggedIn(true)
+    router.refresh()
+    // Trigger order directly — don't rely on stale closure via handleOrder()
+    if (!designId) return
+    setIsOrdering(true)
+    const result = await createOrder(designId)
+    if (result.success) {
+      window.location.href = result.checkoutUrl
+    } else {
+      toast.error(result.message)
+      setIsOrdering(false)
+    }
+  }
 
   // Fade-in de l'image + lancement des confettis
   useEffect(() => {
@@ -192,14 +255,27 @@ export default function ResultView() {
             Limite de 3 itérations atteinte
           </Button>
         )}
-        <Button
-          size="lg"
-          className="w-full font-semibold"
-          disabled
-          title="Disponible en Story 4.1"
-        >
-          Commander mon poster — 19,90 €
-        </Button>
+        {isPaid ? (
+          <div className="w-full rounded-lg bg-primary/10 p-3 text-center text-sm font-semibold text-primary">
+            Commande confirmée — vérifiez votre boîte email
+          </div>
+        ) : (
+          <Button
+            size="lg"
+            className="w-full font-semibold"
+            onClick={handleOrder}
+            disabled={isOrdering}
+          >
+            {isOrdering ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Redirection vers le paiement…
+              </>
+            ) : (
+              'Commander mon poster — 19,90 €'
+            )}
+          </Button>
+        )}
       </div>
 
       {/* Dialog plein écran pour zoom */}
@@ -225,6 +301,15 @@ export default function ResultView() {
           </DialogClose>
         </DialogContent>
       </Dialog>
+
+      {/* Auth modal pour utilisateurs non connectés */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+        returnTo="/generate/result"
+        description="Connectez-vous pour finaliser votre commande."
+      />
 
       {/* Dialog de feedback / ajustement */}
       <Dialog

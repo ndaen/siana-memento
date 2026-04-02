@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@stripe/stripe-js": "^9.0.1",
     "@vercel/analytics": "^1.6.1",
     "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
