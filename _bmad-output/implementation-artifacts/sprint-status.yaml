@@ -55,7 +55,7 @@ development_status:
   2-5-modal-auth-juste-a-temps: done
   epic-2-retrospective: done
 
-  epic-3: in-progress
+  epic-3: done
   3-1-upload-de-photos: done
   3-2-galerie-de-selection-de-template: done
   3-3-form-conversationnel-enrichi-avec-preview-texte: done
@@ -64,7 +64,7 @@ development_status:
   3-6-upload-cloudinary-et-watermark-design: done
   3-7-iterations-et-feedback-simple: done
   3-8-cron-rgpd-suppression-automatique-des-photos: done
-  epic-3-retrospective: optional
+  epic-3-retrospective: done
 
   epic-4: backlog
   4-1-checkout-stripe: backlog
