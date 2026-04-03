@@ -11,7 +11,7 @@ export default class OrdersController {
    * Creates an order and Stripe Checkout session. Auth required.
    */
   async store({ request, auth, response }: HttpContext) {
-    const { designId } = await request.validateUsing(createOrderValidator)
+    const { designId, sessionToken } = await request.validateUsing(createOrderValidator)
     const user = auth.getUserOrFail()
 
     const design = await Design.find(designId)
@@ -25,9 +25,27 @@ export default class OrdersController {
     // Ownership check — claim design if anon→auth transition (sessionToken match)
     if (design.userId !== user.id) {
       if (design.userId === null) {
-        // Anon design: claim it for the now-authenticated user
-        design.userId = user.id
-        await design.save()
+        // Guard: sessionToken required to claim an anonymous design
+        if (!sessionToken) {
+          return response.forbidden({
+            success: false,
+            error: { code: 'FORBIDDEN', message: 'Token de session requis pour ce design.' },
+          })
+        }
+        // Atomic claim — prevents race condition (UPDATE WHERE conditions)
+        const result = await Design.query()
+          .where('id', design.id)
+          .whereNull('user_id')
+          .where('session_token', sessionToken)
+          .update({ user_id: user.id })
+        const rowCount = Array.isArray(result) ? result[0] : result
+        if (rowCount === 0) {
+          return response.forbidden({
+            success: false,
+            error: { code: 'FORBIDDEN', message: 'Token de session invalide.' },
+          })
+        }
+        await design.refresh()
       } else {
         return response.forbidden({
           success: false,

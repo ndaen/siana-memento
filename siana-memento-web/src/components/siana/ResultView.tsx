@@ -46,7 +46,7 @@ function buildReformulation(options: string[], freeText: string): string {
 }
 
 export default function ResultView() {
-  const { generatedImageUrl, partner1Name, partner2Name, iterationsUsed, designId, resetForPhotoChange } =
+  const { generatedImageUrl, partner1Name, partner2Name, iterationsUsed, designId, sessionToken, resetForPhotoChange } =
     useGenerationStore()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -91,7 +91,7 @@ export default function ResultView() {
     }
 
     setIsOrdering(true)
-    const result = await createOrder(designId)
+    const result = await createOrder(designId, sessionToken)
     if (result.success) {
       window.location.href = result.checkoutUrl
     } else {
@@ -107,7 +107,7 @@ export default function ResultView() {
     // Trigger order directly — don't rely on stale closure via handleOrder()
     if (!designId) return
     setIsOrdering(true)
-    const result = await createOrder(designId)
+    const result = await createOrder(designId, sessionToken)
     if (result.success) {
       window.location.href = result.checkoutUrl
     } else {

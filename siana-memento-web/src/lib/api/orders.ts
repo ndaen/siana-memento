@@ -4,13 +4,13 @@ type CreateOrderResult =
   | { success: true; orderId: number; checkoutUrl: string }
   | { success: false; errorCode: string; message: string }
 
-export async function createOrder(designId: number): Promise<CreateOrderResult> {
+export async function createOrder(designId: number, sessionToken?: string | null): Promise<CreateOrderResult> {
   try {
     const res = await fetch(`${API_URL}/api/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ designId }),
+      body: JSON.stringify({ designId, ...(sessionToken ? { sessionToken } : {}) }),
     })
     const json = await res.json()
     if (json.success) {

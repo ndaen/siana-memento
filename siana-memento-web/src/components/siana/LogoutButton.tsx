@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { logoutUser } from '@/lib/api/auth'
+import { useGenerationStore } from '@/stores/useGenerationStore'
 import { toast } from 'sonner'
 
 interface LogoutButtonProps {
@@ -18,6 +19,7 @@ export default function LogoutButton({ className }: LogoutButtonProps) {
     setIsLoading(true)
     const result = await logoutUser()
     if (result.success) {
+      useGenerationStore.getState().reset()
       router.push('/login')
     } else {
       toast.error('Impossible de se déconnecter. Veuillez réessayer.')

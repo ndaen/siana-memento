@@ -131,6 +131,106 @@ test.group('POST /api/orders', (group) => {
   })
 })
 
+test.group('POST /api/orders — sessionToken security', (group) => {
+  group.each.setup(() => testUtils.db().withGlobalTransaction())
+
+  const KNOWN_TOKEN = 'a'.repeat(64)
+  const WRONG_TOKEN = 'b'.repeat(64)
+
+  async function createAnonDesign(token: string = KNOWN_TOKEN) {
+    return Design.create({
+      userId: null,
+      sessionToken: token,
+      status: 'completed',
+      expiresAt: DateTime.now().plus({ days: 7 }),
+    })
+  }
+
+  test('anonymous design + correct sessionToken → 201 (claim succeeds)', async ({ client, assert }) => {
+    const { cookie, user } = await loginAs(client)
+    const design = await createAnonDesign()
+
+    const response = await client
+      .post('/api/orders')
+      .header('cookie', cookie)
+      .json({ designId: design.id, sessionToken: KNOWN_TOKEN })
+
+    const status = response.response.status
+    // 201 if Stripe config valid, 500 with graceful error otherwise
+    assert.oneOf(status, [201, 500])
+
+    // Design should be claimed regardless
+    await design.refresh()
+    assert.equal(design.userId, user.id)
+  })
+
+  test('anonymous design + wrong sessionToken → 403', async ({ client, assert }) => {
+    const { cookie } = await loginAs(client)
+    const design = await createAnonDesign()
+
+    const response = await client
+      .post('/api/orders')
+      .header('cookie', cookie)
+      .json({ designId: design.id, sessionToken: WRONG_TOKEN })
+
+    response.assertStatus(403)
+    assert.equal(response.body().error.code, 'FORBIDDEN')
+
+    // Design must NOT be claimed
+    await design.refresh()
+    assert.isNull(design.userId)
+  })
+
+  test('anonymous design + no sessionToken → 403', async ({ client, assert }) => {
+    const { cookie } = await loginAs(client)
+    const design = await createAnonDesign()
+
+    const response = await client
+      .post('/api/orders')
+      .header('cookie', cookie)
+      .json({ designId: design.id })
+
+    response.assertStatus(403)
+    assert.equal(response.body().error.code, 'FORBIDDEN')
+
+    await design.refresh()
+    assert.isNull(design.userId)
+  })
+
+  test('anonymous design + sessionToken from ANOTHER design → 403', async ({ client, assert }) => {
+    const { cookie } = await loginAs(client)
+    const design = await createAnonDesign(KNOWN_TOKEN)
+    await createAnonDesign(WRONG_TOKEN) // another anonymous design
+
+    const response = await client
+      .post('/api/orders')
+      .header('cookie', cookie)
+      .json({ designId: design.id, sessionToken: WRONG_TOKEN })
+
+    response.assertStatus(403)
+
+    await design.refresh()
+    assert.isNull(design.userId)
+  })
+
+  test('owned design + no sessionToken → 201 (sessionToken not needed)', async ({ client, assert }) => {
+    const { cookie, user } = await loginAs(client)
+    const design = await createDesignForUser(user.id, 'completed')
+
+    const response = await client
+      .post('/api/orders')
+      .header('cookie', cookie)
+      .json({ designId: design.id })
+
+    const status = response.response.status
+    assert.oneOf(status, [201, 500])
+
+    // Order should exist regardless
+    const orders = await Order.query().where('userId', user.id).where('designId', design.id)
+    assert.isAbove(orders.length, 0)
+  })
+})
+
 test.group('GET /api/orders/:id', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
