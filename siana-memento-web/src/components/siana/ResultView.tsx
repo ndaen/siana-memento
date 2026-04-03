@@ -16,7 +16,7 @@ import {
 import { useGenerationStore } from '@/stores/useGenerationStore'
 import AuthModal from '@/components/siana/AuthModal'
 import { getMe, type User } from '@/lib/api/auth'
-import { createOrder } from '@/lib/api/orders'
+import { createOrder, getOrder, getOrderBySession, type OrderData } from '@/lib/api/orders'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import confetti from 'canvas-confetti'
@@ -46,7 +46,7 @@ function buildReformulation(options: string[], freeText: string): string {
 }
 
 export default function ResultView() {
-  const { generatedImageUrl, partner1Name, partner2Name, iterationsUsed, designId, sessionToken, resetForPhotoChange } =
+  const { generatedImageUrl, partner1Name, partner2Name, iterationsUsed, designId, sessionToken, isPaid, orderId, setPaid, resetForPhotoChange } =
     useGenerationStore()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -57,33 +57,65 @@ export default function ResultView() {
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
   const [freeText, setFreeText] = useState('')
   const [isOrdering, setIsOrdering] = useState(false)
-  const [isPaid, setIsPaid] = useState(false)
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
+  const [orderData, setOrderData] = useState<OrderData | null>(null)
   const confettiFiredRef = useRef(false)
   const confettiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const stripeToastFiredRef = useRef(false)
+  const stripeVerifiedRef = useRef(false)
 
   // Check auth status on mount
   useEffect(() => {
     getMe().then((result) => setIsLoggedIn(result.success))
   }, [])
 
-  // Handle Stripe return (success or cancel) — ref prevents double toast in Strict Mode
+  // Reload order data on mount if isPaid but orderData is missing (e.g. page refresh)
   useEffect(() => {
-    if (stripeToastFiredRef.current) return
-    if (searchParams.get('session_id')) {
-      stripeToastFiredRef.current = true
-      setIsPaid(true)
-      toast.success('Paiement confirmé ! Votre design est en route.')
-    } else if (searchParams.get('canceled') === 'true') {
-      stripeToastFiredRef.current = true
+    if (isPaid && orderId && !orderData && !searchParams.get('session_id')) {
+      getOrder(orderId).then((result) => {
+        if (result.success) setOrderData(result.order)
+      })
+    }
+  }, [isPaid, orderId, orderData, searchParams])
+
+  // Handle Stripe return — verify payment via API instead of trusting query param
+  useEffect(() => {
+    if (stripeVerifiedRef.current) return
+    const sessionId = searchParams.get('session_id')
+    const canceled = searchParams.get('canceled')
+
+    if (sessionId) {
+      stripeVerifiedRef.current = true
+      getOrderBySession(sessionId).then((result) => {
+        if (result.success && result.order.status === 'paid') {
+          setPaid(result.order.id)
+          setOrderData(result.order)
+          toast.success('Paiement confirmé ! Votre design est en route.')
+        } else if (result.success && result.order.status === 'pending') {
+          // Race condition: webhook not yet processed — retry once after 3s
+          setTimeout(() => {
+            getOrderBySession(sessionId).then((retry) => {
+              if (retry.success && retry.order.status === 'paid') {
+                setPaid(retry.order.id)
+                setOrderData(retry.order)
+                toast.success('Paiement confirmé ! Votre design est en route.')
+              } else {
+                toast.info('Paiement en cours de confirmation. Vérifiez votre email dans quelques instants.')
+              }
+            })
+          }, 3000)
+        } else {
+          toast.error('Impossible de vérifier le paiement. Contactez le support si le problème persiste.')
+        }
+      })
+    } else if (canceled === 'true') {
+      stripeVerifiedRef.current = true
       toast.info('Paiement annulé. Vous pouvez réessayer quand vous le souhaitez.')
     }
-  }, [searchParams])
+  }, [searchParams, setPaid])
 
   async function handleOrder() {
-    if (!designId) return
+    if (!designId || isPaid) return
 
     if (!isLoggedIn) {
       setIsAuthOpen(true)
@@ -104,8 +136,7 @@ export default function ResultView() {
     setIsAuthOpen(false)
     setIsLoggedIn(true)
     router.refresh()
-    // Trigger order directly — don't rely on stale closure via handleOrder()
-    if (!designId) return
+    if (!designId || isPaid) return
     setIsOrdering(true)
     const result = await createOrder(designId, sessionToken)
     if (result.success) {
@@ -187,9 +218,10 @@ export default function ResultView() {
       ? `Itération ${iterationsUsed}/${MAX_ITERATIONS} — ${remainingIterations} itération${remainingIterations > 1 ? 's' : ''} restante${remainingIterations > 1 ? 's' : ''} incluse${remainingIterations > 1 ? 's' : ''}`
       : `Itération ${iterationsUsed}/${MAX_ITERATIONS} — Aucune itération restante`
 
-  const altText = `Illustration Save the Date pour ${partner1Name ?? ''} et ${partner2Name ?? ''}`
+  const displayImageUrl = generatedImageUrl ?? orderData?.design?.previewUrl ?? null
+  const altText = `Illustration Save the Date pour ${partner1Name ?? orderData?.design?.partner1Name ?? ''} et ${partner2Name ?? orderData?.design?.partner2Name ?? ''}`
 
-  if (!generatedImageUrl) return null
+  if (!displayImageUrl && !isPaid) return null
 
   return (
     <div className="flex flex-col items-center gap-6 py-8">
@@ -213,53 +245,96 @@ export default function ResultView() {
       </div>
 
       {/* Illustration avec fade-in et comportement zoom */}
-      <div
-        className={[
-          'w-full overflow-hidden rounded-2xl shadow-2xl cursor-zoom-in',
-          'transition-opacity duration-[2000ms] ease-in-out',
-          isRevealed ? 'opacity-100' : 'opacity-0',
-        ].join(' ')}
-        style={{ touchAction: 'pinch-zoom' }}
-        onClick={() => setIsModalOpen(true)}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setIsModalOpen(true)}
-        role="button"
-        tabIndex={0}
-        aria-label="Voir l'illustration en plein écran"
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={generatedImageUrl}
-          alt={altText}
-          className="w-full h-auto object-contain"
-        />
-      </div>
+      {displayImageUrl && (
+        <div
+          className={[
+            'w-full overflow-hidden rounded-2xl shadow-2xl cursor-zoom-in',
+            'transition-opacity duration-[2000ms] ease-in-out',
+            isRevealed ? 'opacity-100' : 'opacity-0',
+          ].join(' ')}
+          style={{ touchAction: 'pinch-zoom' }}
+          onClick={() => setIsModalOpen(true)}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setIsModalOpen(true)}
+          role="button"
+          tabIndex={0}
+          aria-label="Voir l'illustration en plein écran"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={displayImageUrl}
+            alt={altText}
+            className="w-full h-auto object-contain"
+          />
+        </div>
+      )}
 
-      {/* Compteur d'itérations */}
-      <p className="text-sm text-muted-foreground text-center" aria-live="polite">
-        {iterationLabel}
-      </p>
+      {/* Compteur d'itérations — masqué si paiement confirmé */}
+      {!isPaid && (
+        <p className="text-sm text-muted-foreground text-center" aria-live="polite">
+          {iterationLabel}
+        </p>
+      )}
 
-      {/* Actions */}
-      <div className="flex w-full flex-col gap-3">
-        {remainingIterations > 0 ? (
-          <Button
-            size="lg"
-            variant="outline"
-            className="w-full font-semibold"
-            onClick={() => { setAdjustStep('form'); setIsAdjustOpen(true) }}
-          >
-            Ajuster mon illustration
-          </Button>
-        ) : (
-          <Button size="lg" variant="outline" className="w-full" disabled>
-            Limite de 3 itérations atteinte
-          </Button>
-        )}
-        {isPaid ? (
-          <div className="w-full rounded-lg bg-primary/10 p-3 text-center text-sm font-semibold text-primary">
-            Commande confirmée — vérifiez votre boîte email
+      {/* Actions / Confirmation */}
+      {isPaid ? (
+        <div className="flex w-full flex-col gap-4">
+          {/* Confirmation block */}
+          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <Image src="/mascotte/siana-success.svg" alt="" aria-hidden="true" width={48} height={48} />
+              <div>
+                <p className="text-lg font-bold text-primary">Votre Save the Date est en route !</p>
+                <p className="text-sm text-muted-foreground">
+                  Vérifiez votre boîte email{partner1Name && partner2Name ? ` — ${partner1Name} & ${partner2Name}` : ''}
+                </p>
+              </div>
+            </div>
+
+            {/* Order recap */}
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mt-3 border-t border-primary/10 pt-3">
+              <dt className="text-muted-foreground">Montant</dt>
+              <dd className="font-medium text-right">19,90 €</dd>
+              {orderData?.createdAt && (
+                <>
+                  <dt className="text-muted-foreground">Date</dt>
+                  <dd className="font-medium text-right">
+                    {new Date(orderData.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </dd>
+                </>
+              )}
+              {orderData?.design?.template && (
+                <>
+                  <dt className="text-muted-foreground">Template</dt>
+                  <dd className="font-medium text-right capitalize">{orderData.design.template}</dd>
+                </>
+              )}
+            </dl>
           </div>
-        ) : (
+
+          {/* Support message */}
+          <p className="text-center text-sm text-muted-foreground">
+            Une question ? Répondez simplement à l'email reçu ou contactez{' '}
+            <a href="mailto:support@siana-memento.fr" className="text-primary underline underline-offset-2">
+              support@siana-memento.fr
+            </a>
+          </p>
+        </div>
+      ) : (
+        <div className="flex w-full flex-col gap-3">
+          {remainingIterations > 0 ? (
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full font-semibold"
+              onClick={() => { setAdjustStep('form'); setIsAdjustOpen(true) }}
+            >
+              Ajuster mon illustration
+            </Button>
+          ) : (
+            <Button size="lg" variant="outline" className="w-full" disabled>
+              Limite de 3 itérations atteinte
+            </Button>
+          )}
           <Button
             size="lg"
             className="w-full font-semibold"
@@ -275,8 +350,8 @@ export default function ResultView() {
               'Commander mon poster — 19,90 €'
             )}
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Dialog plein écran pour zoom */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -288,12 +363,14 @@ export default function ResultView() {
             Illustration Save the Date — Vue plein écran
           </DialogTitle>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={generatedImageUrl}
-            alt={altText}
-            className="w-full h-auto object-contain"
-            style={{ touchAction: 'pinch-zoom' }}
-          />
+          {displayImageUrl && (
+            <img
+              src={displayImageUrl}
+              alt={altText}
+              className="w-full h-auto object-contain"
+              style={{ touchAction: 'pinch-zoom' }}
+            />
+          )}
           <DialogClose asChild>
             <Button variant="outline" className="mt-2 w-full" aria-label="Fermer la vue plein écran">
               Fermer

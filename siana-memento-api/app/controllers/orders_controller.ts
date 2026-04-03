@@ -5,6 +5,28 @@ import Design from '#models/design'
 import Order from '#models/order'
 import { createCheckoutSession } from '#services/stripe_service'
 
+function serializeOrderWithDesign(order: Order) {
+  return {
+    id: order.id,
+    designId: order.designId,
+    amount: order.amount,
+    status: order.status,
+    paidAt: order.paidAt,
+    emailSentAt: order.emailSentAt,
+    createdAt: order.createdAt,
+    design: order.design
+      ? {
+          id: order.design.id,
+          template: order.design.template,
+          partner1Name: order.design.partner1Name,
+          partner2Name: order.design.partner2Name,
+          weddingDate: order.design.weddingDate,
+          previewUrl: order.design.previewUrl,
+        }
+      : null,
+  }
+}
+
 export default class OrdersController {
   /**
    * POST /api/orders
@@ -125,14 +147,39 @@ export default class OrdersController {
 
     return response.ok({
       success: true,
-      data: {
-        id: order.id,
-        designId: order.designId,
-        amount: order.amount,
-        status: order.status,
-        paidAt: order.paidAt,
-        createdAt: order.createdAt,
-      },
+      data: serializeOrderWithDesign(order),
+    })
+  }
+
+  /**
+   * GET /api/orders/by-session/:sessionId
+   * Lookup order by Stripe session ID. Auth required + ownership check.
+   */
+  async showBySession({ auth, params, response }: HttpContext) {
+    const user = auth.getUserOrFail()
+
+    const order = await Order.query()
+      .where('stripeSessionId', params.sessionId)
+      .preload('design')
+      .first()
+
+    if (!order) {
+      return response.notFound({
+        success: false,
+        error: { code: 'ORDER_NOT_FOUND', message: 'Commande introuvable.' },
+      })
+    }
+
+    if (order.userId !== user.id) {
+      return response.forbidden({
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'Cette commande ne vous appartient pas.' },
+      })
+    }
+
+    return response.ok({
+      success: true,
+      data: serializeOrderWithDesign(order),
     })
   }
 }

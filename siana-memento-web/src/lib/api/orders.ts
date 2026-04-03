@@ -34,23 +34,57 @@ export async function createOrder(designId: number, sessionToken?: string | null
   }
 }
 
+export interface OrderDesign {
+  id: number
+  template: string | null
+  partner1Name: string | null
+  partner2Name: string | null
+  weddingDate: string | null
+  previewUrl: string | null
+}
+
+export interface OrderData {
+  id: number
+  designId: number
+  amount: number
+  status: string
+  paidAt: string | null
+  emailSentAt: string | null
+  createdAt: string
+  design: OrderDesign | null
+}
+
 type GetOrderResult =
-  | {
-      success: true
-      order: {
-        id: number
-        designId: number
-        amount: number
-        status: string
-        paidAt: string | null
-        createdAt: string
-      }
-    }
+  | { success: true; order: OrderData }
   | { success: false; errorCode: string; message: string }
 
 export async function getOrder(orderId: number): Promise<GetOrderResult> {
   try {
     const res = await fetch(`${API_URL}/api/orders/${orderId}`, {
+      method: 'GET',
+      credentials: 'include',
+    })
+    const json = await res.json()
+    if (json.success) {
+      return { success: true, order: json.data }
+    }
+    return {
+      success: false,
+      errorCode: json.error?.code ?? 'ORDER_NOT_FOUND',
+      message: json.error?.message ?? 'Commande introuvable.',
+    }
+  } catch {
+    return {
+      success: false,
+      errorCode: 'NETWORK_ERROR',
+      message: 'Service indisponible. Vérifiez votre connexion et réessayez.',
+    }
+  }
+}
+
+export async function getOrderBySession(sessionId: string): Promise<GetOrderResult> {
+  try {
+    const res = await fetch(`${API_URL}/api/orders/by-session/${sessionId}`, {
       method: 'GET',
       credentials: 'include',
     })

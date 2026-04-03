@@ -10,16 +10,19 @@ interface ResultGuardProps {
 
 export default function ResultGuard({ children }: ResultGuardProps) {
   const router = useRouter()
-  const { designId, generatedImageUrl, _hasHydrated } = useGenerationStore()
+  const { designId, generatedImageUrl, isPaid, orderId, _hasHydrated } = useGenerationStore()
+
+  const hasResult = !!(designId && generatedImageUrl)
+  const hasPaidOrder = !!(isPaid && orderId)
 
   useEffect(() => {
     if (!_hasHydrated) return
-    if (!designId || !generatedImageUrl) {
+    if (!hasResult && !hasPaidOrder) {
       router.replace('/generate/generating')
     }
-  }, [_hasHydrated, designId, generatedImageUrl, router])
+  }, [_hasHydrated, hasResult, hasPaidOrder, router])
 
-  if (!_hasHydrated || !designId || !generatedImageUrl) return null
+  if (!_hasHydrated || (!hasResult && !hasPaidOrder)) return null
 
   return <>{children}</>
 }

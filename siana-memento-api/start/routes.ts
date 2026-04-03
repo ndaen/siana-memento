@@ -73,6 +73,9 @@ router
   .post('/api/orders', [OrdersController, 'store'])
   .use([ordersThrottle, middleware.auth()])
 router
+  .get('/api/orders/by-session/:sessionId', [OrdersController, 'showBySession'])
+  .use(middleware.auth())
+router
   .get('/api/orders/:id', [OrdersController, 'show'])
   .use(middleware.auth())
 
