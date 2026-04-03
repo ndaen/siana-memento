@@ -82,6 +82,34 @@ export async function getOrder(orderId: number): Promise<GetOrderResult> {
   }
 }
 
+type ListOrdersResult =
+  | { success: true; orders: OrderData[] }
+  | { success: false; errorCode: string; message: string }
+
+export async function listOrders(): Promise<ListOrdersResult> {
+  try {
+    const res = await fetch(`${API_URL}/api/orders`, {
+      method: 'GET',
+      credentials: 'include',
+    })
+    const json = await res.json()
+    if (json.success) {
+      return { success: true, orders: json.data }
+    }
+    return {
+      success: false,
+      errorCode: json.error?.code ?? 'LIST_ORDERS_FAILED',
+      message: json.error?.message ?? 'Impossible de charger les commandes.',
+    }
+  } catch {
+    return {
+      success: false,
+      errorCode: 'NETWORK_ERROR',
+      message: 'Service indisponible. Vérifiez votre connexion et réessayez.',
+    }
+  }
+}
+
 export async function getOrderBySession(sessionId: string): Promise<GetOrderResult> {
   try {
     const res = await fetch(`${API_URL}/api/orders/by-session/${sessionId}`, {

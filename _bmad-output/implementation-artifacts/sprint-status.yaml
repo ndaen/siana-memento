@@ -70,7 +70,7 @@ development_status:
   4-1-checkout-stripe: done
   4-2-delivery-email-avec-fichier-haute-resolution: done
   4-3-page-de-confirmation-post-achat: done
-  4-4-historique-de-commandes: backlog
+  4-4-historique-de-commandes: review
   4-5-re-telechargement-dans-les-7-jours: backlog
   epic-4-retrospective: optional
 

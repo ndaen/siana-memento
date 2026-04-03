@@ -70,6 +70,9 @@ router
 
 // Orders — auth obligatoire + throttle
 router
+  .get('/api/orders', [OrdersController, 'index'])
+  .use([ordersThrottle, middleware.auth()])
+router
   .post('/api/orders', [OrdersController, 'store'])
   .use([ordersThrottle, middleware.auth()])
 router

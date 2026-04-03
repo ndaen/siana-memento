@@ -29,6 +29,25 @@ function serializeOrderWithDesign(order: Order) {
 
 export default class OrdersController {
   /**
+   * GET /api/orders
+   * Returns all paid orders for the authenticated user, newest first.
+   */
+  async index({ auth, response }: HttpContext) {
+    const user = auth.getUserOrFail()
+
+    const orders = await Order.query()
+      .where('userId', user.id)
+      .where('status', 'paid')
+      .preload('design')
+      .orderBy('createdAt', 'desc')
+
+    return response.ok({
+      success: true,
+      data: orders.map(serializeOrderWithDesign),
+    })
+  }
+
+  /**
    * POST /api/orders
    * Creates an order and Stripe Checkout session. Auth required.
    */
