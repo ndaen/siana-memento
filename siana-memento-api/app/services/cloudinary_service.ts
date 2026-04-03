@@ -57,6 +57,21 @@ function buildWatermarkTransformation(): object[] {
   ]
 }
 
+/**
+ * Builds the Cloudinary URL for the original (non-watermarked) high-resolution design.
+ */
+export function getOriginalDesignUrl(cloudinaryPublicId: string, options?: { forceDownload?: boolean; fileName?: string }): string {
+  if (options?.forceDownload) {
+    const attachmentFlag = options.fileName ? `attachment:${options.fileName}` : 'attachment'
+    return cloudinary.url(cloudinaryPublicId, {
+      secure: true,
+      transformation: [{ flags: attachmentFlag }],
+    })
+  }
+
+  return cloudinary.url(cloudinaryPublicId, { secure: true })
+}
+
 export async function uploadDesign(
   base64DataUrl: string,
   designId: number

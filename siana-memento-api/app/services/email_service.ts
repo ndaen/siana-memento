@@ -1,19 +1,12 @@
 import { Resend } from 'resend'
-import { v2 as cloudinary } from 'cloudinary'
 import env from '#start/env'
 import logger from '@adonisjs/core/services/logger'
+import { getOriginalDesignUrl } from '#services/cloudinary_service'
 import type Order from '#models/order'
 import type User from '#models/user'
 import type Design from '#models/design'
 
 const resend = new Resend(env.get('RESEND_API_KEY'))
-
-/**
- * Builds the Cloudinary URL for the original (non-watermarked) high-resolution design.
- */
-function getOriginalDesignUrl(cloudinaryPublicId: string): string {
-  return cloudinary.url(cloudinaryPublicId, { secure: true })
-}
 
 /**
  * Builds the delivery email HTML body.

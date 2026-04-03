@@ -38,6 +38,10 @@ const ordersThrottle = limiter.define('orders', () =>
   limiter.allowRequests(5).every('15 minutes')
 )
 
+const downloadThrottle = limiter.define('download', () =>
+  limiter.allowRequests(10).every('15 minutes')
+)
+
 router.get('/api/health', async ({ response }) => {
   return response.ok({
     status: 'ok',
@@ -78,6 +82,9 @@ router
 router
   .get('/api/orders/by-session/:sessionId', [OrdersController, 'showBySession'])
   .use(middleware.auth())
+router
+  .get('/api/orders/:id/download', [OrdersController, 'download'])
+  .use([downloadThrottle, middleware.auth()])
 router
   .get('/api/orders/:id', [OrdersController, 'show'])
   .use(middleware.auth())

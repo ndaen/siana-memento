@@ -110,6 +110,34 @@ export async function listOrders(): Promise<ListOrdersResult> {
   }
 }
 
+type DownloadResult =
+  | { success: true; downloadUrl: string }
+  | { success: false; errorCode: string; message: string }
+
+export async function downloadDesign(orderId: number): Promise<DownloadResult> {
+  try {
+    const res = await fetch(`${API_URL}/api/orders/${orderId}/download`, {
+      method: 'GET',
+      credentials: 'include',
+    })
+    const json = await res.json()
+    if (json.success) {
+      return { success: true, downloadUrl: json.data.downloadUrl }
+    }
+    return {
+      success: false,
+      errorCode: json.error?.code ?? 'DOWNLOAD_FAILED',
+      message: json.error?.message ?? 'Impossible de télécharger le fichier.',
+    }
+  } catch {
+    return {
+      success: false,
+      errorCode: 'NETWORK_ERROR',
+      message: 'Service indisponible. Vérifiez votre connexion et réessayez.',
+    }
+  }
+}
+
 export async function getOrderBySession(sessionId: string): Promise<GetOrderResult> {
   try {
     const res = await fetch(`${API_URL}/api/orders/by-session/${sessionId}`, {
