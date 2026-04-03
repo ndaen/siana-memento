@@ -52,8 +52,8 @@ export default function Home() {
         </div>
 
         {/* CTA */}
-        <div className="mb-8 w-full max-w-lg sm:mb-12">
-          <Button size="lg" asChild className="w-full text-base sm:w-auto">
+        <div className="mb-8 sm:mb-12">
+          <Button size="lg" asChild className="w-full sm:w-auto text-base">
             <Link href="/generate/upload">Créer mon Save the Date</Link>
           </Button>
         </div>

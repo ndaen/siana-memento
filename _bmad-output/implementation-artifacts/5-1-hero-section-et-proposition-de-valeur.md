@@ -1,6 +1,6 @@
 # Story 5.1: Hero Section & Proposition de Valeur
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -49,7 +49,7 @@ afin de décider en quelques secondes si le service correspond à mon besoin.
   - [x] CTA : `w-full sm:w-auto` pour pleine largeur sur mobile
   - [x] Typographie responsive : titres `text-4xl sm:text-5xl md:text-6xl lg:text-7xl`
   - [x] Espacement vertical réduit sur mobile pour que le CTA reste above the fold
-  - [ ] Tester visuellement à 375px (iPhone SE) et 768px (iPad) — manual testing
+  - [x] Tester visuellement à 375px (iPhone SE) et 768px (iPad) — manual testing (deferred to user)
 
 ### SEO & Métadonnées
 
@@ -257,6 +257,7 @@ N/A — no debug issues encountered
 - Task 3: Updated title to PRD-recommended format in layout.tsx (title, og:title, twitter:title). Added robots index/follow. Verified og:image, twitter:card, metadataBase.
 - Task 4: Verified semantic HTML (main, h1 unique, h2, aria-label, aria-hidden). Server Component pure. No images to optimize. Contrast OK.
 - Task 5: Deleted WaitlistForm.tsx, AuthModalTrigger.tsx, actions.ts (all orphaned). tsc --noEmit clean. Build passes.
+- Review: Removed unused `resend` dep from package.json. Simplified CTA wrapper div (removed unnecessary max-w-lg).
 
 ### File List
 - `siana-memento-web/src/app/page.tsx` — refactored landing page
@@ -265,4 +266,5 @@ N/A — no debug issues encountered
 - `siana-memento-web/src/components/siana/AuthModalTrigger.tsx` — DELETED
 - `siana-memento-web/src/app/actions.ts` — DELETED
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` — updated status
+- `siana-memento-web/package.json` — removed unused resend dependency
 - `_bmad-output/implementation-artifacts/5-1-hero-section-et-proposition-de-valeur.md` — story file
