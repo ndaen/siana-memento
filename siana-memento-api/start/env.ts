@@ -66,4 +66,12 @@ export default await Env.create(new URL('../', import.meta.url), {
   STRIPE_SECRET_KEY: Env.schema.string(),
   STRIPE_WEBHOOK_SECRET: Env.schema.string(),
   STRIPE_PRICE_ID: Env.schema.string(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring Resend (transactional emails)
+  |----------------------------------------------------------
+  */
+  RESEND_API_KEY: Env.schema.string(),
+  RESEND_FROM_EMAIL: Env.schema.string(),
 })

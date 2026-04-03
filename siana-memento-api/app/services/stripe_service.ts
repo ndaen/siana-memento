@@ -4,8 +4,10 @@ import db from '@adonisjs/lucid/services/db'
 import logger from '@adonisjs/core/services/logger'
 import Order from '#models/order'
 import Design from '#models/design'
+import User from '#models/user'
 import StripeEvent from '#models/stripe_event'
 import { DateTime } from 'luxon'
+import { sendDesignDelivery } from '#services/email_service'
 
 const stripe = new Stripe(env.get('STRIPE_SECRET_KEY'))
 
@@ -87,6 +89,26 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session) 
     },
     'Payment confirmed'
   )
+
+  // Email delivery — outside ACID transaction (fire-and-forget with logging)
+  // Idempotence: skip if email was already sent (e.g. Stripe webhook retry)
+  await order.refresh()
+  if (order.emailSentAt) {
+    logger.info(
+      { event: 'delivery_email_skipped', orderId: order.id },
+      'Email already sent, skipping (idempotent)'
+    )
+    return
+  }
+
+  const user = await User.findOrFail(order.userId)
+  const design = await Design.findOrFail(order.designId)
+  const result = await sendDesignDelivery(order, user, design)
+
+  if (result.success) {
+    order.emailSentAt = DateTime.now()
+    await order.save()
+  }
 }
 
 /**

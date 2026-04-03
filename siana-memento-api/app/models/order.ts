@@ -29,6 +29,9 @@ export default class Order extends BaseModel {
   @column.dateTime()
   declare paidAt: DateTime | null
 
+  @column.dateTime()
+  declare emailSentAt: DateTime | null
+
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
