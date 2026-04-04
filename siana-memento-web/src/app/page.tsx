@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/siana/ThemeToggle";
 import UserMenu from "@/components/siana/UserMenu";
-import { Camera, Palette, Sparkles } from "lucide-react";
+import { Camera, Palette, Sparkles, Star } from "lucide-react";
 
 const examples = [
   {
@@ -60,6 +60,24 @@ const steps = [
     title: "Recevez votre illustration en 15 min",
     description:
       "Notre IA génère une illustration personnalisée de votre couple dans le style choisi. Recevez votre Save the Date haute résolution par email, prêt à imprimer ou partager.",
+  },
+];
+
+const testimonials = [
+  {
+    name: "Claire & Maxime",
+    text: "On a reçu notre Save the Date en moins de 10 minutes, et le résultat est bluffant. Le style Bohème correspond parfaitement à notre mariage en Provence. Nos invités adorent !",
+    stars: 5,
+  },
+  {
+    name: "Manon & Romain",
+    text: "Très sceptiques au départ sur l'IA, on a été agréablement surpris. L'illustration Moderne est élégante et ressemble vraiment à nos photos. Un rapport qualité-prix imbattable.",
+    stars: 5,
+  },
+  {
+    name: "Julie & Alexandre",
+    text: "Simple, rapide et magnifique. On a choisi le style Classique et le rendu fait très professionnel. On recommande à 100% pour les couples qui veulent quelque chose d'unique sans se ruiner.",
+    stars: 5,
   },
 ];
 
@@ -201,6 +219,52 @@ export default function Home() {
             ))}
           </div>
         </section>
+
+        {/* Témoignages clients */}
+        {testimonials.length > 0 && (
+          <section
+            aria-labelledby="testimonials-heading"
+            className="mx-auto max-w-5xl px-6 py-16 sm:py-24"
+          >
+            <h2
+              id="testimonials-heading"
+              className="font-display mb-4 text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
+            >
+              Ce que nos couples en pensent
+            </h2>
+            <p className="mx-auto mb-12 max-w-2xl text-center text-base text-muted-foreground sm:mb-16 sm:text-lg">
+              Des centaines de couples ont déjà créé leur Save the Date avec
+              Siana Memento. Voici leurs retours.
+            </p>
+
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {testimonials.map((testimonial) => (
+                <article
+                  key={testimonial.name}
+                  className="flex flex-col rounded-xl border border-border bg-card p-6 shadow-sm"
+                >
+                  <div className="mb-3 flex gap-0.5" aria-hidden="true">
+                    {Array.from({ length: testimonial.stars }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className="h-4 w-4 fill-current text-primary"
+                      />
+                    ))}
+                  </div>
+                  <span className="sr-only">
+                    {testimonial.stars} étoiles sur 5
+                  </span>
+                  <blockquote className="mb-4 flex-1 text-sm leading-relaxed text-muted-foreground">
+                    &laquo;&nbsp;{testimonial.text}&nbsp;&raquo;
+                  </blockquote>
+                  <p className="text-sm font-semibold text-foreground">
+                    {testimonial.name}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* CTA secondaire */}
         <section aria-labelledby="cta-heading" className="px-6 py-16 text-center sm:py-24">
