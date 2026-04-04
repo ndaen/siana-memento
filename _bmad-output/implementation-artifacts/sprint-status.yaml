@@ -66,17 +66,17 @@ development_status:
   3-8-cron-rgpd-suppression-automatique-des-photos: done
   epic-3-retrospective: done
 
-  epic-4: in-progress
+  epic-4: done
   4-1-checkout-stripe: done
   4-2-delivery-email-avec-fichier-haute-resolution: done
   4-3-page-de-confirmation-post-achat: done
-  4-4-historique-de-commandes: review
+  4-4-historique-de-commandes: done
   4-5-re-telechargement-dans-les-7-jours: done
-  epic-4-retrospective: optional
+  epic-4-retrospective: done
 
   epic-5: in-progress
   5-1-hero-section-et-proposition-de-valeur: done
-  5-2-galerie-dexemples-et-section-comment-ca-marche: backlog
+  5-2-galerie-dexemples-et-section-comment-ca-marche: review
   5-3-temoignages-clients: backlog
   5-4-footer-contact-et-politique-rgpd: backlog
   epic-5-retrospective: optional
