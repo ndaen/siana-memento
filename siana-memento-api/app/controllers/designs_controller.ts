@@ -243,7 +243,15 @@ export default class DesignsController {
       }
 
       // Générer via Gemini (retry 3× avec backoff exponentiel dans generateDesignImage)
-      const imageDataUrl = await generateDesignImage(photoInputs, theme, weddingData)
+      // iterationsUsed is 0-based before increment, so current iteration = iterationsUsed + 1
+      const iterationNumber = design.iterationsUsed + 1
+      const imageDataUrl = await generateDesignImage(
+        photoInputs,
+        theme,
+        weddingData,
+        iterationNumber,
+        payload.feedback
+      )
 
       // Upload vers Cloudinary et récupération de la preview watermarquée
       const { publicId, previewUrl } = await uploadDesign(imageDataUrl, design.id)

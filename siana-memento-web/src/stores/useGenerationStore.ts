@@ -24,6 +24,7 @@ interface GenerationState {
   weddingLocation: string | null
   iterationsUsed: number
   generatedImageUrl: string | null
+  pendingFeedback: string | null
   orderId: number | null
   isPaid: boolean
   _hasHydrated: boolean
@@ -41,6 +42,7 @@ const initialState: GenerationState = {
   weddingLocation: null,
   iterationsUsed: 0,
   generatedImageUrl: null,
+  pendingFeedback: null,
   orderId: null,
   isPaid: false,
   _hasHydrated: false,
@@ -58,6 +60,7 @@ interface GenerationStore extends GenerationState {
     weddingLocation: string
   }) => void
   setGenerationResult: (iterationsUsed: number, imageUrl: string) => void
+  setPendingFeedback: (feedback: string | null) => void
   setPaid: (orderId: number) => void
   setHasHydrated: (val: boolean) => void
   resetForPhotoChange: () => void
@@ -81,7 +84,8 @@ export const useGenerationStore = create<GenerationStore>()(
           weddingLocation: data.weddingLocation,
         }),
       setGenerationResult: (iterationsUsed, imageUrl) =>
-        set({ iterationsUsed, generatedImageUrl: imageUrl }),
+        set({ iterationsUsed, generatedImageUrl: imageUrl, pendingFeedback: null }),
+      setPendingFeedback: (feedback) => set({ pendingFeedback: feedback }),
       setPaid: (orderId) => set({ orderId, isPaid: true }),
       setHasHydrated: (val) => set({ _hasHydrated: val }),
       resetForPhotoChange: () =>
@@ -92,6 +96,7 @@ export const useGenerationStore = create<GenerationStore>()(
           currentStep: 'upload',
           iterationsUsed: 0,
           generatedImageUrl: null,
+          pendingFeedback: null,
           orderId: null,
           isPaid: false,
           // Conserver : selectedTemplate, partner1Name, partner2Name, weddingDate, weddingLocation
@@ -116,6 +121,7 @@ export const useGenerationStore = create<GenerationStore>()(
         weddingLocation: state.weddingLocation,
         iterationsUsed: state.iterationsUsed,
         generatedImageUrl: state.generatedImageUrl,
+        pendingFeedback: state.pendingFeedback,
         orderId: state.orderId,
         isPaid: state.isPaid,
       }),

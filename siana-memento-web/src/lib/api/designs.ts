@@ -77,14 +77,18 @@ type TriggerGenerationResult =
 
 export async function triggerGeneration(
   designId: number,
-  sessionToken?: string | null
+  sessionToken?: string | null,
+  feedback?: string | null
 ): Promise<TriggerGenerationResult> {
   try {
+    const body: Record<string, string> = {}
+    if (sessionToken) body.sessionToken = sessionToken
+    if (feedback) body.feedback = feedback
     const res = await fetch(`${API_URL}/api/designs/${designId}/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify(sessionToken ? { sessionToken } : {}),
+      body: JSON.stringify(body),
     })
     const json = await res.json()
     if (json.success) {

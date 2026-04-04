@@ -24,7 +24,7 @@ const ESTIMATED_DURATION_MS = 28000
 
 export default function GeneratingView() {
   const router = useRouter()
-  const { designId, sessionToken, setGenerationResult, setStep } = useGenerationStore()
+  const { designId, sessionToken, pendingFeedback, setGenerationResult, setStep } = useGenerationStore()
   const [progress, setProgress] = useState(0)
   const [messageIndex, setMessageIndex] = useState(0)
   const [hasError, setHasError] = useState(false)
@@ -33,35 +33,54 @@ export default function GeneratingView() {
   // triggerCount permet de relancer la génération depuis handleRetry sans useCallback
   const [triggerCount, setTriggerCount] = useState(0)
 
-  // Ref pour éviter le double déclenchement React Strict Mode (deux calls useEffect en dev)
+  // Ref pour éviter le double appel API en React Strict Mode (dev : mount/unmount/remount)
   const hasStarted = useRef(false)
   const designIdRef = useRef(designId)
   const sessionTokenRef = useRef(sessionToken)
+  const pendingFeedbackRef = useRef(pendingFeedback)
+  // Ref partagée : le résultat de triggerGeneration, accessible par les deux effets
+  const generationPromiseRef = useRef<Promise<Awaited<ReturnType<typeof triggerGeneration>>> | null>(null)
 
   // Synchroniser les refs avec les valeurs courantes
   useEffect(() => {
     designIdRef.current = designId
     sessionTokenRef.current = sessionToken
+    pendingFeedbackRef.current = pendingFeedback
   })
 
+  // Effet 1 — Déclencher l'appel API (une seule fois, protégé par hasStarted)
   useEffect(() => {
-    // Protection contre le double déclenchement en React Strict Mode
     if (hasStarted.current) return
     hasStarted.current = true
 
     const currentDesignId = designIdRef.current
     const currentSessionToken = sessionTokenRef.current
+    const currentFeedback = pendingFeedbackRef.current
 
+    if (!currentDesignId) return
+
+    generationPromiseRef.current = triggerGeneration(currentDesignId, currentSessionToken, currentFeedback)
+    // triggerCount dans les deps permet de relancer quand l'utilisateur clique "Réessayer"
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [triggerCount])
+
+  // Effet 2 — Animation de la progress bar + attente du résultat
+  // Cet effet n'est pas gardé par hasStarted et relance les timers à chaque mount,
+  // ce qui corrige le problème en React Strict Mode (dev) où le premier mount
+  // est nettoyé et seul le second mount reste actif.
+  useEffect(() => {
+    const currentDesignId = designIdRef.current
     if (!currentDesignId) return
 
     setHasError(false)
     setProgress(0)
     setIsRetrying(false)
 
+    let cancelled = false
     const startTime = Date.now()
 
     // Animation fictive 0→90% sur la durée estimée.
-    // La génération est synchrone : on ne peut pas connaître la progression réelle côté Gemini.
+    // La génération est synchrone côté Gemini : pas de progression réelle disponible.
     const progressInterval = setInterval(() => {
       const elapsed = Date.now() - startTime
       const simulatedProgress = Math.min(90, (elapsed / ESTIMATED_DURATION_MS) * 90)
@@ -73,8 +92,18 @@ export default function GeneratingView() {
       setMessageIndex((prev) => (prev + 1) % MASCOT_MESSAGES.length)
     }, 5000)
 
-    triggerGeneration(currentDesignId, currentSessionToken)
-      .then((result) => {
+    // Attendre le résultat de l'appel API (peut déjà être en cours depuis l'effet 1)
+    const waitForResult = async () => {
+      // Attendre que la promise soit disponible (effet 1 peut s'exécuter en parallèle)
+      while (!generationPromiseRef.current && !cancelled) {
+        await new Promise((r) => setTimeout(r, 50))
+      }
+      if (cancelled) return
+
+      try {
+        const result = await generationPromiseRef.current!
+        if (cancelled) return
+
         clearInterval(progressInterval)
         clearInterval(messageInterval)
 
@@ -93,18 +122,21 @@ export default function GeneratingView() {
 
         // Laisser 500ms pour voir 100% avant la navigation
         setTimeout(() => {
-          router.push('/generate/result')
+          if (!cancelled) router.push('/generate/result')
         }, 500)
-      })
-      .catch(() => {
+      } catch {
+        if (cancelled) return
         clearInterval(progressInterval)
         clearInterval(messageInterval)
         setHasError(true)
         setErrorMessage('Une erreur inattendue est survenue. Veuillez réessayer.')
         setProgress(0)
-      })
+      }
+    }
+    waitForResult()
 
     return () => {
+      cancelled = true
       clearInterval(progressInterval)
       clearInterval(messageInterval)
     }
@@ -115,6 +147,7 @@ export default function GeneratingView() {
   const handleRetry = () => {
     setIsRetrying(true)
     hasStarted.current = false
+    generationPromiseRef.current = null
     setTriggerCount((c) => c + 1)
   }
 

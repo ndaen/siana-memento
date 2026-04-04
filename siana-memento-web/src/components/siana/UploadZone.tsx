@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useDropzone, type FileRejection } from 'react-dropzone'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -24,7 +24,18 @@ interface PhotoPreview {
 
 export default function UploadZone() {
   const router = useRouter()
-  const { designId, setDesign, setPhotos, setStep, photos: storePhotos, _hasHydrated } = useGenerationStore()
+  const { designId, setDesign, setPhotos, setStep, resetForPhotoChange, photos: storePhotos, _hasHydrated } = useGenerationStore()
+
+  // Reset le store une seule fois à l'hydration si un design d'une session précédente existe
+  const didResetOnMount = useRef(false)
+  useEffect(() => {
+    if (!_hasHydrated || didResetOnMount.current) return
+    didResetOnMount.current = true
+    if (designId) {
+      resetForPhotoChange()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [_hasHydrated])
 
   const [previews, setPreviews] = useState<PhotoPreview[]>([])
   const [uploadProgress, setUploadProgress] = useState<number[]>([])

@@ -45,5 +45,6 @@ export const updateDesignConfigureValidator = vine.compile(
 export const triggerGenerationValidator = vine.compile(
   vine.object({
     sessionToken: vine.string().minLength(64).maxLength(64).optional(),
+    feedback: vine.string().trim().maxLength(1000).optional(),
   })
 )

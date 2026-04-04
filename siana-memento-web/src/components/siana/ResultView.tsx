@@ -24,11 +24,11 @@ import confetti from 'canvas-confetti'
 const MAX_ITERATIONS = 3
 
 const FEEDBACK_OPTIONS = [
-  { id: 'texte-petit', label: 'Les textes sont trop petits', reformulation: 'agrandir les textes' },
-  { id: 'texte-grand', label: 'Les textes sont trop grands', reformulation: 'réduire les textes' },
-  { id: 'photos-visibles', label: 'Les photos ne sont pas assez visibles', reformulation: 'mettre les photos plus en avant' },
-  { id: 'couleurs', label: 'Les couleurs ne me conviennent pas', reformulation: 'ajuster la palette de couleurs' },
-  { id: 'style', label: "Le style n'est pas assez marqué", reformulation: 'renforcer le style' },
+  { id: 'texte-petit', label: 'Les textes sont trop petits', reformulation: 'make the text (names, date, location) larger and more prominent' },
+  { id: 'texte-grand', label: 'Les textes sont trop grands', reformulation: 'make the text (names, date, location) smaller and more subtle' },
+  { id: 'photos-visibles', label: 'Les photos ne sont pas assez visibles', reformulation: 'make the couple more visible and central in the illustration' },
+  { id: 'couleurs', label: 'Les couleurs ne me conviennent pas', reformulation: 'adjust the color palette for better harmony' },
+  { id: 'style', label: "Le style n'est pas assez marqué", reformulation: 'make the artistic style more pronounced and distinctive' },
 ] as const
 
 // Paires mutuellement exclusives — cocher l'un décoche l'autre
@@ -46,7 +46,7 @@ function buildReformulation(options: string[], freeText: string): string {
 }
 
 export default function ResultView() {
-  const { generatedImageUrl, partner1Name, partner2Name, iterationsUsed, designId, sessionToken, isPaid, orderId, setPaid, resetForPhotoChange } =
+  const { generatedImageUrl, partner1Name, partner2Name, iterationsUsed, designId, sessionToken, isPaid, orderId, setPaid, resetForPhotoChange, setPendingFeedback } =
     useGenerationStore()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -190,6 +190,9 @@ export default function ResultView() {
   }, [])
 
   function handleRegenerate() {
+    // Store feedback in the generation store so GeneratingView can send it to the API
+    const reformulation = buildReformulation(selectedOptions, freeText)
+    setPendingFeedback(reformulation)
     setIsAdjustOpen(false)
     setAdjustStep('form')
     setSelectedOptions([])
