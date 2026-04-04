@@ -233,8 +233,8 @@ export default function Home() {
               Ce que nos couples en pensent
             </h2>
             <p className="mx-auto mb-12 max-w-2xl text-center text-base text-muted-foreground sm:mb-16 sm:text-lg">
-              Des centaines de couples ont déjà créé leur Save the Date avec
-              Siana Memento. Voici leurs retours.
+              Découvrez pourquoi ils ont choisi Siana Memento pour leur
+              Save the Date.
             </p>
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -243,17 +243,15 @@ export default function Home() {
                   key={testimonial.name}
                   className="flex flex-col rounded-xl border border-border bg-card p-6 shadow-sm"
                 >
-                  <div className="mb-3 flex gap-0.5" aria-hidden="true">
+                  <div role="img" aria-label={`${testimonial.stars} étoiles sur 5`} className="mb-3 flex gap-0.5">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
+                        aria-hidden="true"
                         className={`h-4 w-4 ${i < testimonial.stars ? "fill-current text-primary" : "text-muted-foreground/30"}`}
                       />
                     ))}
                   </div>
-                  <span className="sr-only">
-                    {testimonial.stars} étoiles sur 5
-                  </span>
                   <blockquote className="mb-4 flex-1 text-sm leading-relaxed text-muted-foreground">
                     &laquo;&nbsp;{testimonial.text}&nbsp;&raquo;
                   </blockquote>
