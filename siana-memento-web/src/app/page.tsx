@@ -72,7 +72,7 @@ const testimonials = [
   {
     name: "Manon & Romain",
     text: "Très sceptiques au départ sur l'IA, on a été agréablement surpris. L'illustration Moderne est élégante et ressemble vraiment à nos photos. Un rapport qualité-prix imbattable.",
-    stars: 5,
+    stars: 4,
   },
   {
     name: "Julie & Alexandre",
@@ -244,10 +244,10 @@ export default function Home() {
                   className="flex flex-col rounded-xl border border-border bg-card p-6 shadow-sm"
                 >
                   <div className="mb-3 flex gap-0.5" aria-hidden="true">
-                    {Array.from({ length: testimonial.stars }).map((_, i) => (
+                    {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
-                        className="h-4 w-4 fill-current text-primary"
+                        className={`h-4 w-4 ${i < testimonial.stars ? "fill-current text-primary" : "text-muted-foreground/30"}`}
                       />
                     ))}
                   </div>
