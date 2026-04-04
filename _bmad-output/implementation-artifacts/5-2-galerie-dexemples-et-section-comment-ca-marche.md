@@ -1,6 +1,6 @@
 # Story 5.2: Galerie d'Exemples et Section "Comment ça marche"
 
-Status: review
+Status: done
 
 ## Story
 
@@ -94,3 +94,12 @@ Claude Opus 4.6 (1M context)
 
 ### File List
 - `siana-memento-web/src/app/page.tsx` — restructured with gallery + how-it-works sections
+- `siana-memento-web/src/app/layout.tsx` — added skip-navigation link (WCAG 2.4.1)
+
+### Review Fixes
+- Added `font-display` class to all h1/h2/h3 headings (Clash Display design token)
+- Added `aria-labelledby="cta-heading"` on CTA section
+- Added skip-navigation link in layout.tsx (WCAG 2.4.1)
+- Gallery cards: `<p>` → `<h3>` for couple names, added `aria-label` on `<article>`
+- Added `sr-only` step prefix on h3 for screen reader robustness
+- Replaced hardcoded hex blobs with design token classes (bg-primary, bg-secondary)
