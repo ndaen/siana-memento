@@ -71,9 +71,9 @@ export default function Home() {
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 overflow-hidden"
       >
-        <div className="absolute -top-32 -right-32 h-[600px] w-[600px] rounded-full bg-[#2d4a3e]/8 blur-3xl dark:bg-[#2d4a3e]/20" />
-        <div className="absolute -bottom-32 -left-32 h-[500px] w-[500px] rounded-full bg-[#b5c4b1]/20 blur-3xl dark:bg-[#2d4a3e]/15" />
-        <div className="absolute top-1/2 left-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f5efe6]/40 blur-3xl dark:bg-[#1e2d26]/40" />
+        <div className="absolute -top-32 -right-32 h-[600px] w-[600px] rounded-full bg-primary/8 blur-3xl dark:bg-primary/20" />
+        <div className="absolute -bottom-32 -left-32 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl dark:bg-primary/15" />
+        <div className="absolute top-1/2 left-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-secondary/40 blur-3xl dark:bg-primary/10" />
       </div>
 
       {/* Header */}
@@ -86,7 +86,7 @@ export default function Home() {
         {/* Hero section */}
         <section className="flex min-h-[calc(100vh-80px)] flex-col items-center justify-center px-6 pb-16 text-center">
           <div className="mb-6 sm:mb-8">
-            <h1 className="text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
+            <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
               Siana&nbsp;
               <span className="text-primary">Memento</span>
             </h1>
@@ -122,7 +122,7 @@ export default function Home() {
         >
           <h2
             id="how-it-works-heading"
-            className="mb-12 text-center text-3xl font-bold tracking-tight text-foreground sm:mb-16 sm:text-4xl"
+            className="font-display mb-12 text-center text-3xl font-bold tracking-tight text-foreground sm:mb-16 sm:text-4xl"
           >
             Comment ça marche
           </h2>
@@ -139,7 +139,8 @@ export default function Home() {
                 >
                   {i + 1}
                 </span>
-                <h3 className="mb-2 text-lg font-semibold text-foreground">
+                <h3 className="font-display mb-2 text-lg font-semibold text-foreground">
+                  <span className="sr-only">Étape {i + 1} : </span>
                   {step.title}
                 </h3>
                 <p className="text-sm leading-relaxed text-muted-foreground">
@@ -157,7 +158,7 @@ export default function Home() {
         >
           <h2
             id="gallery-heading"
-            className="mb-4 text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
+            className="font-display mb-4 text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
           >
             Des styles pour chaque histoire
           </h2>
@@ -171,6 +172,7 @@ export default function Home() {
             {examples.map((example) => (
               <article
                 key={example.template}
+                aria-label={`${example.couple} — Style ${example.template}`}
                 className="group overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md"
               >
                 {/* Placeholder illustration */}
@@ -185,9 +187,9 @@ export default function Home() {
                   </span>
                 </div>
                 <div className="p-4">
-                  <p className="text-sm font-semibold text-foreground">
+                  <h3 className="text-sm font-semibold text-foreground">
                     {example.couple}
-                  </p>
+                  </h3>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Style {example.template}
                   </p>
@@ -201,8 +203,8 @@ export default function Home() {
         </section>
 
         {/* CTA secondaire */}
-        <section className="px-6 py-16 text-center sm:py-24">
-          <h2 className="mb-4 text-2xl font-bold text-foreground sm:text-3xl">
+        <section aria-labelledby="cta-heading" className="px-6 py-16 text-center sm:py-24">
+          <h2 id="cta-heading" className="font-display mb-4 text-2xl font-bold text-foreground sm:text-3xl">
             Prêt à créer votre Save the Date ?
           </h2>
           <p className="mx-auto mb-8 max-w-md text-base text-muted-foreground">
