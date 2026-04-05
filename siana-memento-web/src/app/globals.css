@@ -83,13 +83,9 @@
   --color-olive: #6b7c47;
   --color-sage: #b5c4b1;
 
-  /* Typographie
-     NOTE: Clash Display + Satoshi sont les polices officielles.
-     En attendant les fichiers locaux, Syne ≈ Clash Display
-     et DM Sans ≈ Satoshi (substituts Google Fonts).
-  */
-  --font-display: var(--font-siana-display);
-  --font-body: var(--font-siana-body);
+  /* Typographie — Clash Display (headings) + Satoshi (body) */
+  --font-display: "ClashDisplay", sans-serif;
+  --font-body: "Satoshi", sans-serif;
 }
 
 :root {
@@ -170,8 +166,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    --font-display: "ClashDisplay", sans-serif;
-    --font-body: "Satoshi", sans-serif;
     font-family: var(--font-body);
   }
   h1, h2, h3, h4, h5, h6 {

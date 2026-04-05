@@ -118,7 +118,7 @@ export default function Home() {
           </p>
 
           <div className="mb-8 flex items-baseline gap-1.5 sm:mb-12">
-            <span className="text-4xl font-bold text-foreground sm:text-5xl">
+            <span className="font-display text-4xl font-bold text-foreground sm:text-5xl">
               19,90&nbsp;€
             </span>
             <span className="text-sm text-muted-foreground sm:text-base">
