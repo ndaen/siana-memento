@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/siana/ThemeToggle";
-import UserMenu from "@/components/siana/UserMenu";
 import { Camera, Palette, Sparkles, Star } from "lucide-react";
 
 const examples = [
@@ -94,15 +92,9 @@ export default function Home() {
         <div className="absolute top-1/2 left-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-secondary/40 blur-3xl dark:bg-primary/10" />
       </div>
 
-      {/* Header */}
-      <header className="relative z-10 flex items-center justify-between p-4 sm:p-6">
-        <ThemeToggle />
-        <UserMenu />
-      </header>
-
-      <main id="main-content" className="relative z-10">
+      <main className="relative z-10">
         {/* Hero section */}
-        <section className="flex min-h-[calc(100vh-80px)] flex-col items-center justify-center px-6 pb-16 text-center">
+        <section className="flex min-h-[calc(100dvh-var(--header-h))] flex-col items-center justify-center px-6 pb-16 text-center">
           <div className="mb-6 sm:mb-8">
             <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
               Siana&nbsp;
@@ -135,8 +127,9 @@ export default function Home() {
 
         {/* Comment ça marche */}
         <section
+          id="how-it-works"
           aria-labelledby="how-it-works-heading"
-          className="mx-auto max-w-5xl px-6 py-16 sm:py-24"
+          className="scroll-mt-20 mx-auto max-w-5xl px-6 py-16 sm:py-24"
         >
           <h2
             id="how-it-works-heading"
@@ -171,8 +164,9 @@ export default function Home() {
 
         {/* Galerie d'exemples */}
         <section
+          id="gallery"
           aria-labelledby="gallery-heading"
-          className="mx-auto max-w-6xl px-6 py-16 sm:py-24"
+          className="scroll-mt-20 mx-auto max-w-6xl px-6 py-16 sm:py-24"
         >
           <h2
             id="gallery-heading"
@@ -223,8 +217,9 @@ export default function Home() {
         {/* Témoignages clients */}
         {testimonials.length > 0 && (
           <section
+            id="testimonials"
             aria-labelledby="testimonials-heading"
-            className="mx-auto max-w-5xl px-6 py-16 sm:py-24"
+            className="scroll-mt-20 mx-auto max-w-5xl px-6 py-16 sm:py-24"
           >
             <h2
               id="testimonials-heading"

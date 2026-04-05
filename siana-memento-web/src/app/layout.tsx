@@ -3,6 +3,7 @@ import "./globals.css";
 import {ThemeProvider} from "@/components/siana/ThemeProvider";
 import {Toaster} from "@/components/ui/sonner";
 import {Analytics} from "@vercel/analytics/next"
+import SiteHeader from "@/components/siana/SiteHeader"
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://siana-memento.com";
 
@@ -53,7 +54,10 @@ export default function RootLayout({
             <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground focus:outline-none">
                 Aller au contenu principal
             </a>
-            {children}
+            <SiteHeader />
+            <div id="main-content">
+                {children}
+            </div>
             <Analytics/>
             <Toaster richColors position="bottom-center"/>
         </ThemeProvider>

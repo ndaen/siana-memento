@@ -18,6 +18,16 @@
   font-style: normal;
 }
 
+:root {
+  --header-h: 4rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
