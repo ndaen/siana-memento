@@ -1,6 +1,6 @@
 # Story 5.3: Temoignages Clients
 
-Status: review
+Status: done
 
 ## Story
 
@@ -127,6 +127,15 @@ Claude Opus 4.6 (1M context)
 - Task 2: Inserted testimonials section between gallery and CTA secondaire. Responsive grid (1/2/3 cols). Cards with blockquote, filled Star icons, and couple name.
 - Task 3: aria-labelledby on section, font-display on h2, stars aria-hidden with sr-only rating text, design token colors for contrast.
 - Task 4: tsc clean, build passes, Server Component pure (no 'use client').
+
+### Review Notes
+- Reviewed by Claude Opus 4.6 (1M context) on 2026-04-05
+- All ACs verified: testimonials display correctly, empty state hides section
+- Accessibility: role="img" with aria-label on star rating, aria-hidden on individual stars, font-display on h2, semantic blockquote
+- Layout: correct position between gallery and CTA, responsive grid, design token colors
+- TypeScript: tsc --noEmit clean for both frontend and backend
+- Server Component: no 'use client', no hooks, no state
+- No HIGH or MEDIUM issues found
 
 ### File List
 - `siana-memento-web/src/app/page.tsx` — added testimonials data + section
