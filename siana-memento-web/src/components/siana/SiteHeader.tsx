@@ -29,6 +29,14 @@ export default function SiteHeader() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [loading, setLoading] = useState(true)
   const [activeSection, setActiveSection] = useState<string | null>(null)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   useEffect(() => {
     getMe().then((result) => {
@@ -62,7 +70,13 @@ export default function SiteHeader() {
   }, [isHome])
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center border-b border-border/40 bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+    <header className={`sticky top-0 z-40 flex h-16 items-center px-4 transition-all duration-300 sm:px-6 ${
+      scrolled
+        ? 'border-b border-border/40 bg-background/80 backdrop-blur-sm'
+        : isHome
+          ? 'bg-transparent'
+          : 'border-b border-border/40 bg-background/80 backdrop-blur-sm'
+    }`}>
       {/* Logo + nom — gauche */}
       <Link href="/" className="flex items-center gap-2">
         <Image src="/logo.svg" width={32} height={32} alt="" />

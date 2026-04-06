@@ -96,13 +96,14 @@
   /* Typographie — Clash Display (headings) + Satoshi (body) */
   --font-display: "ClashDisplay", sans-serif;
   --font-body: "Satoshi", sans-serif;
+
 }
 
 :root {
   --radius: 0.75rem;
 
   /* ── Siana Memento — shadcn token overrides ── */
-  --background: #fafafa;           /* Ice White */
+  --background: #faf8f5;           /* Warm White (cream tint) */
   --foreground: #09090b;           /* Deep Black */
   --card: #ffffff;
   --card-foreground: #09090b;

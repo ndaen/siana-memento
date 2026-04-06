@@ -1,6 +1,10 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Camera, Palette, Sparkles, Star } from "lucide-react";
+import HeroSection from "@/components/siana/landing/HeroSection";
+import ScrollFloat from "@/components/ScrollFloat";
+import GlareHover from "@/components/GlareHover";
+import ScrollReveal from "@/components/siana/landing/ScrollReveal";
+import StarBorder from "@/components/StarBorder";
 
 const examples = [
   {
@@ -81,49 +85,10 @@ const testimonials = [
 
 export default function Home() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      {/* Botanical background blobs */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-      >
-        <div className="absolute -top-32 -right-32 h-[600px] w-[600px] rounded-full bg-primary/8 blur-3xl dark:bg-primary/20" />
-        <div className="absolute -bottom-32 -left-32 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl dark:bg-primary/15" />
-        <div className="absolute top-1/2 left-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-secondary/40 blur-3xl dark:bg-primary/10" />
-      </div>
-
+    <div className="relative min-h-screen bg-background">
       <main className="relative z-10">
-        {/* Hero section */}
-        <section className="flex min-h-[calc(100dvh-var(--header-h))] flex-col items-center justify-center px-6 pb-16 text-center">
-          <div className="mb-6 sm:mb-8">
-            <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
-              Siana&nbsp;
-              <span className="text-primary">Memento</span>
-            </h1>
-          </div>
-
-          <p className="mx-auto mb-4 max-w-xl text-lg leading-relaxed text-muted-foreground sm:mb-6 sm:text-xl md:text-2xl">
-            Générez votre Save the Date unique avec vos photos en{" "}
-            <strong className="font-semibold text-foreground">
-              15 minutes
-            </strong>
-          </p>
-
-          <div className="mb-8 flex items-baseline gap-1.5 sm:mb-12">
-            <span className="font-display text-4xl font-bold text-foreground sm:text-5xl">
-              19,90&nbsp;€
-            </span>
-            <span className="text-sm text-muted-foreground sm:text-base">
-              par design
-            </span>
-          </div>
-
-          <div className="mb-8 sm:mb-12">
-            <Button size="lg" asChild className="w-full sm:w-auto text-base">
-              <Link href="/generate/upload">Créer mon Save the Date</Link>
-            </Button>
-          </div>
-        </section>
+        {/* Hero section with LightRays background, BlurText, CountUp, StarBorder */}
+        <HeroSection />
 
         {/* Comment ça marche */}
         <section
@@ -131,16 +96,16 @@ export default function Home() {
           aria-labelledby="how-it-works-heading"
           className="scroll-mt-20 mx-auto max-w-5xl px-6 py-16 sm:py-24"
         >
-          <h2
-            id="how-it-works-heading"
-            className="font-display mb-12 text-center text-3xl font-bold tracking-tight text-foreground sm:mb-16 sm:text-4xl"
+          <ScrollFloat
+            containerClassName="font-display mb-12 text-center font-bold tracking-tight text-foreground sm:mb-16"
+            textClassName="text-3xl sm:text-4xl leading-[1.2]"
           >
             Comment ça marche
-          </h2>
+          </ScrollFloat>
 
-          <ol className="grid gap-8 sm:grid-cols-3 sm:gap-12">
+          <ScrollReveal className="grid gap-8 sm:grid-cols-3 sm:gap-12">
             {steps.map((step, i) => (
-              <li key={step.title} className="flex flex-col items-center text-center">
+              <div key={step.title} className="flex flex-col items-center text-center">
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   <step.icon className="h-7 w-7" aria-hidden="true" />
                 </div>
@@ -157,9 +122,9 @@ export default function Home() {
                 <p className="text-sm leading-relaxed text-muted-foreground">
                   {step.description}
                 </p>
-              </li>
+              </div>
             ))}
-          </ol>
+          </ScrollReveal>
         </section>
 
         {/* Galerie d'exemples */}
@@ -168,50 +133,60 @@ export default function Home() {
           aria-labelledby="gallery-heading"
           className="scroll-mt-20 mx-auto max-w-6xl px-6 py-16 sm:py-24"
         >
-          <h2
-            id="gallery-heading"
-            className="font-display mb-4 text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
+          <ScrollFloat
+            containerClassName="font-display mb-4 text-center font-bold tracking-tight text-foreground"
+            textClassName="text-3xl sm:text-4xl leading-[1.2]"
           >
             Des styles pour chaque histoire
-          </h2>
+          </ScrollFloat>
           <p className="mx-auto mb-12 max-w-2xl text-center text-base text-muted-foreground sm:mb-16 sm:text-lg">
             Chaque couple est unique. Découvrez nos cinq univers artistiques,
             conçus pour refléter votre personnalité et le ton de votre mariage.
             Notre IA transforme vos photos en une illustration sur mesure.
           </p>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <ScrollReveal className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {examples.map((example) => (
-              <article
+              <GlareHover
                 key={example.template}
-                aria-label={`${example.couple} — Style ${example.template}`}
-                className="group overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md"
+                className="rounded-xl"
+                width="100%"
+                height="auto"
+                background="var(--card)"
+                borderRadius="0.75rem"
+                borderColor="var(--border)"
+                glareColor="#ffffff"
+                glareOpacity={0.3}
+                transitionDuration={800}
               >
-                {/* Placeholder illustration */}
-                <div
-                  className={`${example.bgColor} flex aspect-[3/4] items-center justify-center`}
-                  aria-hidden="true"
+                <article
+                  aria-label={`${example.couple} — Style ${example.template}`}
                 >
-                  <span
-                    className={`${example.accentColor} text-lg font-semibold opacity-60`}
+                  <div
+                    className={`${example.bgColor} flex aspect-[3/4] items-center justify-center`}
+                    aria-hidden="true"
                   >
-                    {example.template}
-                  </span>
-                </div>
-                <div className="p-4">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    {example.couple}
-                  </h3>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Style {example.template}
-                  </p>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    {example.description}
-                  </p>
-                </div>
-              </article>
+                    <span
+                      className={`${example.accentColor} text-lg font-semibold opacity-60`}
+                    >
+                      {example.template}
+                    </span>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="text-sm font-semibold text-foreground">
+                      {example.couple}
+                    </h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Style {example.template}
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                      {example.description}
+                    </p>
+                  </div>
+                </article>
+              </GlareHover>
             ))}
-          </div>
+          </ScrollReveal>
         </section>
 
         {/* Témoignages clients */}
@@ -221,22 +196,22 @@ export default function Home() {
             aria-labelledby="testimonials-heading"
             className="scroll-mt-20 mx-auto max-w-5xl px-6 py-16 sm:py-24"
           >
-            <h2
-              id="testimonials-heading"
-              className="font-display mb-4 text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
+            <ScrollFloat
+              containerClassName="font-display mb-4 text-center font-bold tracking-tight text-foreground"
+              textClassName="text-3xl sm:text-4xl leading-[1.2]"
             >
               Ce que nos couples en pensent
-            </h2>
+            </ScrollFloat>
             <p className="mx-auto mb-12 max-w-2xl text-center text-base text-muted-foreground sm:mb-16 sm:text-lg">
               Découvrez pourquoi ils ont choisi Siana Memento pour leur
               Save the Date.
             </p>
 
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <ScrollReveal className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {testimonials.map((testimonial) => (
                 <article
                   key={testimonial.name}
-                  className="flex flex-col rounded-xl border border-border bg-card p-6 shadow-sm"
+                  className="flex flex-col rounded-xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                 >
                   <div role="img" aria-label={`${testimonial.stars} étoiles sur 5`} className="mb-3 flex gap-0.5">
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -255,38 +230,29 @@ export default function Home() {
                   </p>
                 </article>
               ))}
-            </div>
+            </ScrollReveal>
           </section>
         )}
 
         {/* CTA secondaire */}
         <section aria-labelledby="cta-heading" className="px-6 py-16 text-center sm:py-24">
-          <h2 id="cta-heading" className="font-display mb-4 text-2xl font-bold text-foreground sm:text-3xl">
+          <ScrollFloat
+            containerClassName="font-display mb-4 font-bold text-foreground text-center"
+            textClassName="text-2xl sm:text-3xl leading-[1.2]"
+          >
             Prêt à créer votre Save the Date ?
-          </h2>
+          </ScrollFloat>
           <p className="mx-auto mb-8 max-w-md text-base text-muted-foreground">
             Uploadez vos photos, choisissez un style, et recevez votre
             illustration personnalisée en quelques minutes. Un design unique pour
             un jour unique.
           </p>
-          <Button size="lg" asChild className="w-full sm:w-auto text-base">
-            <Link href="/generate/upload">Commencer maintenant</Link>
-          </Button>
+          <StarBorder as="a" color="#C9A84C" speed="6s" thickness={2} className="text-base cursor-pointer no-underline" href="/generate/upload">
+            Commencer maintenant
+          </StarBorder>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="relative z-10 pb-6 text-center">
-        <p className="text-xs text-muted-foreground">
-          © 2026 Siana Memento · Fait avec soin en France ·{" "}
-          <a
-            href="mailto:support@siana-memento.com"
-            className="underline underline-offset-2 hover:text-foreground"
-          >
-            Nous contacter
-          </a>
-        </p>
-      </footer>
     </div>
   );
 }
