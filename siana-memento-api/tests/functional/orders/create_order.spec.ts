@@ -1,7 +1,6 @@
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 import Order from '#models/order'
-import { DateTime } from 'luxon'
 import { loginAs, createDesign } from '#tests/helpers/index'
 
 test.group('POST /api/orders', (group) => {
@@ -12,7 +11,10 @@ test.group('POST /api/orders', (group) => {
     response.assertStatus(401)
   })
 
-  test('creates order for completed design (201 with valid Stripe config, 500 otherwise)', async ({ client, assert }) => {
+  test('creates order for completed design (201 with valid Stripe config, 500 otherwise)', async ({
+    client,
+    assert,
+  }) => {
     const { cookie, user } = await loginAs(client)
     const design = await createDesign({ userId: user.id, status: 'completed' })
 
@@ -46,7 +48,9 @@ test.group('POST /api/orders', (group) => {
     const { user: owner } = await loginAs(client, { email: `owner-${Date.now()}@example.com` })
     const design = await createDesign({ userId: owner.id, status: 'completed' })
 
-    const { cookie: otherCookie } = await loginAs(client, { email: `other-${Date.now()}@example.com` })
+    const { cookie: otherCookie } = await loginAs(client, {
+      email: `other-${Date.now()}@example.com`,
+    })
 
     const response = await client
       .post('/api/orders')
@@ -106,7 +110,10 @@ test.group('POST /api/orders — sessionToken security', (group) => {
   const KNOWN_TOKEN = 'a'.repeat(64)
   const WRONG_TOKEN = 'b'.repeat(64)
 
-  test('anonymous design + correct sessionToken → 201 (claim succeeds)', async ({ client, assert }) => {
+  test('anonymous design + correct sessionToken → 201 (claim succeeds)', async ({
+    client,
+    assert,
+  }) => {
     const { cookie, user } = await loginAs(client)
     const design = await createDesign({ sessionToken: KNOWN_TOKEN, status: 'completed' })
 
@@ -170,7 +177,10 @@ test.group('POST /api/orders — sessionToken security', (group) => {
     assert.isNull(design.userId)
   })
 
-  test('owned design + no sessionToken → 201 (sessionToken not needed)', async ({ client, assert }) => {
+  test('owned design + no sessionToken → 201 (sessionToken not needed)', async ({
+    client,
+    assert,
+  }) => {
     const { cookie, user } = await loginAs(client)
     const design = await createDesign({ userId: user.id, status: 'completed' })
 
@@ -200,9 +210,7 @@ test.group('GET /api/orders/:id', (group) => {
       status: 'pending',
     })
 
-    const response = await client
-      .get(`/api/orders/${order.id}`)
-      .header('cookie', cookie)
+    const response = await client.get(`/api/orders/${order.id}`).header('cookie', cookie)
 
     response.assertStatus(200)
     const body = response.body()
@@ -221,11 +229,11 @@ test.group('GET /api/orders/:id', (group) => {
       status: 'pending',
     })
 
-    const { cookie: otherCookie } = await loginAs(client, { email: `other-${Date.now()}@example.com` })
+    const { cookie: otherCookie } = await loginAs(client, {
+      email: `other-${Date.now()}@example.com`,
+    })
 
-    const response = await client
-      .get(`/api/orders/${order.id}`)
-      .header('cookie', otherCookie)
+    const response = await client.get(`/api/orders/${order.id}`).header('cookie', otherCookie)
 
     response.assertStatus(403)
   })

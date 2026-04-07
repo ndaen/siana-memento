@@ -6,8 +6,4 @@ export {
   createPaidOrderWithDesign,
   createDesignViaApi,
 } from './factories.js'
-export {
-  VALID_PHOTO_1,
-  VALID_PHOTO_2,
-  VALID_CONFIG_PAYLOAD,
-} from './constants.js'
+export { VALID_PHOTO_1, VALID_PHOTO_2, VALID_CONFIG_PAYLOAD } from './constants.js'

@@ -36,10 +36,7 @@ export async function createDesign(
   })
 }
 
-export async function createConfiguredDesign(
-  sessionToken: string,
-  userId: number | null = null
-) {
+export async function createConfiguredDesign(sessionToken: string, userId: number | null = null) {
   const expiresAt = DateTime.now().plus({ days: 7 })
   const design = await Design.create({
     userId,
@@ -112,8 +109,7 @@ export async function createPaidOrderWithDesign(
     amount: 1990,
     status: overrides?.status ?? 'paid',
     paidAt: overrides?.paidAt ?? DateTime.now(),
-    emailSentAt:
-      overrides?.emailSentAt !== undefined ? overrides.emailSentAt : DateTime.now(),
+    emailSentAt: overrides?.emailSentAt !== undefined ? overrides.emailSentAt : DateTime.now(),
     stripeSessionId: `cs_test_${Date.now()}_${Math.random().toString(36).slice(2)}`,
   })
 
@@ -125,7 +121,6 @@ export async function createPaidOrderWithDesign(
   return { order, design }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function createDesignViaApi(client: any, cookie?: string) {
   const photo = {
     publicId: 'designs/session123/photo1_abc',

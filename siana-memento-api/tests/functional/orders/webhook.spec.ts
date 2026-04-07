@@ -11,9 +11,7 @@ test.group('POST /api/webhooks/stripe', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('returns 400 without stripe-signature header', async ({ client }) => {
-    const response = await client
-      .post('/api/webhooks/stripe')
-      .json({})
+    const response = await client.post('/api/webhooks/stripe').json({})
 
     response.assertStatus(400)
   })
@@ -104,7 +102,8 @@ test.group('Order + Design ACID transaction', (group) => {
     })
 
     // Simulate what handleCheckoutCompleted does (without Stripe SDK)
-    const db = (await import('@adonisjs/lucid/services/db')).default
+    const dbModule = await import('@adonisjs/lucid/services/db')
+    const db = dbModule.default
     await db.transaction(async (trx) => {
       order.useTransaction(trx)
       order.status = 'paid'
