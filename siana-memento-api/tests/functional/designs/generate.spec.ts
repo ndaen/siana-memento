@@ -4,55 +4,12 @@ import Design from '#models/design'
 import Photo from '#models/photo'
 import User from '#models/user'
 import { DateTime } from 'luxon'
-
-
-
-/**
- * Helper : crée un design configuré avec toutes les données requises pour la génération.
- */
-async function createConfiguredDesign(sessionToken: string, userId: number | null = null) {
-  const expiresAt = DateTime.now().plus({ days: 7 })
-  const design = await Design.create({
-    userId,
-    sessionToken,
-    status: 'draft',
-    expiresAt,
-    template: 'boheme',
-    partner1Name: 'Sophie',
-    partner2Name: 'Thomas',
-    weddingDate: DateTime.fromISO('2026-09-20'),
-    weddingLocation: 'Château de Lastours',
-  })
-  await Photo.create({
-    designId: design.id,
-    position: 1,
-    cloudinaryPublicId: 'designs/session123/photo1_abc',
-    cloudinaryUrl:
-      'https://res.cloudinary.com/mycloud/image/upload/v1234/photo1.jpg',
-    expiresAt,
-  })
-  return design
-}
+import { loginAs, createConfiguredDesign } from '#tests/helpers/index'
 
 test.group('POST /api/designs/:id/generate', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   const SESSION_TOKEN = 'a'.repeat(64)
-  const TEST_USER = { email: 'test-gen@example.com', password: 'motdepasse123', provider: 'email' as const }
-
-  /**
-   * Helper : crée un utilisateur, le connecte et retourne le cookie header.
-   * Le endpoint generate requiert middleware.auth() (Story 3-7).
-   */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async function loginAsUser(client: any, userOverrides?: { email: string; password: string }): Promise<{ cookie: string; userId: number }> {
-    const creds = userOverrides ?? TEST_USER
-    const user = await User.create({ ...creds, provider: 'email' })
-    const loginResponse = await client.post('/auth/login').json({ email: creds.email, password: creds.password })
-    const rawCookies = loginResponse.headers()['set-cookie'] as unknown as string[] | undefined
-    const cookie = rawCookies?.map((c: string) => c.split(';')[0]).join('; ') ?? ''
-    return { cookie, userId: user.id }
-  }
 
   // ─────────────────────────────────────────────────────────────────────
   // Auth middleware — requiert authentification (Story 3-7)
@@ -74,8 +31,7 @@ test.group('POST /api/designs/:id/generate', (group) => {
   // ─────────────────────────────────────────────────────────────────────
 
   test('retourne 403 avec un sessionToken incorrect pour design anonyme', async ({ client, assert }) => {
-    const { cookie } = await loginAsUser(client)
-    // Design anonyme (userId = null) → auth user ne match pas → 403
+    const { cookie } = await loginAs(client)
     const design = await createConfiguredDesign(SESSION_TOKEN)
 
     const response = await client
@@ -88,7 +44,7 @@ test.group('POST /api/designs/:id/generate', (group) => {
   })
 
   test('retourne 403 sans sessionToken pour un design anonyme', async ({ client, assert }) => {
-    const { cookie } = await loginAsUser(client)
+    const { cookie } = await loginAs(client)
     const design = await createConfiguredDesign(SESSION_TOKEN)
 
     const response = await client
@@ -101,7 +57,7 @@ test.group('POST /api/designs/:id/generate', (group) => {
   })
 
   test('retourne 404 pour un design inexistant (firstOrFail)', async ({ client }) => {
-    const { cookie } = await loginAsUser(client)
+    const { cookie } = await loginAs(client)
 
     const response = await client
       .post('/api/designs/999999/generate')
@@ -115,14 +71,13 @@ test.group('POST /api/designs/:id/generate', (group) => {
     client,
     assert,
   }) => {
-    const { cookie, userId } = await loginAsUser(client)
+    const { cookie, user } = await loginAs(client)
     const expiresAt = DateTime.now().plus({ days: 7 })
     const design = await Design.create({
-      userId,
+      userId: user.id,
       sessionToken: SESSION_TOKEN,
       status: 'draft',
       expiresAt,
-      // Pas de template, pas de partner1Name, etc.
     })
 
     const response = await client
@@ -138,8 +93,8 @@ test.group('POST /api/designs/:id/generate', (group) => {
     client,
     assert,
   }) => {
-    const { cookie, userId } = await loginAsUser(client)
-    const design = await createConfiguredDesign(SESSION_TOKEN, userId)
+    const { cookie, user } = await loginAs(client)
+    const design = await createConfiguredDesign(SESSION_TOKEN, user.id)
     await design.merge({ iterationsUsed: 3 }).save()
 
     const response = await client
@@ -162,7 +117,7 @@ test.group('POST /api/designs/:id/generate', (group) => {
     })
     const design = await createConfiguredDesign(SESSION_TOKEN, user1.id)
 
-    const { cookie } = await loginAsUser(client, { email: 'thomas@example.com', password: 'autremotdepasse' })
+    const { cookie } = await loginAs(client, { email: 'thomas@example.com', password: 'autremotdepasse' })
 
     const response = await client
       .post(`/api/designs/${design.id}/generate`)
@@ -177,10 +132,10 @@ test.group('POST /api/designs/:id/generate', (group) => {
     client,
     assert,
   }) => {
-    const { cookie, userId } = await loginAsUser(client)
+    const { cookie, user } = await loginAs(client)
     const expiresAt = DateTime.now().plus({ days: 7 })
     const design = await Design.create({
-      userId,
+      userId: user.id,
       sessionToken: SESSION_TOKEN,
       status: 'draft',
       expiresAt,
@@ -203,7 +158,6 @@ test.group('POST /api/designs/:id/generate', (group) => {
       .json({ sessionToken: SESSION_TOKEN })
       .header('Cookie', cookie)
 
-    // Soit 500 GENERATION_FAILED (fetch échoue) soit 500 Gemini (API key manquante en test)
     assert.isTrue([500].includes(response.status()), `Status attendu 500, reçu ${response.status()}`)
 
     const updatedDesign = await Design.find(design.id)
@@ -214,8 +168,8 @@ test.group('POST /api/designs/:id/generate', (group) => {
     client,
     assert,
   }) => {
-    const { cookie, userId } = await loginAsUser(client)
-    const design = await createConfiguredDesign(SESSION_TOKEN, userId)
+    const { cookie, user } = await loginAs(client)
+    const design = await createConfiguredDesign(SESSION_TOKEN, user.id)
 
     const response = await client
       .post(`/api/designs/${design.id}/generate`)

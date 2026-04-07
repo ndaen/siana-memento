@@ -2,25 +2,15 @@ import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 import Design from '#models/design'
 import Photo from '#models/photo'
-import User from '#models/user'
 import { DateTime } from 'luxon'
+import { loginAs, VALID_PHOTO_1, VALID_PHOTO_2 } from '#tests/helpers/index'
 
 test.group('POST /api/designs', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
-  const validPhoto1 = {
-    publicId: 'designs/session123/photo1_abc',
-    url: 'https://res.cloudinary.com/mycloud/image/upload/v1234/photo1.jpg',
-  }
-
-  const validPhoto2 = {
-    publicId: 'designs/session123/photo2_def',
-    url: 'https://res.cloudinary.com/mycloud/image/upload/v1234/photo2.jpg',
-  }
-
   test('crée un design avec 1 photo et retourne 201', async ({ client, assert }) => {
     const response = await client.post('/api/designs').json({
-      photos: [validPhoto1],
+      photos: [VALID_PHOTO_1],
     })
 
     response.assertStatus(201)
@@ -47,7 +37,7 @@ test.group('POST /api/designs', (group) => {
 
   test('crée un design avec 2 photos et les 2 sont en DB', async ({ client, assert }) => {
     const response = await client.post('/api/designs').json({
-      photos: [validPhoto1, validPhoto2],
+      photos: [VALID_PHOTO_1, VALID_PHOTO_2],
     })
 
     response.assertStatus(201)
@@ -59,13 +49,13 @@ test.group('POST /api/designs', (group) => {
     assert.equal(photos.length, 2)
     assert.equal(photos[0].position, 1)
     assert.equal(photos[1].position, 2)
-    assert.equal(photos[0].cloudinaryPublicId, validPhoto1.publicId)
-    assert.equal(photos[1].cloudinaryPublicId, validPhoto2.publicId)
+    assert.equal(photos[0].cloudinaryPublicId, VALID_PHOTO_1.publicId)
+    assert.equal(photos[1].cloudinaryPublicId, VALID_PHOTO_2.publicId)
   })
 
   test('expires_at des photos est à J+7', async ({ client, assert }) => {
     const response = await client.post('/api/designs').json({
-      photos: [validPhoto1],
+      photos: [VALID_PHOTO_1],
     })
 
     response.assertStatus(201)
@@ -82,26 +72,12 @@ test.group('POST /api/designs', (group) => {
   })
 
   test("associe le design à l'utilisateur connecté", async ({ client, assert }) => {
-    const user = await User.create({
-      email: 'sophie@example.com',
-      password: 'motdepasse123',
-      provider: 'email',
-    })
-
-    const loginResponse = await client.post('/auth/login').json({
-      email: 'sophie@example.com',
-      password: 'motdepasse123',
-    })
-    loginResponse.assertStatus(200)
-
-    // Pattern identique au test google_oauth.spec.ts "GET /auth/me returns user data"
-    const rawCookies = loginResponse.headers()['set-cookie'] as unknown as string[] | undefined
-    const cookieHeader = rawCookies?.map((c: string) => c.split(';')[0]).join('; ') ?? ''
+    const { cookie, user } = await loginAs(client, { email: 'sophie@example.com' })
 
     const response = await client
       .post('/api/designs')
-      .json({ photos: [validPhoto1] })
-      .header('Cookie', cookieHeader)
+      .json({ photos: [VALID_PHOTO_1] })
+      .header('Cookie', cookie)
 
     response.assertStatus(201)
 
@@ -119,7 +95,7 @@ test.group('POST /api/designs', (group) => {
 
   test('retourne 422 si plus de 2 photos', async ({ client }) => {
     const response = await client.post('/api/designs').json({
-      photos: [validPhoto1, validPhoto2, validPhoto1],
+      photos: [VALID_PHOTO_1, VALID_PHOTO_2, VALID_PHOTO_1],
     })
 
     response.assertStatus(422)

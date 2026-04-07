@@ -1,39 +1,8 @@
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
-import User from '#models/user'
-import Design from '#models/design'
 import Order from '#models/order'
-import { randomBytes } from 'node:crypto'
 import { DateTime } from 'luxon'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function loginAs(client: any, email?: string): Promise<{ cookie: string; user: InstanceType<typeof User> }> {
-  const userEmail = email ?? `test-${Date.now()}@example.com`
-  const user = await User.create({
-    email: userEmail,
-    password: 'motdepasse123',
-    provider: 'email',
-  })
-  const loginResponse = await client.post('/auth/login').json({ email: userEmail, password: 'motdepasse123' })
-  const rawCookies = loginResponse.headers()['set-cookie'] as unknown as string[] | undefined
-  const cookie = rawCookies?.map((c: string) => c.split(';')[0]).join('; ') ?? ''
-  return { cookie, user }
-}
-
-async function createDesignWithPreview(userId: number) {
-  return Design.create({
-    userId,
-    sessionToken: randomBytes(32).toString('hex'),
-    status: 'paid',
-    template: 'boheme',
-    partner1Name: 'Sophie',
-    partner2Name: 'Thomas',
-    weddingDate: DateTime.fromISO('2026-09-15'),
-    previewUrl: 'https://res.cloudinary.com/test/previews/design-1.png',
-    cloudinaryPublicId: 'designs/design-1',
-    expiresAt: DateTime.now().plus({ days: 7 }),
-  })
-}
+import { loginAs, createDesignWithPreview } from '#tests/helpers/index'
 
 test.group('GET /api/orders/:id — enriched response', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
@@ -121,7 +90,7 @@ test.group('GET /api/orders/by-session/:sessionId', (group) => {
   })
 
   test('returns 403 for order owned by another user', async ({ client, assert }) => {
-    const { user: owner } = await loginAs(client, `owner-${Date.now()}@example.com`)
+    const { user: owner } = await loginAs(client, { email: `owner-${Date.now()}@example.com` })
     const design = await createDesignWithPreview(owner.id)
     const stripeSessionId = `cs_test_other_${Date.now()}`
     await Order.create({
@@ -133,7 +102,7 @@ test.group('GET /api/orders/by-session/:sessionId', (group) => {
       stripeSessionId,
     })
 
-    const { cookie: otherCookie } = await loginAs(client, `other-${Date.now()}@example.com`)
+    const { cookie: otherCookie } = await loginAs(client, { email: `other-${Date.now()}@example.com` })
 
     const response = await client
       .get(`/api/orders/by-session/${stripeSessionId}`)

@@ -1,7 +1,7 @@
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 import { DateTime } from 'luxon'
-import { loginAs, createPaidOrderWithDesign } from './_helpers.js'
+import { loginAs, createPaidOrderWithDesign } from '#tests/helpers/index'
 
 test.group('GET /api/orders/:id/download — design re-download', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
@@ -35,10 +35,10 @@ test.group('GET /api/orders/:id/download — design re-download', (group) => {
   })
 
   test('returns 403 for order owned by another user', async ({ client, assert }) => {
-    const { user: owner } = await loginAs(client, `owner-${Date.now()}@example.com`)
+    const { user: owner } = await loginAs(client, { email: `owner-${Date.now()}@example.com` })
     const { order } = await createPaidOrderWithDesign(owner.id)
 
-    const { cookie } = await loginAs(client, `other-${Date.now()}@example.com`)
+    const { cookie } = await loginAs(client, { email: `other-${Date.now()}@example.com` })
 
     const response = await client.get(`/api/orders/${order.id}/download`).header('cookie', cookie)
 

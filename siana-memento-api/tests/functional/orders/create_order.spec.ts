@@ -1,36 +1,8 @@
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
-import User from '#models/user'
-import Design from '#models/design'
 import Order from '#models/order'
-import { randomBytes } from 'node:crypto'
 import { DateTime } from 'luxon'
-
-/**
- * Helper: creates a user, logs in, and returns the session cookie.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function loginAs(client: any, email?: string): Promise<{ cookie: string; user: InstanceType<typeof User> }> {
-  const userEmail = email ?? `test-${Date.now()}@example.com`
-  const user = await User.create({
-    email: userEmail,
-    password: 'motdepasse123',
-    provider: 'email',
-  })
-  const loginResponse = await client.post('/auth/login').json({ email: userEmail, password: 'motdepasse123' })
-  const rawCookies = loginResponse.headers()['set-cookie'] as unknown as string[] | undefined
-  const cookie = rawCookies?.map((c: string) => c.split(';')[0]).join('; ') ?? ''
-  return { cookie, user }
-}
-
-async function createDesignForUser(userId: number, status: Design['status'] = 'completed') {
-  return Design.create({
-    userId,
-    sessionToken: randomBytes(32).toString('hex'),
-    status,
-    expiresAt: DateTime.now().plus({ days: 7 }),
-  })
-}
+import { loginAs, createDesign } from '#tests/helpers/index'
 
 test.group('POST /api/orders', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
@@ -42,7 +14,7 @@ test.group('POST /api/orders', (group) => {
 
   test('creates order for completed design (201 with valid Stripe config, 500 otherwise)', async ({ client, assert }) => {
     const { cookie, user } = await loginAs(client)
-    const design = await createDesignForUser(user.id, 'completed')
+    const design = await createDesign({ userId: user.id, status: 'completed' })
 
     const response = await client
       .post('/api/orders')
@@ -53,7 +25,6 @@ test.group('POST /api/orders', (group) => {
     const status = response.response.status
 
     if (status === 201) {
-      // Stripe config is valid — full flow works
       assert.isTrue(body.success)
       assert.exists(body.data.orderId)
       assert.exists(body.data.checkoutUrl)
@@ -61,23 +32,21 @@ test.group('POST /api/orders', (group) => {
       assert.isNotNull(order)
       assert.equal(order!.status, 'pending')
     } else {
-      // Stripe config is invalid (e.g., test price ID) — verify graceful error handling
       assert.equal(status, 500)
       assert.isFalse(body.success)
       assert.equal(body.error.code, 'STRIPE_SESSION_FAILED')
     }
 
-    // Either way, an order should have been created in DB
     const orders = await Order.query().where('userId', user.id).where('designId', design.id)
     assert.isAbove(orders.length, 0)
     assert.equal(orders[0].amount, 1990)
   })
 
   test('returns 403 for design owned by another user', async ({ client, assert }) => {
-    const { user: owner } = await loginAs(client, `owner-${Date.now()}@example.com`)
-    const design = await createDesignForUser(owner.id, 'completed')
+    const { user: owner } = await loginAs(client, { email: `owner-${Date.now()}@example.com` })
+    const design = await createDesign({ userId: owner.id, status: 'completed' })
 
-    const { cookie: otherCookie } = await loginAs(client, `other-${Date.now()}@example.com`)
+    const { cookie: otherCookie } = await loginAs(client, { email: `other-${Date.now()}@example.com` })
 
     const response = await client
       .post('/api/orders')
@@ -91,7 +60,7 @@ test.group('POST /api/orders', (group) => {
 
   test('returns 422 for design already paid', async ({ client, assert }) => {
     const { cookie, user } = await loginAs(client)
-    const design = await createDesignForUser(user.id, 'paid')
+    const design = await createDesign({ userId: user.id, status: 'paid' })
 
     const response = await client
       .post('/api/orders')
@@ -105,7 +74,7 @@ test.group('POST /api/orders', (group) => {
 
   test('returns 422 for design in draft status', async ({ client, assert }) => {
     const { cookie, user } = await loginAs(client)
-    const design = await createDesignForUser(user.id, 'draft')
+    const design = await createDesign({ userId: user.id, status: 'draft' })
 
     const response = await client
       .post('/api/orders')
@@ -137,18 +106,9 @@ test.group('POST /api/orders — sessionToken security', (group) => {
   const KNOWN_TOKEN = 'a'.repeat(64)
   const WRONG_TOKEN = 'b'.repeat(64)
 
-  async function createAnonDesign(token: string = KNOWN_TOKEN) {
-    return Design.create({
-      userId: null,
-      sessionToken: token,
-      status: 'completed',
-      expiresAt: DateTime.now().plus({ days: 7 }),
-    })
-  }
-
   test('anonymous design + correct sessionToken → 201 (claim succeeds)', async ({ client, assert }) => {
     const { cookie, user } = await loginAs(client)
-    const design = await createAnonDesign()
+    const design = await createDesign({ sessionToken: KNOWN_TOKEN, status: 'completed' })
 
     const response = await client
       .post('/api/orders')
@@ -156,17 +116,15 @@ test.group('POST /api/orders — sessionToken security', (group) => {
       .json({ designId: design.id, sessionToken: KNOWN_TOKEN })
 
     const status = response.response.status
-    // 201 if Stripe config valid, 500 with graceful error otherwise
     assert.oneOf(status, [201, 500])
 
-    // Design should be claimed regardless
     await design.refresh()
     assert.equal(design.userId, user.id)
   })
 
   test('anonymous design + wrong sessionToken → 403', async ({ client, assert }) => {
     const { cookie } = await loginAs(client)
-    const design = await createAnonDesign()
+    const design = await createDesign({ sessionToken: KNOWN_TOKEN, status: 'completed' })
 
     const response = await client
       .post('/api/orders')
@@ -176,14 +134,13 @@ test.group('POST /api/orders — sessionToken security', (group) => {
     response.assertStatus(403)
     assert.equal(response.body().error.code, 'FORBIDDEN')
 
-    // Design must NOT be claimed
     await design.refresh()
     assert.isNull(design.userId)
   })
 
   test('anonymous design + no sessionToken → 403', async ({ client, assert }) => {
     const { cookie } = await loginAs(client)
-    const design = await createAnonDesign()
+    const design = await createDesign({ sessionToken: KNOWN_TOKEN, status: 'completed' })
 
     const response = await client
       .post('/api/orders')
@@ -199,8 +156,8 @@ test.group('POST /api/orders — sessionToken security', (group) => {
 
   test('anonymous design + sessionToken from ANOTHER design → 403', async ({ client, assert }) => {
     const { cookie } = await loginAs(client)
-    const design = await createAnonDesign(KNOWN_TOKEN)
-    await createAnonDesign(WRONG_TOKEN) // another anonymous design
+    const design = await createDesign({ sessionToken: KNOWN_TOKEN, status: 'completed' })
+    await createDesign({ sessionToken: WRONG_TOKEN, status: 'completed' })
 
     const response = await client
       .post('/api/orders')
@@ -215,7 +172,7 @@ test.group('POST /api/orders — sessionToken security', (group) => {
 
   test('owned design + no sessionToken → 201 (sessionToken not needed)', async ({ client, assert }) => {
     const { cookie, user } = await loginAs(client)
-    const design = await createDesignForUser(user.id, 'completed')
+    const design = await createDesign({ userId: user.id, status: 'completed' })
 
     const response = await client
       .post('/api/orders')
@@ -225,7 +182,6 @@ test.group('POST /api/orders — sessionToken security', (group) => {
     const status = response.response.status
     assert.oneOf(status, [201, 500])
 
-    // Order should exist regardless
     const orders = await Order.query().where('userId', user.id).where('designId', design.id)
     assert.isAbove(orders.length, 0)
   })
@@ -236,7 +192,7 @@ test.group('GET /api/orders/:id', (group) => {
 
   test('returns order details for owner', async ({ client, assert }) => {
     const { cookie, user } = await loginAs(client)
-    const design = await createDesignForUser(user.id, 'completed')
+    const design = await createDesign({ userId: user.id, status: 'completed' })
     const order = await Order.create({
       userId: user.id,
       designId: design.id,
@@ -256,8 +212,8 @@ test.group('GET /api/orders/:id', (group) => {
   })
 
   test('returns 403 for order owned by another user', async ({ client }) => {
-    const { user: owner } = await loginAs(client, `owner-${Date.now()}@example.com`)
-    const design = await createDesignForUser(owner.id, 'completed')
+    const { user: owner } = await loginAs(client, { email: `owner-${Date.now()}@example.com` })
+    const design = await createDesign({ userId: owner.id, status: 'completed' })
     const order = await Order.create({
       userId: owner.id,
       designId: design.id,
@@ -265,7 +221,7 @@ test.group('GET /api/orders/:id', (group) => {
       status: 'pending',
     })
 
-    const { cookie: otherCookie } = await loginAs(client, `other-${Date.now()}@example.com`)
+    const { cookie: otherCookie } = await loginAs(client, { email: `other-${Date.now()}@example.com` })
 
     const response = await client
       .get(`/api/orders/${order.id}`)

@@ -1,24 +1,13 @@
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 import Design from '#models/design'
-import User from '#models/user'
+import { loginAs, createDesignViaApi } from '#tests/helpers/index'
 
 test.group('PATCH /api/designs/:id/template', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
-  const validPhoto = {
-    publicId: 'designs/session123/photo1_abc',
-    url: 'https://res.cloudinary.com/mycloud/image/upload/v1234/photo1.jpg',
-  }
-
-  async function createDesign(client: any) {
-    const res = await client.post('/api/designs').json({ photos: [validPhoto] })
-    res.assertStatus(201)
-    return res.body().data as { designId: number; sessionToken: string }
-  }
-
   test('met à jour le template avec sessionToken valide (anonyme)', async ({ client, assert }) => {
-    const { designId, sessionToken } = await createDesign(client)
+    const { designId, sessionToken } = await createDesignViaApi(client)
 
     const response = await client.patch(`/api/designs/${designId}/template`).json({
       template: 'boheme',
@@ -39,7 +28,7 @@ test.group('PATCH /api/designs/:id/template', (group) => {
     const templates = ['boheme', 'moderne', 'classique', 'vintage', 'minimaliste'] as const
 
     for (const template of templates) {
-      const { designId, sessionToken } = await createDesign(client)
+      const { designId, sessionToken } = await createDesignViaApi(client)
 
       const response = await client.patch(`/api/designs/${designId}/template`).json({
         template,
@@ -52,7 +41,7 @@ test.group('PATCH /api/designs/:id/template', (group) => {
   })
 
   test('retourne 422 si template est invalide', async ({ client, assert }) => {
-    const { designId, sessionToken } = await createDesign(client)
+    const { designId, sessionToken } = await createDesignViaApi(client)
 
     const response = await client.patch(`/api/designs/${designId}/template`).json({
       template: 'baroque',
@@ -64,7 +53,7 @@ test.group('PATCH /api/designs/:id/template', (group) => {
   })
 
   test('retourne 403 avec mauvais sessionToken', async ({ client, assert }) => {
-    const { designId } = await createDesign(client)
+    const { designId } = await createDesignViaApi(client)
 
     const response = await client.patch(`/api/designs/${designId}/template`).json({
       template: 'moderne',
@@ -76,7 +65,7 @@ test.group('PATCH /api/designs/:id/template', (group) => {
   })
 
   test('retourne 403 sans sessionToken pour utilisateur anonyme', async ({ client, assert }) => {
-    const { designId } = await createDesign(client)
+    const { designId } = await createDesignViaApi(client)
 
     const response = await client.patch(`/api/designs/${designId}/template`).json({
       template: 'moderne',
@@ -100,33 +89,13 @@ test.group('PATCH /api/designs/:id/template', (group) => {
     client,
     assert,
   }) => {
-    const user = await User.create({
-      email: 'sophie@example.com',
-      password: 'motdepasse123',
-      provider: 'email',
-    })
-
-    const loginResponse = await client.post('/auth/login').json({
-      email: 'sophie@example.com',
-      password: 'motdepasse123',
-    })
-    loginResponse.assertStatus(200)
-
-    const rawCookies = loginResponse.headers()['set-cookie'] as unknown as string[] | undefined
-    const cookieHeader = rawCookies?.map((c: string) => c.split(';')[0]).join('; ') ?? ''
-
-    // Créer un design en tant qu'utilisateur connecté
-    const createRes = await client
-      .post('/api/designs')
-      .json({ photos: [validPhoto] })
-      .header('Cookie', cookieHeader)
-    createRes.assertStatus(201)
-    const { designId } = createRes.body().data
+    const { cookie, user } = await loginAs(client, { email: 'sophie@example.com' })
+    const { designId } = await createDesignViaApi(client, cookie)
 
     const response = await client
       .patch(`/api/designs/${designId}/template`)
       .json({ template: 'vintage' })
-      .header('Cookie', cookieHeader)
+      .header('Cookie', cookie)
 
     response.assertStatus(200)
     assert.equal(response.body().data.template, 'vintage')
@@ -140,44 +109,15 @@ test.group('PATCH /api/designs/:id/template', (group) => {
     client,
     assert,
   }) => {
-    // Créer propriétaire
-    await User.create({
-      email: 'owner@example.com',
-      password: 'motdepasse123',
-      provider: 'email',
-    })
-    const ownerLogin = await client
-      .post('/auth/login')
-      .json({ email: 'owner@example.com', password: 'motdepasse123' })
-    const ownerCookies = (ownerLogin.headers()['set-cookie'] as unknown as string[] | undefined)
-      ?.map((c: string) => c.split(';')[0])
-      .join('; ') ?? ''
+    const { cookie: ownerCookie } = await loginAs(client, { email: 'owner@example.com' })
+    const { designId } = await createDesignViaApi(client, ownerCookie)
 
-    const createRes = await client
-      .post('/api/designs')
-      .json({ photos: [validPhoto] })
-      .header('Cookie', ownerCookies)
-    const { designId } = createRes.body().data
-
-    // Créer attaquant
-    await User.create({
-      email: 'attacker@example.com',
-      password: 'motdepasse123',
-      provider: 'email',
-    })
-    const attackerLogin = await client
-      .post('/auth/login')
-      .json({ email: 'attacker@example.com', password: 'motdepasse123' })
-    const attackerCookies = (
-      attackerLogin.headers()['set-cookie'] as unknown as string[] | undefined
-    )
-      ?.map((c: string) => c.split(';')[0])
-      .join('; ') ?? ''
+    const { cookie: attackerCookie } = await loginAs(client, { email: 'attacker@example.com' })
 
     const response = await client
       .patch(`/api/designs/${designId}/template`)
       .json({ template: 'minimaliste' })
-      .header('Cookie', attackerCookies)
+      .header('Cookie', attackerCookie)
 
     response.assertStatus(403)
     assert.equal(response.body().error.code, 'FORBIDDEN')

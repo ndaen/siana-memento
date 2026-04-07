@@ -1,37 +1,19 @@
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 import Design from '#models/design'
-import User from '#models/user'
+import { loginAs, createDesignViaApi, VALID_CONFIG_PAYLOAD } from '#tests/helpers/index'
 
 test.group('PATCH /api/designs/:id/configure', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
-
-  const validPhoto = {
-    publicId: 'designs/session123/photo1_abc',
-    url: 'https://res.cloudinary.com/mycloud/image/upload/v1234/photo1.jpg',
-  }
-
-  const validConfigPayload = {
-    partner1Name: 'Sophie',
-    partner2Name: 'Thomas',
-    weddingDate: '2026-09-20',
-    weddingLocation: 'Château de Lastours',
-  }
-
-  async function createDesign(client: any) {
-    const res = await client.post('/api/designs').json({ photos: [validPhoto] })
-    res.assertStatus(201)
-    return res.body().data as { designId: number; sessionToken: string }
-  }
 
   test('met à jour la configuration avec sessionToken valide (anonyme)', async ({
     client,
     assert,
   }) => {
-    const { designId, sessionToken } = await createDesign(client)
+    const { designId, sessionToken } = await createDesignViaApi(client)
 
     const response = await client.patch(`/api/designs/${designId}/configure`).json({
-      ...validConfigPayload,
+      ...VALID_CONFIG_PAYLOAD,
       sessionToken,
     })
 
@@ -48,7 +30,7 @@ test.group('PATCH /api/designs/:id/configure', (group) => {
   })
 
   test('retourne 422 si partner1Name est absent', async ({ client, assert }) => {
-    const { designId, sessionToken } = await createDesign(client)
+    const { designId, sessionToken } = await createDesignViaApi(client)
 
     const response = await client.patch(`/api/designs/${designId}/configure`).json({
       partner2Name: 'Thomas',
@@ -62,10 +44,10 @@ test.group('PATCH /api/designs/:id/configure', (group) => {
   })
 
   test('retourne 422 si partner1Name est vide', async ({ client, assert }) => {
-    const { designId, sessionToken } = await createDesign(client)
+    const { designId, sessionToken } = await createDesignViaApi(client)
 
     const response = await client.patch(`/api/designs/${designId}/configure`).json({
-      ...validConfigPayload,
+      ...VALID_CONFIG_PAYLOAD,
       partner1Name: '',
       sessionToken,
     })
@@ -75,11 +57,11 @@ test.group('PATCH /api/designs/:id/configure', (group) => {
   })
 
   test('retourne 422 si weddingDate a un format invalide', async ({ client, assert }) => {
-    const { designId, sessionToken } = await createDesign(client)
+    const { designId, sessionToken } = await createDesignViaApi(client)
 
     const response = await client.patch(`/api/designs/${designId}/configure`).json({
-      ...validConfigPayload,
-      weddingDate: '20/09/2026', // format invalide — doit être YYYY-MM-DD
+      ...VALID_CONFIG_PAYLOAD,
+      weddingDate: '20/09/2026',
       sessionToken,
     })
 
@@ -91,11 +73,11 @@ test.group('PATCH /api/designs/:id/configure', (group) => {
     client,
     assert,
   }) => {
-    const { designId, sessionToken } = await createDesign(client)
+    const { designId, sessionToken } = await createDesignViaApi(client)
 
     const response = await client.patch(`/api/designs/${designId}/configure`).json({
-      ...validConfigPayload,
-      weddingDate: '2026-13-40', // format regex OK mais date impossible
+      ...VALID_CONFIG_PAYLOAD,
+      weddingDate: '2026-13-40',
       sessionToken,
     })
 
@@ -104,7 +86,7 @@ test.group('PATCH /api/designs/:id/configure', (group) => {
   })
 
   test('retourne 422 si weddingLocation est absent', async ({ client, assert }) => {
-    const { designId, sessionToken } = await createDesign(client)
+    const { designId, sessionToken } = await createDesignViaApi(client)
 
     const response = await client.patch(`/api/designs/${designId}/configure`).json({
       partner1Name: 'Sophie',
@@ -118,10 +100,10 @@ test.group('PATCH /api/designs/:id/configure', (group) => {
   })
 
   test('retourne 403 avec mauvais sessionToken', async ({ client, assert }) => {
-    const { designId } = await createDesign(client)
+    const { designId } = await createDesignViaApi(client)
 
     const response = await client.patch(`/api/designs/${designId}/configure`).json({
-      ...validConfigPayload,
+      ...VALID_CONFIG_PAYLOAD,
       sessionToken: 'a'.repeat(64),
     })
 
@@ -131,7 +113,7 @@ test.group('PATCH /api/designs/:id/configure', (group) => {
 
   test('retourne 404 si design inexistant', async ({ client, assert }) => {
     const response = await client.patch('/api/designs/999999/configure').json({
-      ...validConfigPayload,
+      ...VALID_CONFIG_PAYLOAD,
       sessionToken: 'a'.repeat(64),
     })
 
@@ -143,33 +125,13 @@ test.group('PATCH /api/designs/:id/configure', (group) => {
     client,
     assert,
   }) => {
-    const user = await User.create({
-      email: 'sophie@example.com',
-      password: 'motdepasse123',
-      provider: 'email',
-    })
-
-    const loginResponse = await client.post('/auth/login').json({
-      email: 'sophie@example.com',
-      password: 'motdepasse123',
-    })
-    loginResponse.assertStatus(200)
-
-    const rawCookies = loginResponse.headers()['set-cookie'] as unknown as string[] | undefined
-    const cookieHeader = rawCookies?.map((c: string) => c.split(';')[0]).join('; ') ?? ''
-
-    // Créer un design en tant qu'utilisateur connecté
-    const createRes = await client
-      .post('/api/designs')
-      .json({ photos: [validPhoto] })
-      .header('Cookie', cookieHeader)
-    createRes.assertStatus(201)
-    const { designId } = createRes.body().data
+    const { cookie, user } = await loginAs(client, { email: 'sophie@example.com' })
+    const { designId } = await createDesignViaApi(client, cookie)
 
     const response = await client
       .patch(`/api/designs/${designId}/configure`)
-      .json(validConfigPayload)
-      .header('Cookie', cookieHeader)
+      .json(VALID_CONFIG_PAYLOAD)
+      .header('Cookie', cookie)
 
     response.assertStatus(200)
     assert.isTrue(response.body().success)
@@ -184,44 +146,15 @@ test.group('PATCH /api/designs/:id/configure', (group) => {
     client,
     assert,
   }) => {
-    // Créer propriétaire
-    await User.create({
-      email: 'owner@example.com',
-      password: 'motdepasse123',
-      provider: 'email',
-    })
-    const ownerLogin = await client
-      .post('/auth/login')
-      .json({ email: 'owner@example.com', password: 'motdepasse123' })
-    const ownerCookies = (ownerLogin.headers()['set-cookie'] as unknown as string[] | undefined)
-      ?.map((c: string) => c.split(';')[0])
-      .join('; ') ?? ''
+    const { cookie: ownerCookie } = await loginAs(client, { email: 'owner@example.com' })
+    const { designId } = await createDesignViaApi(client, ownerCookie)
 
-    const createRes = await client
-      .post('/api/designs')
-      .json({ photos: [validPhoto] })
-      .header('Cookie', ownerCookies)
-    const { designId } = createRes.body().data
-
-    // Créer attaquant
-    await User.create({
-      email: 'attacker@example.com',
-      password: 'motdepasse123',
-      provider: 'email',
-    })
-    const attackerLogin = await client
-      .post('/auth/login')
-      .json({ email: 'attacker@example.com', password: 'motdepasse123' })
-    const attackerCookies = (
-      attackerLogin.headers()['set-cookie'] as unknown as string[] | undefined
-    )
-      ?.map((c: string) => c.split(';')[0])
-      .join('; ') ?? ''
+    const { cookie: attackerCookie } = await loginAs(client, { email: 'attacker@example.com' })
 
     const response = await client
       .patch(`/api/designs/${designId}/configure`)
-      .json(validConfigPayload)
-      .header('Cookie', attackerCookies)
+      .json(VALID_CONFIG_PAYLOAD)
+      .header('Cookie', attackerCookie)
 
     response.assertStatus(403)
     assert.equal(response.body().error.code, 'FORBIDDEN')

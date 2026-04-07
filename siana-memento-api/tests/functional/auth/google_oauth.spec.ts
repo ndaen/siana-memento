@@ -2,49 +2,41 @@ import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 import User from '#models/user'
 import AuthService from '#services/auth_service'
+import { extractCookie } from '#tests/helpers/index'
 
 test.group('Google OAuth', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   // ─── GET /auth/google ───────────────────────────────────────────────────────
 
-  test('GET /auth/google redirects to Google consent screen', async ({ client }) => {
-    // .redirects(0) : ne pas suivre la redirection — on vérifie le 302 directement
+  test('GET /auth/google redirects to Google consent screen', async ({ client, assert }) => {
     const response = await client.get('/auth/google').redirects(0)
     response.assertStatus(302)
     const location = response.header('location') ?? ''
-    assert_contains(location, 'accounts.google.com')
+    assert.include(location, 'accounts.google.com')
   })
 
-  test('GET /auth/google?returnTo=/reveal/abc123 still redirects to Google', async ({ client }) => {
+  test('GET /auth/google?returnTo=/reveal/abc123 still redirects to Google', async ({ client, assert }) => {
     const response = await client.get('/auth/google?returnTo=/reveal/abc123').redirects(0)
     response.assertStatus(302)
     const location = response.header('location') ?? ''
-    assert_contains(location, 'accounts.google.com')
+    assert.include(location, 'accounts.google.com')
   })
 
   test('GET /auth/google?returnTo=http://evil.com ignores malicious returnTo', async ({
     client,
+    assert,
   }) => {
-    // returnTo ne commençant pas par '/' doit être ignoré (sécurité open redirect)
-    // Le comportement observable : la route redirige toujours vers Google (pas d'erreur)
     const response = await client.get('/auth/google?returnTo=http://evil.com').redirects(0)
     response.assertStatus(302)
     const location = response.header('location') ?? ''
-    assert_contains(location, 'accounts.google.com')
+    assert.include(location, 'accounts.google.com')
   })
 
-  test('returnTo stored in session does not affect callback error path', async ({ client }) => {
-    // AC#4 — test indirecte : vérifie que oauth_return_to en session ne perturbe pas
-    // le path d'erreur du callback (session cross-request fonctionne correctement)
-    // Note : tester le redirect success path vers returnTo nécessite un mock Ally
-    // non disponible dans cette stack (pas de sinon) — ce test couvre la robustesse du mécanisme.
-
-    // Étape 1 : stocker returnTo en session via /auth/google
+  test('returnTo stored in session does not affect callback error path', async ({ client, assert }) => {
     const oauthResponse = await client.get('/auth/google?returnTo=/reveal/abc123').redirects(0)
     oauthResponse.assertStatus(302)
 
-    // Étape 2 : récupérer le cookie de session posé par /auth/google
     const sessionCookieRaw = oauthResponse.header('set-cookie') as unknown as
       | string[]
       | string
@@ -53,7 +45,6 @@ test.group('Google OAuth', (group) => {
       ? (sessionCookieRaw.find((c) => c.startsWith('adonis-session'))?.split(';')[0] ?? '')
       : ''
 
-    // Étape 3 : appeler le callback avec une erreur en réutilisant le cookie de session
     const callbackResponse = await client
       .get('/auth/google/callback?error=access_denied')
       .header('Cookie', sessionCookieHeader)
@@ -61,36 +52,33 @@ test.group('Google OAuth', (group) => {
 
     callbackResponse.assertStatus(302)
     const location = callbackResponse.header('location') ?? ''
-    // Le path d'erreur doit rediriger vers oauth=denied, jamais vers returnTo
-    assert_contains(location, 'oauth=denied')
+    assert.include(location, 'oauth=denied')
   })
 
   // ─── GET /auth/google/callback (error cases — testables sans Google) ───────
 
-  test('callback with access_denied redirects to /login?oauth=denied', async ({ client }) => {
+  test('callback with access_denied redirects to /login?oauth=denied', async ({ client, assert }) => {
     const response = await client.get('/auth/google/callback?error=access_denied').redirects(0)
     response.assertStatus(302)
     const location = response.header('location') ?? ''
-    assert_contains(location, 'oauth=denied')
+    assert.include(location, 'oauth=denied')
   })
 
-  test('callback with generic error redirects to /login?oauth=error', async ({ client }) => {
+  test('callback with generic error redirects to /login?oauth=error', async ({ client, assert }) => {
     const response = await client.get('/auth/google/callback?error=server_error').redirects(0)
     response.assertStatus(302)
     const location = response.header('location') ?? ''
-    assert_contains(location, 'oauth=error')
+    assert.include(location, 'oauth=error')
   })
 
   // ─── GET /auth/me ──────────────────────────────────────────────────────────
 
   test('GET /auth/me returns 401 when not authenticated', async ({ client }) => {
-    // AdonisJS retourne {"errors":[{"message":"Unauthorized access"}]} pour les 401 non gérés
     const response = await client.get('/auth/me')
     response.assertStatus(401)
   })
 
   test('GET /auth/me returns user data when authenticated', async ({ client, assert }) => {
-    // Étape 1 : créer un user et se connecter pour obtenir le cookie de session
     await User.create({
       email: 'oauth-me@example.com',
       password: 'motdepasse123',
@@ -103,11 +91,8 @@ test.group('Google OAuth', (group) => {
     })
     loginResponse.assertStatus(200)
 
-    // Étape 2 : extraire les cookies de la réponse login et les passer à /auth/me
-    const rawCookies = loginResponse.headers()['set-cookie'] as unknown as string[] | undefined
-    const cookieHeader = rawCookies?.map((c: string) => c.split(';')[0]).join('; ') ?? ''
+    const cookieHeader = await extractCookie(loginResponse)
 
-    // Étape 3 : appeler /auth/me avec le cookie de session
     const meResponse = await client.get('/auth/me').header('Cookie', cookieHeader)
     meResponse.assertStatus(200)
 
@@ -135,7 +120,6 @@ test.group('Google OAuth', (group) => {
     assert.equal(user.providerId, 'google-id-123')
     assert.isNull(user.password)
 
-    // Vérifier qu'un seul user existe en base
     const count = await User.query().where('email', 'newgoogle@example.com').count('* as total')
     assert.equal(Number(count[0].$extras.total), 1)
   })
@@ -145,14 +129,12 @@ test.group('Google OAuth', (group) => {
   }) => {
     const service = new AuthService()
 
-    // Utilisateur déjà en base (inscrit via email/password)
     const existing = await User.create({
       email: 'existing-oauth@example.com',
       password: 'motdepasse123',
       provider: 'email',
     })
 
-    // OAuth avec le même email → doit retourner le user existant (pas de doublon)
     const user = await service.findOrCreateOAuthUser({
       email: 'existing-oauth@example.com',
       fullName: 'Existing User',
@@ -161,17 +143,9 @@ test.group('Google OAuth', (group) => {
 
     assert.equal(user.id, existing.id)
 
-    // Vérifier : toujours 1 seul user en base
     const count = await User.query()
       .where('email', 'existing-oauth@example.com')
       .count('* as total')
     assert.equal(Number(count[0].$extras.total), 1)
   })
 })
-
-// Helper inline pour les assertions sur les chaînes
-function assert_contains(haystack: string | undefined, needle: string) {
-  if (!haystack?.includes(needle)) {
-    throw new Error(`Expected "${haystack}" to contain "${needle}"`)
-  }
-}

@@ -4,7 +4,7 @@ import Design from '#models/design'
 import Order from '#models/order'
 import { randomBytes } from 'node:crypto'
 import { DateTime } from 'luxon'
-import { loginAs, createPaidOrderWithDesign } from './_helpers.js'
+import { loginAs, createPaidOrderWithDesign } from '#tests/helpers/index'
 
 test.group('GET /api/orders — order history', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
@@ -24,10 +24,10 @@ test.group('GET /api/orders — order history', (group) => {
   })
 
   test('does NOT return orders from another user', async ({ client, assert }) => {
-    const { user: otherUser } = await loginAs(client, `other-${Date.now()}@example.com`)
+    const { user: otherUser } = await loginAs(client, { email: `other-${Date.now()}@example.com` })
     await createPaidOrderWithDesign(otherUser.id)
 
-    const { cookie } = await loginAs(client, `me-${Date.now()}@example.com`)
+    const { cookie } = await loginAs(client, { email: `me-${Date.now()}@example.com` })
 
     const response = await client.get('/api/orders').header('cookie', cookie)
 
