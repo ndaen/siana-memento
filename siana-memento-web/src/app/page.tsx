@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Image from "next/image";
 import { Camera, Palette, Sparkles, Star } from "lucide-react";
 import HeroSection from "@/components/siana/landing/HeroSection";
 import ScrollFloat from "@/components/ScrollFloat";
@@ -11,36 +11,31 @@ const examples = [
     template: "Bohème",
     couple: "Sophie & Thomas",
     description: "Un mariage champêtre en Provence, style aquarelle douce aux tons terre cuite.",
-    bgColor: "bg-[#C17A6F]",
-    accentColor: "text-[#F5E6D3]",
+    image: "/home/sophie&thomas.png",
   },
   {
     template: "Moderne",
     couple: "Léa & Antoine",
     description: "Un mariage urbain et graphique, lignes géométriques en noir et or.",
-    bgColor: "bg-[#1a1a1a]",
-    accentColor: "text-[#C9A84C]",
+    image: "/home/lea&antoine.png",
   },
   {
     template: "Classique",
     couple: "Marie & Hugo",
     description: "Un mariage intemporel et raffiné, portrait dessiné aux tons bordeaux et crème.",
-    bgColor: "bg-[#800020]",
-    accentColor: "text-[#F5E6D3]",
+    image: "/home/marie&hugo.png",
   },
   {
     template: "Vintage",
     couple: "Camille & Julien",
     description: "Un mariage rétro inspiré des années 70, tons ocre et olive chaleureux.",
-    bgColor: "bg-[#A67C52]",
-    accentColor: "text-[#F5E6D3]",
+    image: "/home/camille&julien.png",
   },
   {
     template: "Minimaliste",
     couple: "Emma & Lucas",
     description: "Un mariage épuré et zen, dessin one-line sur fond nude tout en sobriété.",
-    bgColor: "bg-[#E8DCD4]",
-    accentColor: "text-[#8B7355]",
+    image: "/home/emma&lucas.png",
   },
 ];
 
@@ -162,15 +157,14 @@ export default function Home() {
                 <article
                   aria-label={`${example.couple} — Style ${example.template}`}
                 >
-                  <div
-                    className={`${example.bgColor} flex aspect-[3/4] items-center justify-center`}
-                    aria-hidden="true"
-                  >
-                    <span
-                      className={`${example.accentColor} text-lg font-semibold opacity-60`}
-                    >
-                      {example.template}
-                    </span>
+                  <div className="relative aspect-[3/4] overflow-hidden">
+                    <Image
+                      src={example.image}
+                      alt={`Exemple de Save the Date style ${example.template} pour ${example.couple}`}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="object-cover"
+                    />
                   </div>
                   <div className="p-4">
                     <h3 className="text-sm font-semibold text-foreground">
