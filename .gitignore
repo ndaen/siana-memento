@@ -57,3 +57,6 @@ _bmad/
 siana-google-generation/
 .agent/
 .agents/
+skills/
+skills-lock.json
+test-results/
