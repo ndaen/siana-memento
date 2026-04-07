@@ -121,7 +121,7 @@ test.group('PATCH /api/designs/:id/configure', (group) => {
     assert.equal(response.body().error.code, 'DESIGN_NOT_FOUND')
   })
 
-  test("met à jour la configuration pour un utilisateur connecté possédant le design", async ({
+  test('met à jour la configuration pour un utilisateur connecté possédant le design', async ({
     client,
     assert,
   }) => {

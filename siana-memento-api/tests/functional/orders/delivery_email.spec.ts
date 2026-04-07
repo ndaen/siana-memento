@@ -39,7 +39,10 @@ test.group('Email Service — sendDesignDelivery', (group) => {
     const { user } = await createPaidOrder()
     // User email has leading/trailing spaces
     assert.isTrue(user.email.startsWith(' '))
-    assert.equal(user.email.trim(), `delivery-${user.email.trim().split('@')[0].replace('delivery-', '')}@example.com`)
+    assert.equal(
+      user.email.trim(),
+      `delivery-${user.email.trim().split('@')[0].replace('delivery-', '')}@example.com`
+    )
     // Verify trim produces valid email
     const trimmed = user.email.trim()
     assert.isFalse(trimmed.startsWith(' '))
@@ -73,7 +76,9 @@ test.group('Email Service — sendDesignDelivery', (group) => {
     // The handleCheckoutCompleted check: if (order.emailSentAt) return — skip
   })
 
-  test('sendDesignDelivery returns success false when cloudinaryPublicId is null', async ({ assert }) => {
+  test('sendDesignDelivery returns success false when cloudinaryPublicId is null', async ({
+    assert,
+  }) => {
     const { sendDesignDelivery } = await import('#services/email_service')
 
     const user = await User.create({
@@ -101,7 +106,9 @@ test.group('Email Service — sendDesignDelivery', (group) => {
     assert.isUndefined(result.resendId)
   })
 
-  test('sendDesignDelivery returns success false when Cloudinary fetch fails', async ({ assert }) => {
+  test('sendDesignDelivery returns success false when Cloudinary fetch fails', async ({
+    assert,
+  }) => {
     const { sendDesignDelivery } = await import('#services/email_service')
 
     const user = await User.create({

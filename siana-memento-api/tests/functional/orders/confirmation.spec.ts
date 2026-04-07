@@ -7,7 +7,10 @@ import { loginAs, createDesignWithPreview } from '#tests/helpers/index'
 test.group('GET /api/orders/:id — enriched response', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
-  test('returns design info (template, partner names, weddingDate, previewUrl)', async ({ client, assert }) => {
+  test('returns design info (template, partner names, weddingDate, previewUrl)', async ({
+    client,
+    assert,
+  }) => {
     const { cookie, user } = await loginAs(client)
     const design = await createDesignWithPreview(user.id)
     const order = await Order.create({
@@ -19,9 +22,7 @@ test.group('GET /api/orders/:id — enriched response', (group) => {
       stripeSessionId: 'cs_test_enriched',
     })
 
-    const response = await client
-      .get(`/api/orders/${order.id}`)
-      .header('cookie', cookie)
+    const response = await client.get(`/api/orders/${order.id}`).header('cookie', cookie)
 
     response.assertStatus(200)
     const body = response.body()
@@ -34,7 +35,10 @@ test.group('GET /api/orders/:id — enriched response', (group) => {
     assert.equal(body.data.design.partner1Name, 'Sophie')
     assert.equal(body.data.design.partner2Name, 'Thomas')
     assert.exists(body.data.design.weddingDate)
-    assert.equal(body.data.design.previewUrl, 'https://res.cloudinary.com/test/previews/design-1.png')
+    assert.equal(
+      body.data.design.previewUrl,
+      'https://res.cloudinary.com/test/previews/design-1.png'
+    )
   })
 
   test('does NOT expose cloudinaryPublicId in response', async ({ client, assert }) => {
@@ -48,9 +52,7 @@ test.group('GET /api/orders/:id — enriched response', (group) => {
       paidAt: DateTime.now(),
     })
 
-    const response = await client
-      .get(`/api/orders/${order.id}`)
-      .header('cookie', cookie)
+    const response = await client.get(`/api/orders/${order.id}`).header('cookie', cookie)
 
     response.assertStatus(200)
     const body = response.body()
@@ -102,7 +104,9 @@ test.group('GET /api/orders/by-session/:sessionId', (group) => {
       stripeSessionId,
     })
 
-    const { cookie: otherCookie } = await loginAs(client, { email: `other-${Date.now()}@example.com` })
+    const { cookie: otherCookie } = await loginAs(client, {
+      email: `other-${Date.now()}@example.com`,
+    })
 
     const response = await client
       .get(`/api/orders/by-session/${stripeSessionId}`)

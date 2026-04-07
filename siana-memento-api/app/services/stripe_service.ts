@@ -56,7 +56,10 @@ export function constructWebhookEvent(rawBody: string, signature: string): Strip
 export async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const orderId = session.client_reference_id
   if (!orderId) {
-    logger.error({ event: 'webhook_missing_reference', sessionId: session.id }, 'Missing client_reference_id')
+    logger.error(
+      { event: 'webhook_missing_reference', sessionId: session.id },
+      'Missing client_reference_id'
+    )
     return
   }
 

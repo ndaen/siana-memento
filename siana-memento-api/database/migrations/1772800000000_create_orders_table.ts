@@ -23,10 +23,7 @@ export default class extends BaseSchema {
       table.string('stripe_session_id', 255).nullable().unique()
       table.string('stripe_payment_intent_id', 255).nullable()
       table.integer('amount').unsigned().notNullable().defaultTo(1990)
-      table
-        .enum('status', ['pending', 'paid', 'failed'])
-        .notNullable()
-        .defaultTo('pending')
+      table.enum('status', ['pending', 'paid', 'failed']).notNullable().defaultTo('pending')
       table.timestamp('paid_at').nullable()
 
       table.timestamp('created_at').notNullable()

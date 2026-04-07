@@ -23,7 +23,10 @@ export default class WebhooksController {
       const rawBody = request.raw() ?? ''
       event = constructWebhookEvent(rawBody, signature)
     } catch (err) {
-      logger.warn({ event: 'webhook_signature_invalid', error: String(err) }, 'Invalid Stripe webhook signature')
+      logger.warn(
+        { event: 'webhook_signature_invalid', error: String(err) },
+        'Invalid Stripe webhook signature'
+      )
       return response.badRequest({ error: 'Invalid signature' })
     }
 
@@ -38,7 +41,10 @@ export default class WebhooksController {
           await handleCheckoutCompleted(event.data.object)
           break
         default:
-          logger.info({ event: 'webhook_unhandled_type', type: event.type }, 'Unhandled Stripe event type')
+          logger.info(
+            { event: 'webhook_unhandled_type', type: event.type },
+            'Unhandled Stripe event type'
+          )
       }
 
       await markEventProcessed(event.id, event.type)

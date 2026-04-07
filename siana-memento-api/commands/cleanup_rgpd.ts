@@ -20,7 +20,11 @@ export default class CleanupRgpd extends BaseCommand {
 
     // Phase 1 : Photos expirées
     // TODO Growth: paginate si volume > 1000 rows
-    const expiredPhotos = await Photo.query().where('expiresAt', '<', now.toSQL({ includeOffset: false }))
+    const expiredPhotos = await Photo.query().where(
+      'expiresAt',
+      '<',
+      now.toSQL({ includeOffset: false })
+    )
 
     for (const photo of expiredPhotos) {
       try {
@@ -28,13 +32,24 @@ export default class CleanupRgpd extends BaseCommand {
         await photo.delete()
         photosDeleted++
         logger.info(
-          { event: 'rgpd_cleanup', type: 'photo', id: photo.id, cloudinaryPublicId: photo.cloudinaryPublicId },
+          {
+            event: 'rgpd_cleanup',
+            type: 'photo',
+            id: photo.id,
+            cloudinaryPublicId: photo.cloudinaryPublicId,
+          },
           'Photo RGPD supprimée'
         )
       } catch (err) {
         errorsCount++
         logger.error(
-          { event: 'rgpd_cleanup_error', type: 'photo', id: photo.id, cloudinaryPublicId: photo.cloudinaryPublicId, error: String(err) },
+          {
+            event: 'rgpd_cleanup_error',
+            type: 'photo',
+            id: photo.id,
+            cloudinaryPublicId: photo.cloudinaryPublicId,
+            error: String(err),
+          },
           'Échec suppression photo'
         )
       }
@@ -55,7 +70,13 @@ export default class CleanupRgpd extends BaseCommand {
           } catch (cloudinaryErr) {
             errorsCount++
             logger.error(
-              { event: 'rgpd_cleanup_error', type: 'design_cloudinary', id: design.id, cloudinaryPublicId: design.cloudinaryPublicId, error: String(cloudinaryErr) },
+              {
+                event: 'rgpd_cleanup_error',
+                type: 'design_cloudinary',
+                id: design.id,
+                cloudinaryPublicId: design.cloudinaryPublicId,
+                error: String(cloudinaryErr),
+              },
               'Échec suppression Cloudinary design — design marqué expired quand même'
             )
           }
@@ -64,13 +85,24 @@ export default class CleanupRgpd extends BaseCommand {
         await design.save()
         designsExpired++
         logger.info(
-          { event: 'rgpd_cleanup', type: 'design', id: design.id, cloudinaryPublicId: design.cloudinaryPublicId },
+          {
+            event: 'rgpd_cleanup',
+            type: 'design',
+            id: design.id,
+            cloudinaryPublicId: design.cloudinaryPublicId,
+          },
           'Design RGPD expiré'
         )
       } catch (err) {
         errorsCount++
         logger.error(
-          { event: 'rgpd_cleanup_error', type: 'design', id: design.id, cloudinaryPublicId: design.cloudinaryPublicId, error: String(err) },
+          {
+            event: 'rgpd_cleanup_error',
+            type: 'design',
+            id: design.id,
+            cloudinaryPublicId: design.cloudinaryPublicId,
+            error: String(err),
+          },
           'Échec expiration design'
         )
       }

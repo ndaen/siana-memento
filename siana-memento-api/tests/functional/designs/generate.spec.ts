@@ -30,7 +30,10 @@ test.group('POST /api/designs/:id/generate', (group) => {
   // Les designs doivent appartenir à l'utilisateur connecté (userId match)
   // ─────────────────────────────────────────────────────────────────────
 
-  test('retourne 403 avec un sessionToken incorrect pour design anonyme', async ({ client, assert }) => {
+  test('retourne 403 avec un sessionToken incorrect pour design anonyme', async ({
+    client,
+    assert,
+  }) => {
     const { cookie } = await loginAs(client)
     const design = await createConfiguredDesign(SESSION_TOKEN)
 
@@ -89,10 +92,7 @@ test.group('POST /api/designs/:id/generate', (group) => {
     assert.equal(response.body().error.code, 'DESIGN_NOT_CONFIGURED')
   })
 
-  test('retourne 400 MAX_ITERATIONS_REACHED si iterationsUsed >= 3', async ({
-    client,
-    assert,
-  }) => {
+  test('retourne 400 MAX_ITERATIONS_REACHED si iterationsUsed >= 3', async ({ client, assert }) => {
     const { cookie, user } = await loginAs(client)
     const design = await createConfiguredDesign(SESSION_TOKEN, user.id)
     await design.merge({ iterationsUsed: 3 }).save()
@@ -117,7 +117,10 @@ test.group('POST /api/designs/:id/generate', (group) => {
     })
     const design = await createConfiguredDesign(SESSION_TOKEN, user1.id)
 
-    const { cookie } = await loginAs(client, { email: 'thomas@example.com', password: 'autremotdepasse' })
+    const { cookie } = await loginAs(client, {
+      email: 'thomas@example.com',
+      password: 'autremotdepasse',
+    })
 
     const response = await client
       .post(`/api/designs/${design.id}/generate`)
@@ -158,7 +161,10 @@ test.group('POST /api/designs/:id/generate', (group) => {
       .json({ sessionToken: SESSION_TOKEN })
       .header('Cookie', cookie)
 
-    assert.isTrue([500].includes(response.status()), `Status attendu 500, reçu ${response.status()}`)
+    assert.isTrue(
+      [500].includes(response.status()),
+      `Status attendu 500, reçu ${response.status()}`
+    )
 
     const updatedDesign = await Design.find(design.id)
     assert.equal(updatedDesign!.status, 'draft', 'Le status doit être revenu à draft après échec')

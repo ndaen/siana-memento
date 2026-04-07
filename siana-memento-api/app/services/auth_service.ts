@@ -19,7 +19,11 @@ export default class AuthService {
     return User.verifyCredentials(email, password)
   }
 
-  async findOrCreateOAuthUser(data: { email: string; fullName: string | null; providerId: string }) {
+  async findOrCreateOAuthUser(data: {
+    email: string
+    fullName: string | null
+    providerId: string
+  }) {
     let user = await User.findBy('email', data.email)
 
     if (!user) {

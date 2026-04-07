@@ -122,12 +122,18 @@ export default class OrdersController {
     try {
       session = await createCheckoutSession(order, user.email)
     } catch (err) {
-      logger.error({ event: 'stripe_checkout_failed', orderId: order.id, error: String(err) }, 'Stripe checkout session creation failed')
+      logger.error(
+        { event: 'stripe_checkout_failed', orderId: order.id, error: String(err) },
+        'Stripe checkout session creation failed'
+      )
       order.status = 'failed'
       await order.save()
       return response.internalServerError({
         success: false,
-        error: { code: 'STRIPE_SESSION_FAILED', message: 'Erreur lors de la création du paiement. Veuillez réessayer.' },
+        error: {
+          code: 'STRIPE_SESSION_FAILED',
+          message: 'Erreur lors de la création du paiement. Veuillez réessayer.',
+        },
       })
     }
 
@@ -147,10 +153,7 @@ export default class OrdersController {
   async show({ auth, params, response }: HttpContext) {
     const user = auth.getUserOrFail()
 
-    const order = await Order.query()
-      .where('id', params.id)
-      .preload('design')
-      .first()
+    const order = await Order.query().where('id', params.id).preload('design').first()
 
     if (!order) {
       return response.notFound({
@@ -212,10 +215,7 @@ export default class OrdersController {
   async download({ auth, params, response }: HttpContext) {
     const user = auth.getUserOrFail()
 
-    const order = await Order.query()
-      .where('id', params.id)
-      .preload('design')
-      .first()
+    const order = await Order.query().where('id', params.id).preload('design').first()
 
     if (!order) {
       return response.notFound({
@@ -234,14 +234,18 @@ export default class OrdersController {
     if (order.status !== 'paid') {
       return response.badRequest({
         success: false,
-        error: { code: 'ORDER_NOT_PAID', message: 'Cette commande n\'a pas été payée.' },
+        error: { code: 'ORDER_NOT_PAID', message: "Cette commande n'a pas été payée." },
       })
     }
 
     if (!order.paidAt || DateTime.now() > order.paidAt.plus({ days: 7 })) {
       return response.gone({
         success: false,
-        error: { code: 'DOWNLOAD_EXPIRED', message: 'Le fichier n\'est plus disponible (expiré après 7 jours, conformément à la politique RGPD).' },
+        error: {
+          code: 'DOWNLOAD_EXPIRED',
+          message:
+            "Le fichier n'est plus disponible (expiré après 7 jours, conformément à la politique RGPD).",
+        },
       })
     }
 

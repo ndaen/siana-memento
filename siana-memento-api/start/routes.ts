@@ -17,26 +17,18 @@ const DesignsController = () => import('#controllers/designs_controller')
 const OrdersController = () => import('#controllers/orders_controller')
 const WebhooksController = () => import('#controllers/webhooks_controller')
 
-const registerThrottle = limiter.define('register', () =>
-  limiter.allowRequests(3).every('1 hour')
-)
+const registerThrottle = limiter.define('register', () => limiter.allowRequests(3).every('1 hour'))
 
-const loginThrottle = limiter.define('login', () =>
-  limiter.allowRequests(10).every('15 minutes')
-)
+const loginThrottle = limiter.define('login', () => limiter.allowRequests(10).every('15 minutes'))
 
-const designsThrottle = limiter.define('designs', () =>
-  limiter.allowRequests(20).every('1 hour')
-)
+const designsThrottle = limiter.define('designs', () => limiter.allowRequests(20).every('1 hour'))
 
 // Rate limit strict pour les générations IA — coût Gemini par requête
 const generationsThrottle = limiter.define('generations', () =>
   limiter.allowRequests(5).every('1 minute')
 )
 
-const ordersThrottle = limiter.define('orders', () =>
-  limiter.allowRequests(5).every('15 minutes')
-)
+const ordersThrottle = limiter.define('orders', () => limiter.allowRequests(5).every('15 minutes'))
 
 const downloadThrottle = limiter.define('download', () =>
   limiter.allowRequests(10).every('15 minutes')
@@ -68,26 +60,18 @@ router
   .use([generationsThrottle, middleware.auth()])
 
 // Polling statut — sans throttle strict (légère, retourne juste un statut)
-router
-  .get('/api/designs/:id/status', [DesignsController, 'status'])
-  .use(middleware.silentAuth())
+router.get('/api/designs/:id/status', [DesignsController, 'status']).use(middleware.silentAuth())
 
 // Orders — auth obligatoire + throttle
-router
-  .get('/api/orders', [OrdersController, 'index'])
-  .use([ordersThrottle, middleware.auth()])
-router
-  .post('/api/orders', [OrdersController, 'store'])
-  .use([ordersThrottle, middleware.auth()])
+router.get('/api/orders', [OrdersController, 'index']).use([ordersThrottle, middleware.auth()])
+router.post('/api/orders', [OrdersController, 'store']).use([ordersThrottle, middleware.auth()])
 router
   .get('/api/orders/by-session/:sessionId', [OrdersController, 'showBySession'])
   .use(middleware.auth())
 router
   .get('/api/orders/:id/download', [OrdersController, 'download'])
   .use([downloadThrottle, middleware.auth()])
-router
-  .get('/api/orders/:id', [OrdersController, 'show'])
-  .use(middleware.auth())
+router.get('/api/orders/:id', [OrdersController, 'show']).use(middleware.auth())
 
 // Stripe webhook — pas d'auth, pas de rate limiter, signature validée dans le controller
 router.post('/api/webhooks/stripe', [WebhooksController, 'handle'])
@@ -98,9 +82,7 @@ router
       .post('/register', [AuthController, 'register'])
       .use([registerThrottle, middleware.guest()])
 
-    router
-      .post('/login', [AuthController, 'login'])
-      .use(loginThrottle)
+    router.post('/login', [AuthController, 'login']).use(loginThrottle)
 
     router.get('/google', [AuthController, 'redirectToGoogle'])
     router.get('/google/callback', [AuthController, 'googleCallback'])

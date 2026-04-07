@@ -16,7 +16,10 @@ test.group('Google OAuth', (group) => {
     assert.include(location, 'accounts.google.com')
   })
 
-  test('GET /auth/google?returnTo=/reveal/abc123 still redirects to Google', async ({ client, assert }) => {
+  test('GET /auth/google?returnTo=/reveal/abc123 still redirects to Google', async ({
+    client,
+    assert,
+  }) => {
     const response = await client.get('/auth/google?returnTo=/reveal/abc123').redirects(0)
     response.assertStatus(302)
     const location = response.header('location') ?? ''
@@ -33,7 +36,10 @@ test.group('Google OAuth', (group) => {
     assert.include(location, 'accounts.google.com')
   })
 
-  test('returnTo stored in session does not affect callback error path', async ({ client, assert }) => {
+  test('returnTo stored in session does not affect callback error path', async ({
+    client,
+    assert,
+  }) => {
     const oauthResponse = await client.get('/auth/google?returnTo=/reveal/abc123').redirects(0)
     oauthResponse.assertStatus(302)
 
@@ -57,14 +63,20 @@ test.group('Google OAuth', (group) => {
 
   // ─── GET /auth/google/callback (error cases — testables sans Google) ───────
 
-  test('callback with access_denied redirects to /login?oauth=denied', async ({ client, assert }) => {
+  test('callback with access_denied redirects to /login?oauth=denied', async ({
+    client,
+    assert,
+  }) => {
     const response = await client.get('/auth/google/callback?error=access_denied').redirects(0)
     response.assertStatus(302)
     const location = response.header('location') ?? ''
     assert.include(location, 'oauth=denied')
   })
 
-  test('callback with generic error redirects to /login?oauth=error', async ({ client, assert }) => {
+  test('callback with generic error redirects to /login?oauth=error', async ({
+    client,
+    assert,
+  }) => {
     const response = await client.get('/auth/google/callback?error=server_error').redirects(0)
     response.assertStatus(302)
     const location = response.header('location') ?? ''

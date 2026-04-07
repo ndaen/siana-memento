@@ -60,7 +60,10 @@ function buildWatermarkTransformation(): object[] {
 /**
  * Builds the Cloudinary URL for the original (non-watermarked) high-resolution design.
  */
-export function getOriginalDesignUrl(cloudinaryPublicId: string, options?: { forceDownload?: boolean; fileName?: string }): string {
+export function getOriginalDesignUrl(
+  cloudinaryPublicId: string,
+  options?: { forceDownload?: boolean; fileName?: string }
+): string {
   if (options?.forceDownload) {
     const attachmentFlag = options.fileName ? `attachment:${options.fileName}` : 'attachment'
     return cloudinary.url(cloudinaryPublicId, {

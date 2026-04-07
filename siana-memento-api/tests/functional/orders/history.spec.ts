@@ -12,7 +12,11 @@ test.group('GET /api/orders — order history', (group) => {
   test('returns paid orders for the authenticated user', async ({ client, assert }) => {
     const { cookie, user } = await loginAs(client)
     await createPaidOrderWithDesign(user.id)
-    await createPaidOrderWithDesign(user.id, { template: 'moderne', partner1Name: 'Marie', partner2Name: 'Lucas' })
+    await createPaidOrderWithDesign(user.id, {
+      template: 'moderne',
+      partner1Name: 'Marie',
+      partner2Name: 'Lucas',
+    })
 
     const response = await client.get('/api/orders').header('cookie', cookie)
 
@@ -109,7 +113,10 @@ test.group('GET /api/orders — order history', (group) => {
     assert.isTrue(dates[1] >= dates[2])
   })
 
-  test('each order includes design data (template, partnerNames, previewUrl)', async ({ client, assert }) => {
+  test('each order includes design data (template, partnerNames, previewUrl)', async ({
+    client,
+    assert,
+  }) => {
     const { cookie, user } = await loginAs(client)
     await createPaidOrderWithDesign(user.id)
 
