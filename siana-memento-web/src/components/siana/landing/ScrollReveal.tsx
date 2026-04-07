@@ -40,6 +40,7 @@ export default function ScrollReveal({
           delay,
           stagger,
           ease: "power2.out",
+          clearProps: "transform",
           scrollTrigger: {
             trigger: el,
             start: "top bottom-=80",

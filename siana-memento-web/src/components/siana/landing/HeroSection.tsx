@@ -104,7 +104,7 @@ export default function HeroSection() {
       </div>
 
       <div ref={ctaRef} className="mb-8 sm:mb-12" style={{ opacity: 0 }}>
-        <StarBorder as="a" color="#C9A84C" speed="6s" thickness={2} className="text-base cursor-pointer no-underline" href="/generate/upload">
+        <StarBorder as="a" color="#C9A84C" speed="4s" thickness={1} className="text-base cursor-pointer no-underline" href="/generate/upload">
           Créer mon Save the Date
         </StarBorder>
       </div>

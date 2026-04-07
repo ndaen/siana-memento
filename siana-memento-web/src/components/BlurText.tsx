@@ -111,12 +111,15 @@ const BlurText: React.FC<BlurTextProps> = ({
           ease: easing
         };
 
+        const isLast = index === elements.length - 1;
+
         return (
           <motion.span
             key={index}
             initial={reducedMotion ? { opacity: 1, filter: 'blur(0px)', y: 0 } : fromSnapshot}
             animate={reducedMotion ? { opacity: 1, filter: 'blur(0px)', y: 0 } : inView ? animateKeyframes : fromSnapshot}
             transition={reducedMotion ? { duration: 0 } : spanTransition}
+            onAnimationComplete={isLast && !reducedMotion ? onAnimationComplete : undefined}
             style={{
               display: 'inline-block',
             }}
