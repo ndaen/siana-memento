@@ -140,7 +140,7 @@ export default function ConfigForm() {
         <Input
           id="partner1Name"
           type="text"
-          placeholder="Prénom 1 (ex : Sophie)"
+          placeholder="Prénom 1"
           autoCapitalize="words"
           autoComplete="given-name"
           aria-describedby={errors.partner1Name ? 'partner1Name-error' : undefined}
@@ -165,7 +165,7 @@ export default function ConfigForm() {
         <Input
           id="partner2Name"
           type="text"
-          placeholder="Prénom 2 (ex : Thomas)"
+          placeholder="Prénom 2"
           autoCapitalize="words"
           autoComplete="given-name"
           aria-describedby={errors.partner2Name ? 'partner2Name-error' : undefined}

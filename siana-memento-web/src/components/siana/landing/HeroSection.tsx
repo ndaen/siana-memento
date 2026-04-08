@@ -85,8 +85,7 @@ export default function HeroSection() {
         className="mx-auto mb-4 max-w-xl text-lg leading-relaxed text-muted-foreground sm:mb-6 sm:text-xl md:text-2xl"
         style={{ opacity: 0 }}
       >
-        Générez votre Save the Date unique avec vos photos en{" "}
-        <strong className="font-semibold text-foreground">15 minutes</strong>
+        Générez le Save the Date qui vous ressemble avec vos propres photos
       </p>
 
       <div
