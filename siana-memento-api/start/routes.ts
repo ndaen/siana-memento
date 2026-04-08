@@ -62,8 +62,8 @@ router
 // Polling statut — sans throttle strict (légère, retourne juste un statut)
 router.get('/api/designs/:id/status', [DesignsController, 'status']).use(middleware.silentAuth())
 
-// Orders — auth obligatoire + throttle
-router.get('/api/orders', [OrdersController, 'index']).use([ordersThrottle, middleware.auth()])
+// Orders — auth obligatoire, throttle uniquement sur la création (coût Stripe)
+router.get('/api/orders', [OrdersController, 'index']).use(middleware.auth())
 router.post('/api/orders', [OrdersController, 'store']).use([ordersThrottle, middleware.auth()])
 router
   .get('/api/orders/by-session/:sessionId', [OrdersController, 'showBySession'])
