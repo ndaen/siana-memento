@@ -12,17 +12,17 @@ test.group('POST /api/designs/:id/generate', (group) => {
   const SESSION_TOKEN = 'a'.repeat(64)
 
   // ─────────────────────────────────────────────────────────────────────
-  // Auth middleware — requiert authentification (Story 3-7)
+  // silentAuth — anonyme avec sessionToken valide peut générer
   // ─────────────────────────────────────────────────────────────────────
 
-  test('retourne 401 sans authentification', async ({ client }) => {
+  test('retourne 403 sans authentification et sans sessionToken', async ({ client }) => {
     const design = await createConfiguredDesign(SESSION_TOKEN)
 
     const response = await client
       .post(`/api/designs/${design.id}/generate`)
-      .json({ sessionToken: SESSION_TOKEN })
+      .json({})
 
-    response.assertStatus(401)
+    response.assertStatus(403)
   })
 
   // ─────────────────────────────────────────────────────────────────────
