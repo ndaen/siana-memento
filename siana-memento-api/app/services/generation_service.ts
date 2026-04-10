@@ -1,13 +1,19 @@
 import { GoogleGenAI } from '@google/genai'
 
+export interface PaletteConfig {
+  id: string
+  name: string
+  primaryColor: string
+  secondaryColor: string
+  accentColor: string
+}
+
 export interface TemplateConfig {
   id: string
   name: string
   identity: string
-  primaryColor: string
-  secondaryColor: string
-  accentColor: string
   illustration: string
+  palettes: PaletteConfig[]
 }
 
 export interface PhotoInput {
@@ -23,52 +29,152 @@ export interface WeddingData {
 }
 
 // Duplicate intentionnel — le backend et le frontend sont deux packages séparés.
-// La liste de 5 templates change rarement, le couplage cross-package serait inutilement complexe.
+// La liste de 5 templates × 3 palettes change rarement, le couplage cross-package serait inutilement complexe.
 const TEMPLATES: TemplateConfig[] = [
   {
     id: 'boheme',
     name: 'Bohème',
     identity: 'Romantique & naturel',
-    primaryColor: '#C17A6F',
-    secondaryColor: '#F5E6D3',
-    accentColor: '#2D4A3E',
     illustration: 'Aquarelle douce',
+    palettes: [
+      {
+        id: 'terre-sauge',
+        name: 'Terre & Sauge',
+        primaryColor: '#C17A6F',
+        secondaryColor: '#F5E6D3',
+        accentColor: '#2D4A3E',
+      },
+      {
+        id: 'lavande-miel',
+        name: 'Lavande & Miel',
+        primaryColor: '#7B6B8A',
+        secondaryColor: '#FDF6EC',
+        accentColor: '#8B6F47',
+      },
+      {
+        id: 'rose-foret',
+        name: 'Rose & Forêt',
+        primaryColor: '#9E5A63',
+        secondaryColor: '#F0EBE3',
+        accentColor: '#3D5A45',
+      },
+    ],
   },
   {
     id: 'moderne',
     name: 'Moderne',
     identity: 'Épuré & sophistiqué',
-    primaryColor: '#000000',
-    secondaryColor: '#FFFFFF',
-    accentColor: '#D4AF37',
     illustration: 'Flat design géométrique',
+    palettes: [
+      {
+        id: 'noir-or',
+        name: 'Noir & Or',
+        primaryColor: '#000000',
+        secondaryColor: '#FFFFFF',
+        accentColor: '#D4AF37',
+      },
+      {
+        id: 'marine-cuivre',
+        name: 'Marine & Cuivre',
+        primaryColor: '#1B2A4A',
+        secondaryColor: '#F7F5F2',
+        accentColor: '#B87333',
+      },
+      {
+        id: 'charbon-blush',
+        name: 'Charbon & Blush',
+        primaryColor: '#2C2C2C',
+        secondaryColor: '#FFFFFF',
+        accentColor: '#C27685',
+      },
+    ],
   },
   {
     id: 'classique',
     name: 'Classique',
     identity: 'Intemporel & élégant',
-    primaryColor: '#800020',
-    secondaryColor: '#F4EAD5',
-    accentColor: '#D4AF37',
     illustration: 'Portrait dessiné',
+    palettes: [
+      {
+        id: 'bordeaux-or',
+        name: 'Bordeaux & Or',
+        primaryColor: '#800020',
+        secondaryColor: '#F4EAD5',
+        accentColor: '#D4AF37',
+      },
+      {
+        id: 'bleu-royal',
+        name: 'Bleu Royal',
+        primaryColor: '#1E3A5F',
+        secondaryColor: '#F2EDE6',
+        accentColor: '#C5A258',
+      },
+      {
+        id: 'emeraude-creme',
+        name: 'Émeraude & Crème',
+        primaryColor: '#2E5945',
+        secondaryColor: '#FBF7F0',
+        accentColor: '#B8860B',
+      },
+    ],
   },
   {
     id: 'vintage',
     name: 'Vintage',
     identity: 'Nostalgie & rétro chic',
-    primaryColor: '#A67C52',
-    secondaryColor: '#EFE8D8',
-    accentColor: '#6B705C',
     illustration: 'Rotoscope années 70',
+    palettes: [
+      {
+        id: 'ocre-olive',
+        name: 'Ocre & Olive',
+        primaryColor: '#A67C52',
+        secondaryColor: '#EFE8D8',
+        accentColor: '#6B705C',
+      },
+      {
+        id: 'rouille-moutarde',
+        name: 'Rouille & Moutarde',
+        primaryColor: '#8B4513',
+        secondaryColor: '#F5EDDA',
+        accentColor: '#B8860B',
+      },
+      {
+        id: 'brique-sapin',
+        name: 'Brique & Sapin',
+        primaryColor: '#9B5B4C',
+        secondaryColor: '#F0E9DD',
+        accentColor: '#4A5D4F',
+      },
+    ],
   },
   {
     id: 'minimaliste',
     name: 'Minimaliste',
     identity: 'Épuré & zen',
-    primaryColor: '#E8DCD4',
-    secondaryColor: '#FAF8F6',
-    accentColor: '#A8968A',
     illustration: 'Line art one-line',
+    palettes: [
+      {
+        id: 'nude-taupe',
+        name: 'Nude & Taupe',
+        primaryColor: '#E8DCD4',
+        secondaryColor: '#FAF8F6',
+        accentColor: '#A8968A',
+      },
+      {
+        id: 'argile-sable',
+        name: 'Argile & Sable',
+        primaryColor: '#B07156',
+        secondaryColor: '#FAF5F0',
+        accentColor: '#8C6E5D',
+      },
+      {
+        id: 'saumon-lin',
+        name: 'Saumon & Lin',
+        primaryColor: '#D4917A',
+        secondaryColor: '#FFF8F5',
+        accentColor: '#C07A60',
+      },
+    ],
   },
 ]
 
@@ -77,6 +183,24 @@ export function getTemplate(id: string): TemplateConfig {
   if (!tpl) throw new Error(`Template inconnu : ${id}`)
   return tpl
 }
+
+export function getPalette(templateId: string, paletteId: string | null): PaletteConfig {
+  const template = getTemplate(templateId)
+  if (paletteId) {
+    const found = template.palettes.find((p) => p.id === paletteId)
+    if (found) return found
+  }
+  return template.palettes[0]
+}
+
+// Map exportée pour la validation cross-template dans le validateur VineJS
+export const VALID_PALETTE_IDS: Record<string, string[]> = TEMPLATES.reduce(
+  (acc, tpl) => {
+    acc[tpl.id] = tpl.palettes.map((p) => p.id)
+    return acc
+  },
+  {} as Record<string, string[]>
+)
 
 const GEMINI_MODEL = 'gemini-2.5-flash-image'
 const MAX_ATTEMPTS = 3
@@ -96,17 +220,15 @@ function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
-function buildPrompt(
+function buildInitialPrompt(
   theme: TemplateConfig,
-  weddingData: WeddingData,
-  iterationNumber: number,
-  feedback?: string
+  palette: PaletteConfig,
+  weddingData: WeddingData
 ): string {
   const pose = pickRandom(POSE_VARIATIONS)
-  // Identifiant unique injecté dans le prompt pour forcer Gemini à produire un résultat différent
   const variationSeed = `[variation-id: ${Date.now()}-${Math.random().toString(36).slice(2, 8)}]`
 
-  const basePrompt = `Create a beautiful illustrated wedding 'Save The Date' poster.
+  return `Create a beautiful illustrated wedding 'Save The Date' poster.
 ${variationSeed}
 
 Subject: A romantic couple (based exactly on the provided reference photos). They are ${pose}.
@@ -116,7 +238,7 @@ Artistic Direction:
 - Theme: ${theme.name}
 - Medium/Style: ${theme.illustration}
 - Vibe/Mood: ${theme.identity}
-- Color palette: Dominant ${theme.primaryColor}, Secondary ${theme.secondaryColor}, Accents of ${theme.accentColor}.
+- Color palette "${palette.name}": Dominant ${palette.primaryColor}, Secondary ${palette.secondaryColor}, Accents of ${palette.accentColor}.
 - Lighting: Soft, cinematic, romantic lighting.
 
 Composition & Layout:
@@ -129,17 +251,30 @@ Typography — IMPORTANT, include ALL of the following text elegantly on the pos
 - The location "${weddingData.weddingLocation}" displayed clearly.
 - The words "Save The Date" as a header or subtitle.
 - Text must be legible, well-spaced, and integrated into the overall composition.
-- Use colors from the palette for the text (primarily ${theme.primaryColor} or ${theme.accentColor} on lighter areas).`
+- Use colors from the palette for the text (primarily ${palette.primaryColor} or ${palette.accentColor} on lighter areas).`
+}
 
-  if (iterationNumber > 1 && feedback) {
-    return `${basePrompt}
+function buildIterationPrompt(
+  theme: TemplateConfig,
+  palette: PaletteConfig,
+  weddingData: WeddingData,
+  feedback: string
+): string {
+  return `You are refining an existing wedding 'Save The Date' poster based on the client's feedback.
 
-ITERATION FEEDBACK — This is iteration #${iterationNumber}. The user was not satisfied with the previous version. Please create a SIGNIFICANTLY DIFFERENT composition while keeping the same theme and information. Specific feedback to address:
+CURRENT POSTER: The first image provided is the current version of the poster that needs to be modified.
+REFERENCE PHOTOS: The remaining images are reference photos of the couple — use them to keep facial features and physical appearance accurate.
+
+CLIENT FEEDBACK:
 - ${feedback}
-- Produce a noticeably different composition, angle, and arrangement from the previous attempt.`
-  }
 
-  return basePrompt
+INSTRUCTIONS:
+1. Start from the current poster as your base. Do NOT create a completely new design from scratch.
+2. Apply the client's feedback precisely — modify only what they asked to change.
+3. Preserve everything the client did NOT mention: keep the same overall composition, layout, pose, background, and artistic style unless the feedback explicitly asks to change them.
+4. Keep all text identical and legible: "${weddingData.partner1Name} & ${weddingData.partner2Name}", "${weddingData.weddingDate}", "${weddingData.weddingLocation}", "Save The Date".
+5. Maintain the ${theme.name} theme (${theme.illustration} style, palette "${palette.name}": ${palette.primaryColor}, ${palette.secondaryColor}, ${palette.accentColor}).
+6. Output a portrait illustration (3:4 ratio).`
 }
 
 async function sleep(ms: number): Promise<void> {
@@ -149,20 +284,31 @@ async function sleep(ms: number): Promise<void> {
 export async function generateDesignImage(
   photos: PhotoInput[],
   theme: TemplateConfig,
+  palette: PaletteConfig,
   weddingData: WeddingData,
   iterationNumber: number,
-  feedback?: string
+  feedback?: string,
+  previousImage?: PhotoInput
 ): Promise<string> {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! })
 
-  const parts: any[] = photos.map((photo) => ({
-    inlineData: {
-      data: photo.base64,
-      mimeType: photo.mimeType,
-    },
-  }))
+  const isIteration = iterationNumber > 1 && feedback && previousImage
+  const parts: any[] = []
 
-  parts.push({ text: buildPrompt(theme, weddingData, iterationNumber, feedback) })
+  if (isIteration) {
+    // Itération : image précédente d'abord, puis photos de référence, puis prompt de modification
+    parts.push({ inlineData: { data: previousImage.base64, mimeType: previousImage.mimeType } })
+    for (const photo of photos) {
+      parts.push({ inlineData: { data: photo.base64, mimeType: photo.mimeType } })
+    }
+    parts.push({ text: buildIterationPrompt(theme, palette, weddingData, feedback) })
+  } else {
+    // Première génération : photos de référence + prompt initial
+    for (const photo of photos) {
+      parts.push({ inlineData: { data: photo.base64, mimeType: photo.mimeType } })
+    }
+    parts.push({ text: buildInitialPrompt(theme, palette, weddingData) })
+  }
 
   let lastError: unknown
 

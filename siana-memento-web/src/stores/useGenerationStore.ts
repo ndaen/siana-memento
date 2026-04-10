@@ -18,6 +18,7 @@ interface GenerationState {
   photos: UploadedPhoto[]
   currentStep: GenerationStep
   selectedTemplate: string | null
+  selectedPalette: string | null
   partner1Name: string | null
   partner2Name: string | null
   weddingDate: string | null // Format ISO YYYY-MM-DD — sérialisable
@@ -36,6 +37,7 @@ const initialState: GenerationState = {
   photos: [],
   currentStep: 'upload',
   selectedTemplate: null,
+  selectedPalette: null,
   partner1Name: null,
   partner2Name: null,
   weddingDate: null,
@@ -53,6 +55,7 @@ interface GenerationStore extends GenerationState {
   setPhotos: (photos: UploadedPhoto[]) => void
   setStep: (step: GenerationStep) => void
   setTemplate: (template: string) => void
+  setPalette: (palette: string) => void
   setWeddingData: (data: {
     partner1Name: string
     partner2Name: string
@@ -75,7 +78,13 @@ export const useGenerationStore = create<GenerationStore>()(
       setDesign: (id, token) => set({ designId: id, sessionToken: token }),
       setPhotos: (photos) => set({ photos }),
       setStep: (step) => set({ currentStep: step }),
-      setTemplate: (template) => set({ selectedTemplate: template }),
+      setTemplate: (template) =>
+        set((state) => ({
+          selectedTemplate: template,
+          // Reset palette au changement de template pour éviter une palette orpheline
+          selectedPalette: state.selectedTemplate === template ? state.selectedPalette : null,
+        })),
+      setPalette: (palette) => set({ selectedPalette: palette }),
       setWeddingData: (data) =>
         set({
           partner1Name: data.partner1Name,
@@ -115,6 +124,7 @@ export const useGenerationStore = create<GenerationStore>()(
         photos: state.photos.map((p) => ({ ...p, previewUrl: '', file: null })),
         currentStep: state.currentStep,
         selectedTemplate: state.selectedTemplate,
+        selectedPalette: state.selectedPalette,
         partner1Name: state.partner1Name,
         partner2Name: state.partner2Name,
         weddingDate: state.weddingDate,

@@ -1,4 +1,21 @@
 import vine from '@vinejs/vine'
+import { VALID_PALETTE_IDS } from '#services/generation_service'
+
+// Règle custom : vérifie que la palette appartient bien au template sélectionné
+const paletteMatchesTemplateRule = vine.createRule((value: unknown, _options, field) => {
+  if (value === undefined || value === null) return
+  if (typeof value !== 'string') return
+  const template = (field.parent as { template?: string } | undefined)?.template
+  if (!template) return
+  const allowed = VALID_PALETTE_IDS[template]
+  if (!allowed || !allowed.includes(value)) {
+    field.report(
+      `La palette "${value}" n'est pas valide pour le template "${template}".`,
+      'invalid_palette_for_template',
+      field
+    )
+  }
+})
 
 // Règle custom : vérifie que la date ISO YYYY-MM-DD est réellement valide
 // (ex: 2026-13-40 passe la regex mais n'est pas une vraie date)
@@ -25,6 +42,7 @@ export const createDesignValidator = vine.compile(
 export const updateDesignTemplateValidator = vine.compile(
   vine.object({
     template: vine.enum(['boheme', 'moderne', 'classique', 'vintage', 'minimaliste'] as const),
+    palette: vine.string().maxLength(50).use(paletteMatchesTemplateRule()).optional(),
     sessionToken: vine.string().minLength(64).maxLength(64).optional(),
   })
 )

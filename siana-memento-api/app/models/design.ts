@@ -18,6 +18,9 @@ export default class Design extends BaseModel {
   declare template: 'boheme' | 'moderne' | 'classique' | 'vintage' | 'minimaliste' | null
 
   @column()
+  declare palette: string | null
+
+  @column()
   declare partner1Name: string | null
 
   @column()

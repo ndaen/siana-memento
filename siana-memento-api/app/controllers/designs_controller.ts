@@ -7,7 +7,7 @@ import {
 } from '#validators/design_validator'
 import Design from '#models/design'
 import Photo from '#models/photo'
-import { generateDesignImage, getTemplate } from '#services/generation_service'
+import { generateDesignImage, getPalette, getTemplate } from '#services/generation_service'
 import { uploadDesign } from '#services/cloudinary_service'
 import { randomBytes } from 'node:crypto'
 import { DateTime } from 'luxon'
@@ -89,13 +89,14 @@ export default class DesignsController {
       }
     }
 
-    await design.merge({ template: payload.template }).save()
+    await design.merge({ template: payload.template, palette: payload.palette ?? null }).save()
 
     return response.ok({
       success: true,
       data: {
         designId: design.id,
         template: design.template,
+        palette: design.palette,
       },
     })
   }
@@ -229,8 +230,9 @@ export default class DesignsController {
         })
       )
 
-      // Obtenir la config du template
+      // Obtenir la config du template et la palette résolue (défaut si null)
       const theme = getTemplate(design.template)
+      const palette = getPalette(design.template, design.palette)
 
       // Formater la date du mariage en français lisible pour le prompt
       const formattedDate = design.weddingDate.setLocale('fr').toFormat('d MMMM yyyy')
@@ -245,12 +247,26 @@ export default class DesignsController {
       // Générer via Gemini (retry 3× avec backoff exponentiel dans generateDesignImage)
       // iterationsUsed is 0-based before increment, so current iteration = iterationsUsed + 1
       const iterationNumber = design.iterationsUsed + 1
+
+      // Pour les itérations, charger l'image précédente pour que Gemini la modifie
+      let previousImage: { base64: string; mimeType: string } | undefined
+      if (iterationNumber > 1 && payload.feedback && design.generatedImageUrl) {
+        const dataUrlMatch = design.generatedImageUrl.match(
+          /^data:(image\/\w+);base64,(.+)$/
+        )
+        if (dataUrlMatch) {
+          previousImage = { mimeType: dataUrlMatch[1], base64: dataUrlMatch[2] }
+        }
+      }
+
       const imageDataUrl = await generateDesignImage(
         photoInputs,
         theme,
+        palette,
         weddingData,
         iterationNumber,
-        payload.feedback
+        payload.feedback,
+        previousImage
       )
 
       // Upload vers Cloudinary et récupération de la preview watermarquée

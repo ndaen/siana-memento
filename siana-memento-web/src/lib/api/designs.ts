@@ -1,24 +1,34 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
 
 type UpdateTemplateResult =
-  | { success: true; designId: number; template: string }
+  | { success: true; designId: number; template: string; palette: string | null }
   | { success: false; errorCode: string; message: string }
 
 export async function updateDesignTemplate(
   designId: number,
   template: string,
-  sessionToken?: string | null
+  sessionToken?: string | null,
+  palette?: string | null
 ): Promise<UpdateTemplateResult> {
   try {
     const res = await fetch(`${API_URL}/api/designs/${designId}/template`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ template, ...(sessionToken ? { sessionToken } : {}) }),
+      body: JSON.stringify({
+        template,
+        ...(sessionToken ? { sessionToken } : {}),
+        ...(palette ? { palette } : {}),
+      }),
     })
     const json = await res.json()
     if (json.success) {
-      return { success: true, designId: json.data.designId, template: json.data.template }
+      return {
+        success: true,
+        designId: json.data.designId,
+        template: json.data.template,
+        palette: json.data.palette ?? null,
+      }
     }
     return {
       success: false,
