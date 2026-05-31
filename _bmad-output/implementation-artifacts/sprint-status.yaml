@@ -35,6 +35,7 @@
 
 generated: 2026-04-05
 last_updated: 2026-05-31
+# 6.1 done ; 6.2 ready-for-dev (créée 2026-05-31)
 project: poster-generator
 project_key: NOKEY
 tracking_system: file-system
@@ -84,7 +85,7 @@ development_status:
 
   epic-6: in-progress
   6-1-healthcheck-endpoint-et-monitoring: done
-  6-2-dashboard-metriques-business-et-export-csv: backlog
+  6-2-dashboard-metriques-business-et-export-csv: review
   6-3-logs-de-generation-et-historique-erreurs-ia: backlog
   6-4-alertes-automatiques-admin: backlog
   6-5-renvoi-manuel-de-designs-et-backups-db: backlog

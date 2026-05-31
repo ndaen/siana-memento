@@ -37,6 +37,7 @@ export default class AuthController {
           id: user.id,
           email: user.email,
           fullName: user.fullName,
+          isAdmin: user.isAdmin,
         },
       },
     })
@@ -125,6 +126,7 @@ export default class AuthController {
           id: user.id,
           email: user.email,
           fullName: user.fullName,
+          isAdmin: user.isAdmin,
         },
       },
     })

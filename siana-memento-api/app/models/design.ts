@@ -3,6 +3,7 @@ import { BaseModel, column, hasMany, hasOne } from '@adonisjs/lucid/orm'
 import type { HasMany, HasOne } from '@adonisjs/lucid/types/relations'
 import Photo from '#models/photo'
 import Order from '#models/order'
+import Generation from '#models/generation'
 
 export default class Design extends BaseModel {
   @column({ isPrimary: true })
@@ -58,6 +59,9 @@ export default class Design extends BaseModel {
 
   @hasMany(() => Photo)
   declare photos: HasMany<typeof Photo>
+
+  @hasMany(() => Generation)
+  declare generations: HasMany<typeof Generation>
 
   @hasOne(() => Order)
   declare order: HasOne<typeof Order>

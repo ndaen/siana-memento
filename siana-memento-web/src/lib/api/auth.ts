@@ -43,6 +43,7 @@ export interface User {
   id: number
   email: string
   fullName: string | null
+  isAdmin?: boolean
 }
 
 interface LoginPayload {

@@ -17,6 +17,7 @@ const DesignsController = () => import('#controllers/designs_controller')
 const OrdersController = () => import('#controllers/orders_controller')
 const WebhooksController = () => import('#controllers/webhooks_controller')
 const HealthController = () => import('#controllers/health_controller')
+const AdminController = () => import('#controllers/admin_controller')
 
 const registerThrottle = limiter.define('register', () => limiter.allowRequests(3).every('1 hour'))
 
@@ -75,6 +76,16 @@ router.get('/api/orders/:id', [OrdersController, 'show']).use(middleware.auth())
 
 // Stripe webhook — pas d'auth, pas de rate limiter, signature validée dans le controller
 router.post('/api/webhooks/stripe', [WebhooksController, 'handle'])
+
+// Admin — dashboard métriques + export CSV. Protégé serveur (NFR-S10) : auth() puis admin().
+// L'ordre importe : auth() peuple auth.user, admin() vérifie isAdmin (403 sinon).
+router
+  .group(() => {
+    router.get('/metrics', [AdminController, 'metrics'])
+    router.get('/metrics/export-csv', [AdminController, 'exportCsv'])
+  })
+  .prefix('/api/admin')
+  .use([middleware.auth(), middleware.admin()])
 
 router
   .group(() => {

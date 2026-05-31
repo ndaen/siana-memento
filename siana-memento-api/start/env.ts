@@ -82,4 +82,13 @@ export default await Env.create(new URL('../', import.meta.url), {
   */
   // Secret partagé avec UptimeRobot pour accéder au readiness endpoint /api/health (NFR-S10)
   MONITORING_SECRET: Env.schema.string(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring admin metrics dashboard
+  |----------------------------------------------------------
+  */
+  // Estimation MVP du coût Gemini par génération (EUR). Utilisé tant que la Story 6.3
+  // ne persiste pas le coût réel. Défaut applicatif ~0,50€ si absent.
+  GEMINI_COST_EUR_ESTIMATE: Env.schema.number.optional(),
 })
