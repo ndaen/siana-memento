@@ -16,6 +16,7 @@ const UploadController = () => import('#controllers/upload_controller')
 const DesignsController = () => import('#controllers/designs_controller')
 const OrdersController = () => import('#controllers/orders_controller')
 const WebhooksController = () => import('#controllers/webhooks_controller')
+const HealthController = () => import('#controllers/health_controller')
 
 const registerThrottle = limiter.define('register', () => limiter.allowRequests(3).every('1 hour'))
 
@@ -34,12 +35,11 @@ const downloadThrottle = limiter.define('download', () =>
   limiter.allowRequests(10).every('15 minutes')
 )
 
-router.get('/api/health', async ({ response }) => {
-  return response.ok({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-  })
-})
+// Healthcheck — pas de rate limiter ni d'auth utilisateur (cf. Story 6.1)
+// /api/health      : readiness détaillée (DB + Cloudinary + Resend) protégée par MONITORING_SECRET → cible UptimeRobot
+// /api/health/live : liveness publique légère → cible du healthcheck de déploiement (Railway / Docker)
+router.get('/api/health', [HealthController, 'index'])
+router.get('/api/health/live', [HealthController, 'live'])
 
 // API routes — upload et designs
 router.get('/api/upload/sign', [UploadController, 'sign'])

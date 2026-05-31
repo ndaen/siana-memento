@@ -74,4 +74,12 @@ export default await Env.create(new URL('../', import.meta.url), {
   */
   RESEND_API_KEY: Env.schema.string(),
   RESEND_FROM_EMAIL: Env.schema.string(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring monitoring / healthcheck
+  |----------------------------------------------------------
+  */
+  // Secret partagé avec UptimeRobot pour accéder au readiness endpoint /api/health (NFR-S10)
+  MONITORING_SECRET: Env.schema.string(),
 })
