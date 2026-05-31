@@ -4,7 +4,7 @@ import {ThemeProvider} from "@/components/siana/ThemeProvider";
 import {Toaster} from "@/components/ui/sonner";
 import {Analytics} from "@vercel/analytics/next"
 import SiteHeader from "@/components/siana/SiteHeader"
-import Footer from "@/components/siana/Footer"
+import ConditionalFooter from "@/components/siana/ConditionalFooter"
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://siana-memento.com";
 
@@ -59,7 +59,7 @@ export default function RootLayout({
             <div id="main-content">
                 {children}
             </div>
-            <Footer />
+            <ConditionalFooter />
             <Analytics/>
             <Toaster richColors position="bottom-center"/>
         </ThemeProvider>
