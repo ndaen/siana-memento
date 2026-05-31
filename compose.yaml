@@ -1,0 +1,68 @@
+# Stack de dev local Siana Memento — `docker compose up` lance db + api + web.
+# Les secrets restent dans les fichiers .env bind-montés (jamais copiés dans l'image).
+# Côté AdonisJS, les variables système (bloc `environment` ci-dessous) priment sur le
+# fichier .env : le loader n'écrit process.env[key] que s'il est vide (cf. @adonisjs/env).
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: siana_db
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: app
+    ports:
+      # Publié sur 5435 pour rester aligné avec DB_PORT du .env (accès host : Postico, etc.)
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d app"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./siana-memento-api
+      dockerfile: Dockerfile.dev
+    container_name: siana_api
+    # Surcharge uniquement les vars réseau/DB ; le reste (secrets, APP_KEY...) vient du .env bind-monté.
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3333"
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_DATABASE: app
+      CHOKIDAR_USEPOLLING: "true" # fiabilise le watch HMR sur bind mount macOS
+    ports:
+      - "3333:3333"
+    volumes:
+      - ./siana-memento-api:/app
+      - /app/node_modules # préserve les node_modules de l'image (Linux) sans masquer par ceux du host
+    depends_on:
+      db:
+        condition: service_healthy
+    # Migrations auto une fois la DB healthy, puis serveur en mode HMR.
+    command: sh -c "node ace migration:run --force && node ace serve --hmr"
+
+  web:
+    build:
+      context: ./siana-memento-web
+      dockerfile: Dockerfile.dev
+    container_name: siana_web
+    environment:
+      WATCHPACK_POLLING: "true" # fiabilise le HMR Next.js sur bind mount macOS
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./siana-memento-web:/app
+      - /app/node_modules
+      - /app/.next # cache build Next hors du bind mount (perf + pas de conflit avec le host)
+    depends_on:
+      - api
+    command: sh -c "npm run dev -- -H 0.0.0.0 -p 3000"
+
+volumes:
+  postgres_data:
