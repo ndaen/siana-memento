@@ -19,6 +19,11 @@ function sanitizeCsvText(value: string): string {
   return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value
 }
 
+/** Convertit des centimes (integer) en chaîne EUR à 2 décimales. */
+function centsToEur(cents: number): string {
+  return (cents / 100).toFixed(2)
+}
+
 @inject()
 export default class AdminController {
   constructor(protected metricsService: MetricsService) {}
@@ -37,38 +42,57 @@ export default class AdminController {
 
   /**
    * GET /api/admin/metrics/export-csv — export de TOUTES les commandes de la période (AC3).
-   * Colonnes : date, montant, statut, coût API, marge. Génération en mémoire (volume MVP modeste).
+   * Colonnes : date, montant, statut, coût API, marge réelle, marge prévisionnelle.
+   * Génération en mémoire (volume MVP modeste). Tous les calculs d'argent en CENTIMES (integer),
+   * conversion en € uniquement à l'écriture (garde-fou « jamais de float pour l'argent »).
    */
   async exportCsv({ auth, response }: HttpContext) {
     const user = auth.getUserOrFail()
     logger.info({ event: 'admin_csv_export', userId: user.id }, 'Admin CSV export')
 
-    const since = DateTime.now().minus({ days: PERIOD_DAYS }).toSQL()!
+    // Borne temporelle déterministe : UTC sans offset, pour matcher des colonnes
+    // `timestamp without time zone` quel que soit le fuseau du process.
+    const since = DateTime.now()
+      .minus({ days: PERIOD_DAYS })
+      .toUTC()
+      .toSQL({ includeOffset: false })!
     const estimateEur = env.get('GEMINI_COST_EUR_ESTIMATE') ?? DEFAULT_GEMINI_COST_EUR
+    const estimateCentsPerGeneration = Math.round(estimateEur * 100)
 
     const orders = await Order.query()
       .where('created_at', '>=', since)
       .preload('design', (designQuery) => designQuery.preload('generations'))
       .orderBy('created_at', 'desc')
 
-    // Colonnes système (date/montant/statut/coût/marge) : aucune surface d'injection de formule.
-    // sanitizeCsvText reste disponible si une colonne texte libre est ajoutée plus tard.
+    // Colonnes système (date/montant/statut/coûts/marges) : aucune surface d'injection de formule.
+    // sanitizeCsvText reste appliqué au statut par prudence (et si un champ texte libre est ajouté).
     const rows = orders.map((order) => {
       const generationsCount = order.design?.generations?.length ?? 0
-      const apiCostEur = generationsCount * estimateEur
-      const amountEur = order.amount / 100
-      const marginEur = amountEur - apiCostEur
+      const apiCostCents = generationsCount * estimateCentsPerGeneration
+      const amountCents = order.amount
+      // Marge réelle : ne compte le revenu que si la commande est payée (encaissée).
+      const realMarginCents = (order.status === 'paid' ? amountCents : 0) - apiCostCents
+      // Marge prévisionnelle : revenu attendu − coût, quel que soit le statut (potentiel).
+      const forecastMarginCents = amountCents - apiCostCents
       return [
         order.createdAt.toFormat('yyyy-MM-dd HH:mm'),
-        amountEur.toFixed(2),
+        centsToEur(amountCents),
         sanitizeCsvText(order.status),
-        apiCostEur.toFixed(2),
-        marginEur.toFixed(2),
+        centsToEur(apiCostCents),
+        centsToEur(realMarginCents),
+        centsToEur(forecastMarginCents),
       ]
     })
 
     const csv = await writeToString(rows, {
-      headers: ['Date', 'Montant (€)', 'Statut', 'Coût API (€)', 'Marge (€)'],
+      headers: [
+        'Date',
+        'Montant (€)',
+        'Statut',
+        'Coût API (€)',
+        'Marge réelle (€)',
+        'Marge prévisionnelle (€)',
+      ],
     })
 
     // BOM UTF-8 pour qu'Excel FR affiche correctement les accents.

@@ -121,6 +121,25 @@ export async function createPaidOrderWithDesign(
   return { order, design }
 }
 
+export async function createGeneration(
+  designId: number,
+  overrides?: Partial<{
+    status: 'pending' | 'generating' | 'completed' | 'failed'
+    geminiCostUsd: number | null
+    iterationNumber: number
+  }>
+) {
+  const { default: Generation } = await import('#models/generation')
+  return Generation.create({
+    designId,
+    iterationNumber: overrides?.iterationNumber ?? 1,
+    promptUsed: 'test prompt',
+    status: overrides?.status ?? 'completed',
+    geminiCostUsd: overrides?.geminiCostUsd ?? null,
+    attempts: 1,
+  })
+}
+
 export async function createDesignViaApi(client: any, cookie?: string) {
   const photo = {
     publicId: 'designs/session123/photo1_abc',

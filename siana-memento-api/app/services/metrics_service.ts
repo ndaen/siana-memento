@@ -44,7 +44,9 @@ export default class MetricsService {
   }
 
   private sinceSql(): string {
-    return DateTime.now().minus({ days: PERIOD_DAYS }).toSQL()!
+    // Borne déterministe : UTC sans offset, pour matcher des colonnes `timestamp without time zone`
+    // quel que soit le fuseau du process (évite un décalage de fenêtre selon le TZ).
+    return DateTime.now().minus({ days: PERIOD_DAYS }).toUTC().toSQL({ includeOffset: false })!
   }
 
   async getDashboardMetrics(): Promise<DashboardMetrics> {

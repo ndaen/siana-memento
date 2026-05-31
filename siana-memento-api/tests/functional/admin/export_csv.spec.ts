@@ -32,12 +32,13 @@ test.group('GET /api/admin/metrics/export-csv', (group) => {
     assert.include(response.header('content-disposition'), '.csv')
 
     const text = response.text()
-    // BOM UTF-8 + ligne d'en-tête exacte (colonnes AC3)
+    // BOM UTF-8 + ligne d'en-tête (colonnes AC3 ; marge dédoublée réelle/prévisionnelle post-review)
     assert.include(text, 'Date')
     assert.include(text, 'Montant (€)')
     assert.include(text, 'Statut')
     assert.include(text, 'Coût API (€)')
-    assert.include(text, 'Marge (€)')
+    assert.include(text, 'Marge réelle (€)')
+    assert.include(text, 'Marge prévisionnelle (€)')
     // La commande payée (19,90€) figure dans le corps
     assert.include(text, '19.90')
   })

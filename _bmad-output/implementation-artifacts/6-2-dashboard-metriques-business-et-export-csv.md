@@ -4,7 +4,7 @@ baseline_commit: 7bb1427
 
 # Story 6.2: Dashboard Métriques Business et Export CSV
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -227,7 +227,8 @@ claude-opus-4-8[1m] (Claude Opus 4.8, 1M context)
 **NEW — backend**
 - `siana-memento-api/database/migrations/1775900000000_add_is_admin_to_users_table.ts`
 - `siana-memento-api/database/migrations/1775900000100_add_index_to_orders_created_status.ts`
-- `siana-memento-api/database/migrations/1775900000200_promote_admin_user.ts`
+- `siana-memento-api/database/migrations/1775900000200_promote_admin_user.ts` *(rendue inerte post-review — promotion via commande ace)*
+- `siana-memento-api/commands/admin_promote.ts` *(post-review P7)*
 - `siana-memento-api/app/models/generation.ts`
 - `siana-memento-api/app/middleware/admin_middleware.ts`
 - `siana-memento-api/app/services/metrics_service.ts`
@@ -261,3 +262,33 @@ claude-opus-4-8[1m] (Claude Opus 4.8, 1M context)
 |------|---------|-------------|--------|
 | 2026-05-31 | 0.1 | Story 6.2 créée (ready-for-dev) — dashboard métriques + export CSV + auth admin. | create-story |
 | 2026-05-31 | 1.0 | Implémentation 6.2 : `is_admin` + middleware admin, `/api/admin/metrics` (30j, FILTER WHERE, centimes), export CSV `@fast-csv` (BOM + anti-injection), page `/admin/dashboard` (KPI + N/A CAC), 10 tests admin. 165/165 verts. Coût API estimé (réel → 6.3). | Amelia (dev-story) |
+| 2026-05-31 | 1.1 | Corrections post-review (P1–P7) : argent en centimes (CSV), `login()` expose `isAdmin`, garde frontend distingue panne réseau, fenêtre 30j en UTC déterministe, double colonne marge (réelle/prévisionnelle), commande `ace admin:promote` idempotente (migration de promotion inerte), test coût/marge avec générations. 167/167 verts. | Amelia (review-fixes) |
+
+### Review Findings
+
+> Code review adversariale (3 couches : Blind Hunter / Edge Case Hunter / Acceptance Auditor) — 2026-05-31, baseline `7bb1427..4f0ae42`. Les 4 AC sont SATISFAITS ; findings ci-dessous = qualité/robustesse/sémantique. Aucun finding ne bloque les AC.
+
+**Decision-needed** (résolues par Aldo, 2026-05-31) :
+
+- [x] [Review][Decision→Defer] Sémantique coût API / marge brute / coût moyen — **Résolu : différé à la Story 6.3.** Aujourd'hui le coût est 0 partout (générations non persistées) → aucune donnée réelle pour trancher. Re-statuer quand 6.3 persiste le coût réel. [metrics_service.ts:82-84]
+- [x] [Review][Decision→Patch] CSV — commandes non payées : montant plein + marge positive — **Résolu : design à deux colonnes de marge** (voir P6). `Marge réelle = (paid ? montant : 0) − coût` ; `Marge prévisionnelle = montant − coût`. [admin_controller.ts:56-67]
+- [x] [Review][Decision→Patch] Bootstrap admin en production — **Résolu : commande `ace` idempotente** `admin:promote <email>` (voir P7), rejouable, qui log le nb de promotions (WARN si 0). Migration de promotion retirée/inerte. [1775900000200_promote_admin_user.ts:12-16]
+
+**Patch** (correctif non ambigu) — ✅ **tous appliqués 2026-05-31** :
+
+- [x] [Review][Patch] P1 — `exportCsv` : calculs d'argent passés en **centimes integer** (`centsToEur()` à l'affichage), plus de float. [admin_controller.ts]
+- [x] [Review][Patch] P2 — `login()` expose désormais `isAdmin` (aligné avec `register()`/`me()`). [auth_controller.ts]
+- [x] [Review][Patch] P3 — Garde admin frontend : `NETWORK_ERROR` → état d'erreur dédié (`authError` + toast), plus de redirection `/login` sur panne réseau. [AdminDashboard.tsx]
+- [x] [Review][Patch] P4 — Fenêtre 30j déterministe `.toUTC().toSQL({ includeOffset: false })` dans `metrics_service.ts` ET `admin_controller.ts`.
+- [x] [Review][Patch] P5 — Helper `createGeneration()` ajouté + test « subtracts estimated API cost per generation » (coût/marge avec générations non nulles). [factories.ts, metrics_service.spec.ts]
+- [x] [Review][Patch] P6 — CSV : colonnes `Marge réelle (€)` (`(paid ? montant : 0) − coût`) + `Marge prévisionnelle (€)` (`montant − coût`), calcul en centimes. [admin_controller.ts]
+- [x] [Review][Patch] P7 — Commande `node ace admin:promote <email>` idempotente (log nb promotions, WARN si 0) ; migration `1775900000200` rendue **inerte** (no-op). [commands/admin_promote.ts]
+
+**Defer** (réel mais non actionnable maintenant) :
+
+- [x] [Review][Defer] D1 — Sémantique coût/marge (coût toutes générations vs revenu payé) [metrics_service.ts:82-84] — deferred, à statuer avec le coût réel persisté en Story 6.3
+
+- [x] [Review][Defer] Coût API réel non persisté → CSV coût=0,00 / marge=montant aujourd'hui [admin_controller.ts:57] — deferred, dépend de Story 6.3 (documenté)
+- [x] [Review][Defer] Index manquants sur `generations.created_at` et `designs.created_at` (seul `orders` indexé) [1775900000100 migration] — deferred, scalabilité NFR-SC3, non bloquant au MVP
+- [x] [Review][Defer] Export CSV généré en mémoire sans pagination (~10K commandes × preload generations) [admin_controller.ts:49-52] — deferred, scalabilité, non bloquant au MVP
+- [x] [Review][Defer] Download CSV via `<a href>` affiche le JSON brut si la session a expiré (pas de toast) [AdminDashboard.tsx + admin.ts] — deferred, UX mineure, approche `<a href>` autorisée par la spec

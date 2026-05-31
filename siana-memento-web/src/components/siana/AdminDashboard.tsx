@@ -37,6 +37,7 @@ function MetricCard({ label, value, hint }: { label: string; value: string; hint
 export default function AdminDashboard() {
   const router = useRouter()
   const [authChecked, setAuthChecked] = useState(false)
+  const [authError, setAuthError] = useState(false)
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -45,6 +46,13 @@ export default function AdminDashboard() {
   useEffect(() => {
     getMe().then((result) => {
       if (!result.success) {
+        // Distinguer une panne réseau d'un vrai « non authentifié » : ne pas rediriger
+        // vers /login sur un simple souci de connexion (sinon faux logout perçu).
+        if (result.errorCode === 'NETWORK_ERROR') {
+          toast.error('Service indisponible. Vérifiez votre connexion et réessayez.')
+          setAuthError(true)
+          return
+        }
         router.replace('/login?redirect=/admin/dashboard')
         return
       }
@@ -68,6 +76,19 @@ export default function AdminDashboard() {
       setLoading(false)
     })
   }, [authChecked])
+
+  if (authError) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-10 sm:py-16">
+        <div className="flex flex-col items-center py-16 text-center">
+          <h2 className="font-display text-lg font-semibold">Connexion impossible</h2>
+          <p className="mt-1 max-w-xs text-sm text-muted-foreground">
+            Vérifiez votre connexion et rechargez la page.
+          </p>
+        </div>
+      </main>
+    )
+  }
 
   if (!authChecked) {
     return (
