@@ -47,8 +47,10 @@ services:
     # Migrations auto une fois la DB healthy, puis serveur en mode HMR.
     command: sh -c "node ace migration:run --force && node ace serve --hmr"
     # Liveness légère (pas le readiness protégé) : valide que le process AdonisJS répond.
+    # 127.0.0.1 (pas `localhost`) : sous BusyBox/Alpine, `localhost` peut résoudre en IPv6 (::1)
+    # alors que le serveur n'écoute qu'en IPv4 (0.0.0.0) → wget « connection refused ».
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3333/api/health/live || exit 1"]
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3333/api/health/live || exit 1']
       interval: 10s
       timeout: 5s
       retries: 5
