@@ -53,7 +53,6 @@ export default function ResultView() {
   const [isRevealed, setIsRevealed] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isAdjustOpen, setIsAdjustOpen] = useState(false)
-  const [adjustStep, setAdjustStep] = useState<'form' | 'confirm'>('form')
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
   const [freeText, setFreeText] = useState('')
   const [isOrdering, setIsOrdering] = useState(false)
@@ -194,7 +193,6 @@ export default function ResultView() {
     const reformulation = buildReformulation(selectedOptions, freeText)
     setPendingFeedback(reformulation)
     setIsAdjustOpen(false)
-    setAdjustStep('form')
     setSelectedOptions([])
     setFreeText('')
     router.push('/generate/generating')
@@ -247,11 +245,11 @@ export default function ResultView() {
         </div>
       </div>
 
-      {/* Illustration avec fade-in et comportement zoom */}
+      {/* Illustration avec fade-in et comportement zoom — passe-partout pour isoler l'œuvre */}
       {displayImageUrl && (
         <div
           className={[
-            'w-full overflow-hidden rounded-2xl shadow-2xl cursor-zoom-in',
+            'w-full rounded-2xl bg-secondary p-3 sm:p-5 shadow-2xl cursor-zoom-in',
             'transition-opacity duration-[2000ms] ease-in-out',
             isRevealed ? 'opacity-100' : 'opacity-0',
           ].join(' ')}
@@ -262,12 +260,14 @@ export default function ResultView() {
           tabIndex={0}
           aria-label="Voir l'illustration en plein écran"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={displayImageUrl}
-            alt={altText}
-            className="w-full h-auto object-contain"
-          />
+          <div className="overflow-hidden rounded-lg ring-1 ring-foreground/10 bg-white">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={displayImageUrl}
+              alt={altText}
+              className="w-full h-auto object-contain"
+            />
+          </div>
         </div>
       )}
 
@@ -316,7 +316,7 @@ export default function ResultView() {
 
           {/* Support message */}
           <p className="text-center text-sm text-muted-foreground">
-            Une question ? Répondez simplement à l'email reçu ou contactez{' '}
+            Une question ? Répondez simplement à l&apos;email reçu ou contactez{' '}
             <a href="mailto:support@siana-memento.fr" className="text-primary underline underline-offset-2">
               support@siana-memento.fr
             </a>
@@ -329,7 +329,7 @@ export default function ResultView() {
               size="lg"
               variant="outline"
               className="w-full font-semibold"
-              onClick={() => { setAdjustStep('form'); setIsAdjustOpen(true) }}
+              onClick={() => setIsAdjustOpen(true)}
             >
               Ajuster mon illustration
             </Button>
@@ -391,89 +391,74 @@ export default function ResultView() {
         description="Connectez-vous pour finaliser votre commande."
       />
 
-      {/* Dialog de feedback / ajustement */}
-      <Dialog
-        open={isAdjustOpen}
-        onOpenChange={(open) => {
-          setIsAdjustOpen(open)
-          if (!open) setAdjustStep('form')
-        }}
-      >
+      {/* Dialog de feedback / ajustement — form + preview live unifiés */}
+      <Dialog open={isAdjustOpen} onOpenChange={setIsAdjustOpen}>
         <DialogContent className="max-w-sm" aria-describedby={undefined}>
-          {adjustStep === 'form' ? (
-            <>
-              <DialogTitle className="text-lg font-semibold">Ajuster mon illustration</DialogTitle>
-              {/* Mascotte */}
-              <div className="flex items-center gap-3 rounded-xl bg-primary/10 px-4 py-3">
-                <Image src="/mascotte/siana-neutral.svg" alt="" aria-hidden="true" width={40} height={40} />
-                <p className="text-sm font-medium text-primary">Qu&apos;est-ce que je peux améliorer ?</p>
+          <DialogTitle className="text-lg font-semibold">Ajuster mon illustration</DialogTitle>
+          {/* Mascotte */}
+          <div className="flex items-center gap-3 rounded-xl bg-primary/10 px-4 py-3">
+            <Image src="/mascotte/siana-neutral.svg" alt="" aria-hidden="true" width={40} height={40} />
+            <p className="text-sm font-medium text-primary">Qu&apos;est-ce que je peux améliorer ?</p>
+          </div>
+          {/* Checkboxes */}
+          <div className="flex flex-col gap-3 mt-2" role="group" aria-label="Options d'ajustement">
+            {FEEDBACK_OPTIONS.map((opt) => (
+              <div key={opt.id} className="flex items-center gap-3">
+                <Checkbox
+                  id={opt.id}
+                  checked={selectedOptions.includes(opt.id)}
+                  onCheckedChange={() => toggleOption(opt.id)}
+                />
+                <Label htmlFor={opt.id} className="cursor-pointer text-sm">{opt.label}</Label>
               </div>
-              {/* Checkboxes */}
-              <div className="flex flex-col gap-3 mt-2" role="group" aria-label="Options d'ajustement">
-                {FEEDBACK_OPTIONS.map((opt) => (
-                  <div key={opt.id} className="flex items-center gap-3">
-                    <Checkbox
-                      id={opt.id}
-                      checked={selectedOptions.includes(opt.id)}
-                      onCheckedChange={() => toggleOption(opt.id)}
-                    />
-                    <Label htmlFor={opt.id} className="cursor-pointer text-sm">{opt.label}</Label>
-                  </div>
-                ))}
-              </div>
-              {/* Champ libre */}
-              <Textarea
-                placeholder="Autre chose à préciser… (optionnel)"
-                value={freeText}
-                onChange={(e) => setFreeText(e.target.value)}
-                className="resize-none mt-2"
-                rows={2}
-                aria-label="Feedback libre optionnel"
-              />
-              {/* Actions */}
-              <div className="flex flex-col gap-2 mt-2">
-                <Button
-                  size="lg"
-                  className="w-full font-semibold"
-                  onClick={() => setAdjustStep('confirm')}
-                  disabled={selectedOptions.length === 0 && !freeText.trim()}
-                >
-                  Voir la reformulation
-                </Button>
-                <Button
-                  size="lg"
-                  variant="ghost"
-                  className="w-full text-muted-foreground"
-                  onClick={handleChangePhotos}
-                >
-                  Changer mes photos
-                </Button>
-              </div>
-            </>
-          ) : (
-            <>
-              <DialogTitle className="text-lg font-semibold">Prêt pour la prochaine version ?</DialogTitle>
-              {/* Reformulation mascotte */}
-              <div className="flex items-center gap-3 rounded-xl bg-primary/10 px-4 py-3">
-                <Image src="/mascotte/siana-neutral.svg" alt="" aria-hidden="true" width={40} height={40} />
-                <p className="text-sm font-medium text-primary">
-                  D&apos;accord, je vais {buildReformulation(selectedOptions, freeText)}. Prêt pour la prochaine version ?
-                </p>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Il vous restera {remainingIterations - 1} itération{remainingIterations - 1 !== 1 ? 's' : ''} après celle-ci.
+            ))}
+          </div>
+          {/* Champ libre */}
+          <Textarea
+            placeholder="Autre chose à préciser… (optionnel)"
+            value={freeText}
+            onChange={(e) => setFreeText(e.target.value)}
+            className="resize-none mt-2"
+            rows={2}
+            aria-label="Feedback libre optionnel"
+          />
+          {/* Preview live de la reformulation — visible dès qu'une option est cochée */}
+          {(selectedOptions.length > 0 || freeText.trim()) && (
+            <div
+              role="region"
+              aria-label="Aperçu de la reformulation"
+              aria-live="polite"
+              className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-foreground mt-2"
+            >
+              <p className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Voici ce que je vais faire
               </p>
-              {/* Actions */}
-              <div className="flex flex-col gap-2 mt-2">
-                <Button size="lg" className="w-full font-semibold" onClick={handleRegenerate}>
-                  Regénérer mon illustration
-                </Button>
-                <Button size="lg" variant="ghost" className="w-full" onClick={() => setAdjustStep('form')}>
-                  Modifier mes ajustements
-                </Button>
-              </div>
-            </>
+              <p>D&apos;accord, je vais {buildReformulation(selectedOptions, freeText)}.</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Il vous restera {remainingIterations - 1} itération
+                {remainingIterations - 1 !== 1 ? 's' : ''} après celle-ci.
+              </p>
+            </div>
           )}
+          {/* Actions */}
+          <div className="flex flex-col gap-2 mt-2">
+            <Button
+              size="lg"
+              className="w-full font-semibold"
+              onClick={handleRegenerate}
+              disabled={selectedOptions.length === 0 && !freeText.trim()}
+            >
+              Regénérer mon illustration
+            </Button>
+            <Button
+              size="lg"
+              variant="ghost"
+              className="w-full text-muted-foreground"
+              onClick={handleChangePhotos}
+            >
+              Changer mes photos
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

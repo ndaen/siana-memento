@@ -79,12 +79,13 @@ export default function GeneratingView() {
     let cancelled = false
     const startTime = Date.now()
 
-    // Animation fictive 0→90% sur la durée estimée.
-    // La génération est synchrone côté Gemini : pas de progression réelle disponible.
+    // Animation fictive 0→90% sur la durée estimée, ease-out pour donner l'impression
+    // que ça finit toujours (commence rapide, ralentit). Évite l'effet "bloqué à 90%" trop long.
     const progressInterval = setInterval(() => {
       const elapsed = Date.now() - startTime
-      const simulatedProgress = Math.min(90, (elapsed / ESTIMATED_DURATION_MS) * 90)
-      setProgress(simulatedProgress)
+      const t = Math.min(1, elapsed / ESTIMATED_DURATION_MS)
+      const eased = 1 - Math.pow(1 - t, 3) // cubic ease-out
+      setProgress(Math.min(90, eased * 90))
     }, 200)
 
     // Rotation des messages mascotte toutes les 5s

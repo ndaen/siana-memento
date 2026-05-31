@@ -16,7 +16,18 @@ import { updateDesignConfigure } from '@/lib/api/designs'
 const configSchema = z.object({
   partner1Name: z.string().trim().min(1, 'Ce champ est requis').max(100, 'Maximum 100 caractères'),
   partner2Name: z.string().trim().min(1, 'Ce champ est requis').max(100, 'Maximum 100 caractères'),
-  weddingDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date invalide'),
+  weddingDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date invalide')
+    .refine(
+      (value) => {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const parsed = new Date(value + 'T12:00:00')
+        return parsed.getTime() >= today.getTime()
+      },
+      { message: 'La date du mariage doit être à venir' }
+    ),
   weddingLocation: z
     .string()
     .trim()
@@ -190,6 +201,7 @@ export default function ConfigForm() {
         <Input
           id="weddingDate"
           type="date"
+          min={new Date().toISOString().slice(0, 10)}
           aria-describedby={errors.weddingDate ? 'weddingDate-error' : undefined}
           aria-invalid={!!errors.weddingDate}
           {...register('weddingDate')}

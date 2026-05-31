@@ -109,33 +109,42 @@ export default function OrderCard({ order }: { order: OrderData }) {
 
       {/* Infos commande */}
       <CardContent className="flex flex-1 flex-col justify-between gap-3 p-4 sm:p-5">
-        <div className="space-y-1.5">
-          {coupleNames && (
-            <p className="font-display text-base font-semibold leading-tight">{coupleNames}</p>
-          )}
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            {templateLabel && <span>{templateLabel}</span>}
-            <span aria-hidden="true">·</span>
-            <span>{formatDate(order.createdAt)}</span>
+        <div className="space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <div className="space-y-1">
+              {coupleNames && (
+                <p className="font-display text-lg font-semibold leading-tight">{coupleNames}</p>
+              )}
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                {templateLabel && <span>{templateLabel}</span>}
+                <span aria-hidden="true">·</span>
+                <span>{formatDate(order.createdAt)}</span>
+              </div>
+            </div>
+            <Badge
+              className={
+                isDelivered
+                  ? 'border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200'
+                  : 'border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200'
+              }
+            >
+              {statusLabel}
+            </Badge>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Badge variant={order.emailSentAt ? 'default' : 'secondary'}>
-              {statusLabel}
-            </Badge>
-            <span className="text-sm font-medium">{formatAmount(order.amount)}</span>
-          </div>
+          <span className="text-sm font-medium tabular-nums">{formatAmount(order.amount)}</span>
 
           <div className="flex flex-col items-end gap-1">
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               disabled={!canDownload || isDownloading}
               onClick={canDownload ? handleDownload : undefined}
               title={getDownloadTooltip()}
               aria-label="Re-télécharger le design"
+              className="text-muted-foreground hover:text-foreground"
             >
               {isDownloading ? (
                 <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />

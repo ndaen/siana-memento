@@ -256,7 +256,7 @@ export default function UploadZone() {
             <div
               key={preview.previewUrl}
               role="listitem"
-              className="relative aspect-square overflow-hidden rounded-lg bg-muted"
+              className="group relative aspect-square overflow-hidden rounded-lg bg-muted"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -268,10 +268,12 @@ export default function UploadZone() {
                 type="button"
                 onClick={() => removePhoto(i)}
                 disabled={isUploading}
-                className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white transition-colors hover:bg-black/80 disabled:opacity-50"
+                className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-white transition-colors disabled:opacity-50 focus-visible:outline-none"
                 aria-label={`Supprimer la photo ${i + 1}`}
               >
-                ✕
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm transition-colors group-hover:bg-black/80">
+                  ✕
+                </span>
               </button>
             </div>
           ))}

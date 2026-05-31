@@ -121,9 +121,11 @@ export default function SiteHeader() {
             <Button variant="outline" size="sm" asChild>
               <Link href="/register">Inscription</Link>
             </Button>
-            <Button size="sm" asChild className="hidden sm:inline-flex">
-              <Link href="/generate/upload">Créer mon Save the Date</Link>
-            </Button>
+            {(!isHome || scrolled) && (
+              <Button size="sm" asChild className="hidden sm:inline-flex">
+                <Link href="/generate/upload">Créer mon Save the Date</Link>
+              </Button>
+            )}
             {/* Settings dropdown pour visiteurs */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
