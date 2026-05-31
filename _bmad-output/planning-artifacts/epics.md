@@ -960,7 +960,39 @@ afin de surveiller la santé financière du service et prendre des décisions ma
 
 ---
 
-### Story 6.3 : Logs de Génération et Historique Erreurs IA
+### Story 6.3 : Layout & Navigation Admin
+
+En tant qu'admin Aldo,
+je veux une coquille de navigation commune à toutes les pages d'administration (sidebar + protection centralisée),
+afin de circuler facilement entre les sections admin sans réimplémenter le garde d'accès et la mise en page sur chaque page.
+
+**Acceptance Criteria:**
+
+**Given** Aldo authentifié sur n'importe quelle page sous `/admin`
+**When** la page s'affiche
+**Then** une sidebar de navigation persistante liste les sections : Dashboard, Logs, Commandes, Testimonials — avec mise en évidence de la section active (FR33, NFR-A2)
+
+**Given** un layout admin partagé (`/admin/layout`)
+**When** une page admin (dashboard, logs, commandes, testimonials) est rendue
+**Then** elle hérite de la sidebar et du contrôle d'accès commun, sans dupliquer le garde dans chaque page (refactor de la garde de Story 6.2)
+
+**Given** un utilisateur non authentifié ou non-admin accédant à toute route `/admin`
+**When** sa requête arrive
+**Then** il est redirigé (non connecté → `/login` ; connecté non-admin → `/orders`) — contrôle centralisé dans le layout, cohérent avec la protection serveur NFR-S10 (Story 6.2)
+
+**Given** la navigation admin sur mobile
+**When** Aldo consulte une page admin sur un écran < 768px
+**Then** la sidebar reste utilisable (repliable/drawer) et tous les liens sont accessibles au clavier (Tab/Enter, NFR-A2)
+
+**Given** un lien de la sidebar pointant vers une section non encore implémentée (Logs, Commandes, Testimonials avant leurs stories)
+**When** Aldo clique dessus
+**Then** la navigation fonctionne et la page affiche un état neutre « bientôt disponible » (pas d'erreur) jusqu'à l'implémentation de la story correspondante
+
+> **Note (correct-course 2026-06-01)** : story ajoutée a posteriori — la navigation admin n'avait été prévue dans aucune story d'Epic 6, alors que 4 pages `/admin` y sont créées (dashboard, logs, commandes, testimonials). `architecture.md` mentionnait `Sidebar.tsx` (arborescence) sans AC associée. La garde admin de la Story 6.2 (dans le composant `AdminDashboard`) sera refactorisée dans ce layout partagé.
+
+---
+
+### Story 6.4 : Logs de Génération et Historique Erreurs IA
 
 En tant qu'admin Aldo,
 je veux consulter les logs de toutes les générations et l'historique des erreurs IA,
@@ -982,7 +1014,7 @@ afin de diagnostiquer rapidement les problèmes et optimiser les coûts API.
 
 ---
 
-### Story 6.4 : Alertes Automatiques Admin
+### Story 6.5 : Alertes Automatiques Admin
 
 En tant qu'admin Aldo,
 je veux recevoir des alertes email automatiques si des seuils critiques sont dépassés,
@@ -1008,7 +1040,7 @@ afin de réagir en moins de 5 minutes avant que les problèmes n'impactent les c
 
 ---
 
-### Story 6.5 : Renvoi Manuel de Designs et Backups DB
+### Story 6.6 : Renvoi Manuel de Designs et Backups DB
 
 En tant qu'admin Aldo,
 je veux pouvoir renvoyer manuellement un design par email et être assuré que les données sont sauvegardées,
@@ -1034,7 +1066,7 @@ afin de réparer les livraisons échouées et garantir la récupération des don
 
 ---
 
-### Story 6.6 : Gestion des Testimonials (CRUD Admin)
+### Story 6.7 : Gestion des Testimonials (CRUD Admin)
 
 En tant qu'admin Aldo,
 je veux gérer les testimonials de la landing page (ajouter, modifier, activer, supprimer),
@@ -1060,7 +1092,7 @@ afin de contrôler la preuve sociale présentée aux visiteurs sans redéploieme
 
 ---
 
-### Story 6.7 : Survey de Satisfaction Post-Achat
+### Story 6.8 : Survey de Satisfaction Post-Achat
 
 En tant que client ayant acheté un design,
 je veux recevoir un survey de satisfaction 24h après mon achat,
