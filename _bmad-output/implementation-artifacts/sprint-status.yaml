@@ -86,7 +86,7 @@ development_status:
   epic-6: in-progress
   6-1-healthcheck-endpoint-et-monitoring: done
   6-2-dashboard-metriques-business-et-export-csv: done
-  6-3-layout-et-navigation-admin: backlog
+  6-3-layout-et-navigation-admin: review
   6-4-logs-de-generation-et-historique-erreurs-ia: backlog
   6-5-alertes-automatiques-admin: backlog
   6-6-renvoi-manuel-de-designs-et-backups-db: backlog
