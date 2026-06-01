@@ -9,6 +9,7 @@ import Footer from '@/components/siana/Footer'
  */
 export default function ConditionalFooter() {
   const pathname = usePathname()
-  if (pathname?.startsWith('/admin')) return null
+  // Frontière de segment : masquer sur /admin et /admin/* sans matcher un futur /admin-help.
+  if (pathname === '/admin' || pathname?.startsWith('/admin/')) return null
   return <Footer />
 }

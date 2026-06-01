@@ -1,9 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { getMe } from '@/lib/api/auth'
 import { getAdminMetrics, getExportCsvUrl, type DashboardMetrics } from '@/lib/api/admin'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -34,38 +32,14 @@ function MetricCard({ label, value, hint }: { label: string; value: string; hint
   )
 }
 
+// L'accès admin est garanti en amont par AdminShell (layout /admin) — ce composant
+// suppose un admin authentifié et ne charge que les métriques.
 export default function AdminDashboard() {
-  const router = useRouter()
-  const [authChecked, setAuthChecked] = useState(false)
-  const [authError, setAuthError] = useState(false)
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
-  // Garde admin (UX uniquement — la vraie barrière est l'API, NFR-S10).
   useEffect(() => {
-    getMe().then((result) => {
-      if (!result.success) {
-        // Distinguer une panne réseau d'un vrai « non authentifié » : ne pas rediriger
-        // vers /login sur un simple souci de connexion (sinon faux logout perçu).
-        if (result.errorCode === 'NETWORK_ERROR') {
-          toast.error('Service indisponible. Vérifiez votre connexion et réessayez.')
-          setAuthError(true)
-          return
-        }
-        router.replace('/login?redirect=/admin/dashboard')
-        return
-      }
-      if (!result.user.isAdmin) {
-        router.replace('/orders')
-        return
-      }
-      setAuthChecked(true)
-    })
-  }, [router])
-
-  useEffect(() => {
-    if (!authChecked) return
     getAdminMetrics().then((result) => {
       if (result.success) {
         setMetrics(result.metrics)
@@ -75,36 +49,10 @@ export default function AdminDashboard() {
       }
       setLoading(false)
     })
-  }, [authChecked])
-
-  if (authError) {
-    return (
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:py-16">
-        <div className="flex flex-col items-center py-16 text-center">
-          <h2 className="font-display text-lg font-semibold">Connexion impossible</h2>
-          <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-            Vérifiez votre connexion et rechargez la page.
-          </p>
-        </div>
-      </main>
-    )
-  }
-
-  if (!authChecked) {
-    return (
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:py-16">
-        <div className="h-8 w-56 rounded bg-muted animate-pulse" />
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-28 rounded-xl bg-muted animate-pulse" />
-          ))}
-        </div>
-      </main>
-    )
-  }
+  }, [])
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10 sm:py-16">
+    <>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
@@ -181,6 +129,6 @@ export default function AdminDashboard() {
           </section>
         </>
       )}
-    </main>
+    </>
   )
 }

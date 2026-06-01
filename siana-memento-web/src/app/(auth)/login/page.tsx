@@ -1,12 +1,24 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import FocusCard from "@/components/siana/FocusCard";
 import LoginForm from "@/components/siana/LoginForm";
 import GoogleButton from "@/components/siana/GoogleButton";
 
-export default function LoginPage() {
+// Retour post-login : n'autorise que les chemins internes absolus.
+// Rejette les URLs absolues (https://…) et protocol-relative (//host) → anti open-redirect.
+function safeInternalPath(raw: string | null): string | null {
+  if (!raw || !raw.startsWith("/")) return null;
+  if (raw.startsWith("//") || raw.startsWith("/\\")) return null;
+  return raw;
+}
+
+function LoginPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = safeInternalPath(searchParams.get("redirect"));
+  const target = redirectTo ?? "/";
 
   return (
     <FocusCard>
@@ -21,7 +33,7 @@ export default function LoginPage() {
         </div>
 
         <div className="flex flex-col gap-3 mb-4">
-          <GoogleButton label="Continuer avec Google" />
+          <GoogleButton label="Continuer avec Google" returnTo={redirectTo ?? undefined} />
           <div className="relative flex items-center gap-3 py-1">
             <div className="h-px flex-1 bg-border" />
             <span className="text-xs text-muted-foreground">ou</span>
@@ -29,7 +41,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <LoginForm onSuccess={() => router.push("/")} />
+        <LoginForm onSuccess={() => router.push(target)} />
 
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Pas encore de compte ?{" "}
@@ -42,5 +54,13 @@ export default function LoginPage() {
         </p>
       </div>
     </FocusCard>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageInner />
+    </Suspense>
   );
 }

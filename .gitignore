@@ -27,6 +27,8 @@ dist/
 
 # ─── Logs ────────────────────────────────────────────────────────────────────
 logs/
+# Exception : la route admin /admin/logs n'est pas un dossier de logs runtime.
+!siana-memento-web/src/app/admin/logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
