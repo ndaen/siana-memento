@@ -1,0 +1,9 @@
+# Config Railway dédiée aux services cron (alerts:check, cleanup:rgpd, survey:send).
+# Volontairement SANS [deploy].startCommand ni healthcheckPath : ces deux champs
+# restent éditables dans le dashboard pour que chaque service cron définisse
+# sa propre commande ace et son propre Cron Schedule, sans serveur HTTP ni healthcheck.
+# L'API principale continue d'utiliser railway.toml.
+
+[build]
+builder = "RAILPACK"
+buildCommand = "npm install && node ace build --ignore-ts-errors"
