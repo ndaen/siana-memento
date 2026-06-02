@@ -32,6 +32,8 @@ export default class CheckAlerts extends BaseCommand {
 
     let sent = 0
     let throttled = 0
+    let skipped = 0
+    let failed = 0
 
     const results = await service.checkAll()
 
@@ -99,8 +101,17 @@ export default class CheckAlerts extends BaseCommand {
         }
 
         const { subject, html } = emailFor[type](result)
-        await sendAdminAlert(type, subject, html)
-        sent++
+        // Ne compter "sent" que si l'email est réellement parti : sendAdminAlert renvoie
+        // {success:false, skipped:true} si ADMIN_ALERT_EMAIL est absent (dev/test) et
+        // {success:false} sur erreur Resend. Sinon le résumé prétendrait avoir alerté à tort.
+        const res = await sendAdminAlert(type, subject, html)
+        if (res.success) {
+          sent++
+        } else if (res.skipped) {
+          skipped++
+        } else {
+          failed++
+        }
 
         // Upsert de l'état (ré-arme le cooldown), que l'envoi réseau ait abouti ou non :
         // un seuil franchi = un déclenchement, indépendamment de l'état de Resend.
@@ -126,13 +137,15 @@ export default class CheckAlerts extends BaseCommand {
         rateLimit: results.rate_limit.triggered,
         sent,
         throttled,
+        skipped,
+        failed,
         durationMs,
       },
       'Vérification des alertes terminée'
     )
 
     this.logger.success(
-      `Alertes vérifiées : ${sent} envoyée(s), ${throttled} throttlée(s) (${durationMs}ms)`
+      `Alertes vérifiées : ${sent} envoyée(s), ${throttled} throttlée(s), ${skipped} ignorée(s) (email non configuré), ${failed} en échec (${durationMs}ms)`
     )
   }
 }

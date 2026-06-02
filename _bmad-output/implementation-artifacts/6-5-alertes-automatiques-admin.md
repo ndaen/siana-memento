@@ -5,7 +5,7 @@ baseline_commit: dd2519988d7eb455c55a13f3fe3e7deb4355155b
 
 # Story 6.5: Alertes Automatiques Admin
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -233,6 +233,25 @@ Opus 4.8 (1M context) — claude-opus-4-8[1m]
 - `siana-memento-api/tests/helpers/factories.ts` — `createGeneration` accepte `errorMessage` + `createdAt` (additif)
 - `_bmad-output/implementation-artifacts/deferred-work.md` — dette 6.5
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` — 6-5 → review
+
+## Review Findings
+
+Revue de code adversariale (Blind Hunter / Edge Case Hunter / Acceptance Auditor) — 2026-06-02.
+État vérifié : `npx tsc --noEmit` → 0 erreur ; `npm run lint` → 0 erreur ; `node ace test` → **178 passed** (confirmé, aucun écart). Les 4 ACs sont satisfaits (AC#3 via proxy D4 assumé, AC#4 via cron externe documenté). Aucune régression. Aucune fuite de secret (email destinataire jamais loggé ; `error: String(err)` n'expose pas de payload sensible). `whereRaw` paramétré (pas d'injection). Argent en centimes cohérent avec `metrics_service`. Fenêtres UTC `toSQL({includeOffset:false})` correctes. Cooldown sans famine (re-fire après expiration).
+
+### Patch
+
+- [x] **`commands/check_alerts.ts:102-103` — `sent++` compte des envois qui n'ont pas eu lieu.** `sent` était incrémenté inconditionnellement après `await sendAdminAlert(...)`, alors que cette fonction retourne `{success:false, skipped:true}` quand `ADMIN_ALERT_EMAIL` est absent (cas test/dev par défaut) et `{success:false}` en cas d'erreur Resend → observabilité trompeuse. **Corrigé** : `const res = await sendAdminAlert(...)` puis `if (res.success) sent++ else if (res.skipped) skipped++ else failed++` ; compteurs `skipped`/`failed` ajoutés au log `alerts_check_summary` et au message `logger.success`. L'upsert `AlertState` reste inconditionnel (intentionnel, ré-arme le cooldown). tsc/lint OK, 178 tests verts.
+
+### Defer
+
+- [ ] **`alerts_service.ts:185-207` (`checkRateLimit`) — ré-alerte sur erreurs quota périmées pendant 24h.** La fenêtre proxy est de 24h sans notion de « fraîcheur » ni de reset. Une fois le cooldown (60 min) écoulé, les **mêmes** anciennes erreurs 429 (jusqu'à 24h d'âge) re-matchent et redéclenchent l'alerte ~toutes les heures, même si l'incident quota est résolu depuis longtemps. Pas un flood (le cooldown borne à 1/h) mais du bruit répété sur un signal périmé. Atténuation possible (Growth) : ne compter que les erreurs quota postérieures à `last_triggered_at`, ou réduire la fenêtre proxy (ex. 1-2h). Cohérent avec la nature « proxy MVP » de D4 — à tracer dans `deferred-work.md`.
+- [ ] **`generations.created_at` non indexé (dette 6.2 connue) — désormais sollicité par 3 requêtes toutes les 5 min.** Les fenêtres 15min/24h scannent `created_at` ; `checkRateLimit` ajoute un `~*` (regex) sur `error_message`. Volume MVP faible → acceptable, mais la cadence */5min amplifie la dette d'index déjà tracée. Ajouter l'index `generations(created_at)` (et idéalement `(status, created_at)`) quand le volume grossit. Déjà listé dans `deferred-work.md` (6.2) — rien de nouveau à créer, juste confirmer la priorité.
+
+### Decision
+
+- [ ] **AC#2 — `paidOrders` (fenêtre 24h sur `orders.created_at`) vs `generationsCount` (fenêtre 24h sur `generations.created_at`) ne sont pas appariés par commande.** Le coût moyen = (estimation × toutes générations 24h) / (commandes payées 24h). Une rafale de re-générations sans commande payée correspondante dans la même fenêtre gonfle le « coût/commande » (et inversement). C'est exactement la sémantique « agrégat global » héritée de `metrics_service` (dette D1 6.2) et le signal voulu par D3 (« coût qui dérive »). À trancher par Aldo : garder cette sémantique d'agrégat (signal de dérive, ce qui est l'intention) ou viser un vrai coût par commande payée (nécessiterait d'apparier générations↔commande, hors MVP). Aujourd'hui sans impact car coût = estimation uniforme.
+- [ ] **AC#4 — la cadence */5min n'est pas committée** (cron Railway/GitHub Actions externe, comme `cleanup:rgpd`). Décision assumée D2/runbook. À acter : créer le cron externe `*/5 * * * * node build/ace alerts:check` en prod, sinon NFR-R4 (<5 min) n'est pas réellement garanti malgré le code correct.
 
 ## Change Log
 
