@@ -129,3 +129,80 @@ export async function sendDesignDelivery(
     return { success: false }
   }
 }
+
+/**
+ * Builds an admin alert email body (inline HTML, Vert Sauge #2D4A3E).
+ * Generic builder: a title + a list of HTML-safe lines.
+ */
+export function buildAlertHtml(title: string, lines: string[]): string {
+  const items = lines
+    .map(
+      (line) => `<li style="font-size: 15px; line-height: 1.6; margin-bottom: 8px;">${line}</li>`
+    )
+    .join('')
+
+  return `
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"></head>
+<body style="font-family: 'Helvetica Neue', Arial, sans-serif; color: #2D4A3E; max-width: 600px; margin: 0 auto; padding: 24px;">
+  <h1 style="font-size: 22px; color: #2D4A3E;">${title}</h1>
+  <ul style="padding-left: 20px;">${items}</ul>
+  <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 32px 0;" />
+  <p style="font-size: 12px; color: #888;">
+    Siana Memento — Alerte automatique (commande alerts:check)
+  </p>
+</body>
+</html>`.trim()
+}
+
+/**
+ * Sends an admin alert email via Resend.
+ * Returns success status and Resend message ID.
+ * Does NOT throw on failure — logs the error and returns { success: false }.
+ * If ADMIN_ALERT_EMAIL is not configured, skips sending (no network call).
+ */
+export async function sendAdminAlert(
+  type: string,
+  subject: string,
+  htmlBody: string
+): Promise<{ success: boolean; resendId?: string; skipped?: boolean }> {
+  const toEmail = env.get('ADMIN_ALERT_EMAIL')
+
+  if (!toEmail) {
+    logger.warn(
+      { event: 'admin_alert_skipped', type, reason: 'missing_admin_alert_email' },
+      'ADMIN_ALERT_EMAIL non configuré — alerte non envoyée'
+    )
+    return { success: false, skipped: true }
+  }
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: env.get('RESEND_FROM_EMAIL'),
+      to: toEmail,
+      subject: `[Siana Alerte] ${subject}`,
+      html: htmlBody,
+    })
+
+    if (error) {
+      logger.error(
+        { event: 'admin_alert_failed', type, resendError: error },
+        'Resend API returned an error for admin alert'
+      )
+      return { success: false }
+    }
+
+    logger.info(
+      { event: 'admin_alert_sent', type, resendId: data?.id },
+      'Admin alert email sent successfully'
+    )
+    return { success: true, resendId: data?.id }
+  } catch (err) {
+    logger.error(
+      { event: 'admin_alert_failed', type, error: String(err) },
+      'Unexpected error sending admin alert email'
+    )
+    return { success: false }
+  }
+}

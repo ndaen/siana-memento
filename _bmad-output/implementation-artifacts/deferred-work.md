@@ -1,5 +1,12 @@
 # Deferred Work
 
+## Deferred from: story 6.5 (2026-06-02)
+
+- **« Quota restant » exact Gemini non mesurable (AC#3, proxy D4)** — L'alerte rate-limit (`alerts_service.checkRateLimit`) est un **proxy MVP** : elle compte les générations `failed` dont `error_message` matche `429|RESOURCE_EXHAUSTED|quota|rate limit` sur 24h, et reporte ce **nombre d'erreurs** dans l'email. Le « quota restant » exact demandé par l'AC#3 n'est pas exposé par l'API Gemini de façon exploitable au MVP et n'est pas compté localement. Growth : maintenir un compteur de requêtes Gemini (ou exploiter les quotas Cloud) pour reporter le quota restant réel. [siana-memento-api/app/services/alerts_service.ts:checkRateLimit]
+- **Coût API d'alerte = estimation EUR (réutilise dette 6.2/6.4)** — `checkApiCost` réutilise `GEMINI_COST_EUR_ESTIMATE` (× générations / commandes payées) sur 24h, exactement comme `metrics_service`. Quand le coût Gemini réel sera persisté (`generations.gemini_cost_usd`), rebrancher `AlertsService.checkApiCost` dessus **en même temps** que `metrics_service`. [siana-memento-api/app/services/alerts_service.ts:checkApiCost]
+- **Planification cron de `alerts:check` non committée** — Comme `cleanup:rgpd`, la commande `alerts:check` n'a pas de scheduler in-process. Pour satisfaire NFR-R4 (détection→email <5 min), planifier `*/5 * * * * node build/ace alerts:check` via un cron externe (Railway / GitHub Actions schedule). Infra hors périmètre code.
+- **Index manquant `generations.created_at`** — Les fenêtres 15min/24h de `AlertsService` scannent `generations.created_at` (déjà tracé en dette 6.2). Volume MVP faible → acceptable ; ajouter l'index avec celui de 6.2.
+
 ## Deferred from: story 6.4 (2026-06-02)
 
 - **Test d'intégration de la persistance de génération** — `designs_controller.generate` crée désormais une ligne `Generation` (succès/échec). Tester ce wiring de bout en bout nécessite de mocker `generateDesignImage`/`GoogleGenAI` (fonction plate, pas d'injection DI → non swappable via le conteneur AdonisJS). À outiller : soit refactorer `generation_service` en classe injectable, soit introduire un mock de module Japa. Aujourd'hui : chemin d'échec exercé par les tests photo-fail existants, persistance validée par revue + tests de l'endpoint `/api/admin/logs`. Non bloquant.

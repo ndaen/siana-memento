@@ -91,4 +91,24 @@ export default await Env.create(new URL('../', import.meta.url), {
   // Estimation MVP du coût Gemini par génération (EUR). Utilisé tant que la Story 6.3
   // ne persiste pas le coût réel. Défaut applicatif ~0,50€ si absent.
   GEMINI_COST_EUR_ESTIMATE: Env.schema.number.optional(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring admin alerts (alertes admin)
+  |----------------------------------------------------------
+  */
+  // Destinataire des emails d'alerte (commande alerts:check). Optionnel : si absent,
+  // la commande loggue un WARN et n'envoie aucun email (garde test/dev — pas d'appel Resend).
+  ADMIN_ALERT_EMAIL: Env.schema.string.optional(),
+  // Seuil taux d'erreur des générations IA (ratio 0..1). Défaut applicatif 0.05 (5%).
+  ERROR_RATE_THRESHOLD: Env.schema.number.optional(),
+  // Volume minimal de générations sur la fenêtre avant d'évaluer le taux d'erreur
+  // (évite 1 échec sur 1 = 100% faux positif). Défaut applicatif 5.
+  ERROR_RATE_MIN_SAMPLE: Env.schema.number.optional(),
+  // Seuil coût moyen API par commande payée (EUR). Défaut applicatif 0.70.
+  API_COST_ALERT_EUR: Env.schema.number.optional(),
+  // Nombre minimal d'erreurs quota (429/RESOURCE_EXHAUSTED/...) avant alerte rate-limit. Défaut 1.
+  GEMINI_QUOTA_ALERT_MIN_HITS: Env.schema.number.optional(),
+  // Cooldown anti-spam entre deux alertes du même type (minutes). Défaut applicatif 60.
+  ALERT_COOLDOWN_MINUTES: Env.schema.number.optional(),
 })

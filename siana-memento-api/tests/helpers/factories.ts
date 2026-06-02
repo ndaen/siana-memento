@@ -127,17 +127,27 @@ export async function createGeneration(
     status: 'pending' | 'generating' | 'completed' | 'failed'
     geminiCostUsd: number | null
     iterationNumber: number
+    errorMessage: string | null
+    createdAt: DateTime
   }>
 ) {
   const { default: Generation } = await import('#models/generation')
-  return Generation.create({
+  const generation = await Generation.create({
     designId,
     iterationNumber: overrides?.iterationNumber ?? 1,
     promptUsed: 'test prompt',
     status: overrides?.status ?? 'completed',
     geminiCostUsd: overrides?.geminiCostUsd ?? null,
+    errorMessage: overrides?.errorMessage ?? null,
     attempts: 1,
   })
+
+  if (overrides?.createdAt) {
+    generation.createdAt = overrides.createdAt
+    await generation.save()
+  }
+
+  return generation
 }
 
 export async function createDesignViaApi(client: any, cookie?: string) {
