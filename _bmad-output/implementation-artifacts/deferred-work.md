@@ -1,5 +1,9 @@
 # Deferred Work
 
+## Deferred from: code review of story-6.3 (2026-06-02)
+
+- **Double appel `/auth/me` par page admin** — `SiteHeader` exécute son propre `getMe()` au mount sur toutes les routes (y compris `/admin/*`), en parallèle du garde de `AdminShell` → 2 requêtes `/auth/me` concurrentes par chargement de page admin, sans cache partagé. Pré-existant : `SiteHeader.tsx` n'est pas modifié par la Story 6.3. Mutualiser l'état d'auth (contexte/SWR) éliminerait le doublon. Non bloquant. [siana-memento-web/src/components/siana/SiteHeader.tsx:41]
+
 ## Deferred from: code review of story-6.2 (2026-05-31)
 
 - **Sémantique coût API / marge brute (D1)** — Le coût API est agrégé sur **toutes** les générations de la fenêtre 30j tandis que revenu/commandes ne comptent que `paid` → une fois la Story 6.3 livrée (coût réel persisté), `grossMargin` peut devenir fortement négatif et `avgApiCost` (÷ commandes payées) ≈ coût/taux-de-conversion (~10€ à 5%). Le dashboard agrège globalement, le CSV par commande → totaux divergents. À statuer (garder « marge business 30j » vs coût par commande payée) quand le coût réel sera disponible en 6.3. Aujourd'hui sans impact (coût = 0 partout). [metrics_service.ts:67-84 ; admin_controller.ts:57]

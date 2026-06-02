@@ -71,6 +71,39 @@ afin de circuler facilement entre les sections admin sans réimplémenter le gar
   - [x] **AC#4** — viewport < 768px → sidebar masquée, hamburger ouvre le drawer, liens navigables au clavier (Tab/Enter), Échap referme.
 - [x] ⚠️ Les e2e admin nécessitent la stack Docker up + un compte admin connecté. Si l'auth e2e (login programmatique / storageState) n'est pas encore outillée, livrer **au minimum** le test AC#3-anonyme (sans auth) + AC#5, et documenter en Completion Notes les cas couverts manuellement. Suivre le style des specs existantes `e2e/home.spec.ts` / `e2e/generate-flow.spec.ts`.
 
+### Review Findings
+
+<!-- Ajouté par code-review (BMad) le 2026-06-02 — commits 56cdfc3..HEAD ; 3 couches : Blind Hunter, Edge Case Hunter, Acceptance Auditor -->
+
+**Decision needed**
+
+- [x] [Review][Decision] Changements hors File List + `UserMenu` contredit une Dev Note — `UserMenu.tsx` masque « Mes commandes » sous `/admin` alors que les Dev Notes (L101) imposent « ne pas masquer le header (hors scope, risque de régression) ». De plus `login/page.tsx`, `app/admin/page.tsx` et `.gitignore` ne figurent pas dans le File List déclaré. Décider : conserver ces changements (et mettre à jour File List + Change Log) ou réaligner sur le spec.
+
+**Patch**
+
+- [x] [Review][Patch] Drawer mobile ne se ferme pas sur navigation non-clic (bouton retour navigateur / redirect / deep-link) [siana-memento-web/src/components/siana/AdminSidebar.tsx:87]
+- [x] [Review][Patch] État `authError` sans bouton « Réessayer » + `hasChecked` (ref) bloque tout re-check tant que le shell reste monté [siana-memento-web/src/components/siana/AdminShell.tsx:51]
+- [x] [Review][Patch] Skeleton de chargement en forme de dashboard (5 cartes métriques) affiché sur toutes les sous-routes admin (Logs, Commandes, Testimonials) [siana-memento-web/src/components/siana/AdminShell.tsx:64]
+- [x] [Review][Patch] `safeInternalPath` ne neutralise pas les caractères de contrôle (`\t\n\r`) → durcir le filtre anti open-redirect [siana-memento-web/src/app/(auth)/login/page.tsx:11]
+- [x] [Review][Patch] `SheetContent` sans `SheetDescription`/`aria-describedby` → warning a11y Radix Dialog [siana-memento-web/src/components/siana/AdminSidebar.tsx:98]
+- [x] [Review][Patch] Double `<nav aria-label="Navigation admin">` (sidebar desktop + drawer mobile) → libellés de landmark non uniques (WCAG) [siana-memento-web/src/components/siana/AdminSidebar.tsx:47]
+
+**Deferred**
+
+- [x] [Review][Defer] `SiteHeader` déclenche son propre `getMe()` en plus du garde du shell → 2 appels `/auth/me` par page admin [siana-memento-web/src/components/siana/SiteHeader.tsx:41] — deferred, pre-existing (SiteHeader non modifié par cette story)
+
+**Résolution (review-fixes, 2026-06-02)**
+
+- **Decision** → changements **conservés** (demandés par Aldo : retour visuel #1 + décision sur le redirect post-login). Précision : seul le **raccourci « Mes commandes »** est masqué sous `/admin`, pas le header lui-même (logo, menu déconnexion, thème restent) — le garde-fou « ne pas masquer le header » n'est donc pas enfreint. `.gitignore` ajouté au File List (la règle `logs/` masquait `admin/logs/page.tsx` → négation ciblée).
+- **Patch 1** ✅ drawer mobile : `Sheet` non-contrôlé + `key={pathname}` → fermeture sur toute navigation (clic, retour, redirect, deep-link).
+- **Patch 2** ✅ état réseau réessayable : bouton « Réessayer » (reset + re-check) ; `runAuthCheck` mémorisé, garde `checking` ref (un seul appel, pas de setState synchrone en effet).
+- **Patch 3** ✅ skeleton neutre (plus en forme de dashboard) dans le shell, route-agnostique, sans flash de sidebar avant confirmation admin.
+- **Patch 4** ✅ `safeInternalPath` rejette les caractères de contrôle (`charCodeAt < 0x20 || === 0x7f`).
+- **Patch 5** ✅ `SheetContent` doté d'un `SheetDescription` (sr-only) → plus de warning a11y Radix.
+- **Patch 6** ✅ libellés de landmark distincts (`Navigation admin` / `Navigation admin (mobile)`). NB : faux positif au runtime (l'`aside` desktop est `display:none` en mobile → exclu de l'arbre a11y, une seule instance exposée), corrigé par prudence.
+- **Deferred** : double `getMe()` `SiteHeader` — pré-existant, tracé dans `deferred-work.md`.
+- Validation : `tsc` + `eslint` verts ; **20/21 e2e** (10 admin, dont retry réseau + anti open-redirect) ; seul échec = `home › hero` préexistant.
+
 ## Dev Notes
 
 ### Contexte & périmètre
@@ -238,6 +271,9 @@ claude-opus-4-8[1m] (Claude Opus 4.8, 1M context)
 - `siana-memento-web/src/components/siana/ConditionalFooter.tsx` (frontière de segment `/admin/` — durcissement revue adversariale)
 - `siana-memento-web/src/app/(auth)/login/page.tsx` (consomme `?redirect=` post-login + validation chemin interne anti open-redirect — review finding #4)
 
+**UPDATE — racine**
+- `.gitignore` (négation `!siana-memento-web/src/app/admin/logs/` — la règle `logs/` masquait la route `/admin/logs`)
+
 ## Change Log
 
 | Date | Version | Description | Auteur |
@@ -247,3 +283,4 @@ claude-opus-4-8[1m] (Claude Opus 4.8, 1M context)
 | 2026-06-01 | 1.1 | Retours utilisateur (Aldo) : (1) « Mes commandes » masqué dans le header sous `/admin` (`UserMenu` + `usePathname`) ; (2) `/admin` → redirect serveur vers `/admin/dashboard` (`src/app/admin/page.tsx`) ; (3) onglet sidebar actif lisible en clair **et** sombre (tokens `bg-primary`/`text-primary-foreground` au lieu du sage codé en dur sur `bg-accent`). +2 e2e (7/7 admin verts) ; tsc + eslint OK. | Amelia (review-fixes) |
 | 2026-06-01 | 1.2 | Revue adversariale (4 lentilles) → 3 findings en scope corrigés : (1) **focus ring invisible** sur l'onglet actif (`--ring`==`--primary`) → ajout `ring-offset-2 ring-offset-background` (WCAG 2.4.7/2.4.11) ; (2) `getMe()` redondant à chaque sous-route admin → flag ref, un seul appel au montage ; (3) `isAdminArea` / `ConditionalFooter` durcis en frontière de segment `/admin/`. tsc + eslint + 17 e2e (dont 7 admin) verts, 0 régression. Finding #4 (redirect post-login non consommé) = dette pré-6.2, soumise à décision. | Amelia (review-fixes) |
 | 2026-06-01 | 1.3 | Finding #4 corrigé (décision Aldo) : `login/page.tsx` consomme `?redirect=` (`useSearchParams` sous `<Suspense>`) avec validation chemin interne (anti open-redirect) + transmission `GoogleButton.returnTo`. Le garde admin ramène désormais l'utilisateur sur la page demandée après login. +2 e2e (19/20 verts ; seul échec = `home › hero` préexistant). tsc + eslint OK. | Amelia (review-fixes) |
+| 2026-06-02 | 1.4 | Code review formelle (3 couches) traitée : décision conservée (changements voulus, `.gitignore` ajouté au File List) + 6 patchs appliqués (drawer ferme sur toute nav via `key={pathname}` ; bouton Réessayer sur erreur réseau ; skeleton neutre ; `safeInternalPath` rejette les caractères de contrôle ; `SheetDescription` a11y ; libellés de landmark distincts). +1 e2e (retry réseau). tsc + eslint + 20/21 e2e verts (seul échec = `home › hero` préexistant). Deferred : double `getMe` `SiteHeader` (pré-existant). | Amelia (review-fixes) |
