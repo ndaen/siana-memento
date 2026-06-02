@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -14,6 +13,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -39,12 +39,16 @@ function isActive(pathname: string | null, href: string): boolean {
   return pathname === href || pathname.startsWith(href + '/')
 }
 
-/** Liste de liens partagée entre la sidebar desktop et le drawer mobile. */
-function AdminNavList({ onNavigate }: { onNavigate?: () => void }) {
+/**
+ * Liste de liens partagée entre la sidebar desktop et le drawer mobile.
+ * `label` distinct par contexte → libellés de landmark uniques (une seule instance
+ * est exposée à l'arbre a11y à la fois, mais on évite toute ambiguïté).
+ */
+function AdminNavList({ label }: { label: string }) {
   const pathname = usePathname()
 
   return (
-    <nav aria-label="Navigation admin" className="flex flex-col gap-1">
+    <nav aria-label={label} className="flex flex-col gap-1">
       {adminSections.map((section) => {
         const active = isActive(pathname, section.href)
         const Icon = section.icon
@@ -52,7 +56,6 @@ function AdminNavList({ onNavigate }: { onNavigate?: () => void }) {
           <Link
             key={section.href}
             href={section.href}
-            onClick={onNavigate}
             aria-current={active ? 'page' : undefined}
             className={cn(
               'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
@@ -78,18 +81,20 @@ export function AdminSidebar() {
       <p className="px-3 pb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         Administration
       </p>
-      <AdminNavList />
+      <AdminNavList label="Navigation admin" />
     </aside>
   )
 }
 
 /** Barre mobile (< md) avec bouton hamburger ouvrant un drawer. */
 export function AdminMobileNav() {
-  const [open, setOpen] = useState(false)
+  const pathname = usePathname()
 
   return (
     <div className="flex items-center gap-2 border-b border-border/60 px-4 py-2 md:hidden">
-      <Sheet open={open} onOpenChange={setOpen}>
+      {/* key={pathname} : tout changement de route remonte le Sheet → drawer fermé
+          (clic lien, bouton retour, redirection, deep-link) sans setState dans un effet. */}
+      <Sheet key={pathname}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="sm" aria-label="Ouvrir la navigation admin">
             <Menu className="h-5 w-5" />
@@ -98,9 +103,12 @@ export function AdminMobileNav() {
         <SheetContent side="left" className="w-64 p-0">
           <SheetHeader>
             <SheetTitle>Administration</SheetTitle>
+            <SheetDescription className="sr-only">
+              Liens vers les sections de l’espace d’administration.
+            </SheetDescription>
           </SheetHeader>
           <div className="px-3 pb-6">
-            <AdminNavList onNavigate={() => setOpen(false)} />
+            <AdminNavList label="Navigation admin (mobile)" />
           </div>
         </SheetContent>
       </Sheet>

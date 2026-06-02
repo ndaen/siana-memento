@@ -114,8 +114,8 @@ test.describe('Layout & navigation admin', () => {
     await expect(trigger).toBeVisible()
     await trigger.click()
 
-    // Le drawer affiche la navigation, accessible au clavier.
-    const drawerNav = page.getByRole('navigation', { name: 'Navigation admin' })
+    // Le drawer affiche la navigation (libellé distinct du landmark desktop), accessible au clavier.
+    const drawerNav = page.getByRole('navigation', { name: 'Navigation admin (mobile)' })
     await expect(drawerNav).toBeVisible()
     await drawerNav.getByRole('link', { name: 'Commandes' }).click()
     await page.waitForURL('**/admin/orders')
@@ -155,5 +155,16 @@ test.describe('Layout & navigation admin', () => {
     // Le chemin externe est rejeté → retour à l'accueil interne, pas vers evil.example.com.
     await page.waitForURL('http://localhost:3000/')
     expect(new URL(page.url()).host).toBe('localhost:3000')
+  })
+
+  test('erreur réseau sur le garde admin affiche un bouton Réessayer', async ({ page }) => {
+    // Abort de /auth/me → getMe renvoie NETWORK_ERROR → état réessayable (pas de redirect).
+    await page.context().route('**/auth/me', (route) => route.abort())
+
+    await page.goto('/admin/dashboard')
+    await expect(page.getByRole('heading', { name: 'Connexion impossible' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /réessayer/i })).toBeVisible()
+    // Pas de redirection vers /login sur une simple panne réseau.
+    await expect(page).toHaveURL(/\/admin\/dashboard$/)
   })
 })

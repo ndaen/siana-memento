@@ -11,6 +11,12 @@ import GoogleButton from "@/components/siana/GoogleButton";
 function safeInternalPath(raw: string | null): string | null {
   if (!raw || !raw.startsWith("/")) return null;
   if (raw.startsWith("//") || raw.startsWith("/\\")) return null;
+  // Rejette tout caractère de contrôle (\t \n \r, etc.) qui peut contourner les protections
+  // d'URL des navigateurs. (charCodeAt plutôt qu'une regex → évite no-control-regex.)
+  for (let i = 0; i < raw.length; i++) {
+    const code = raw.charCodeAt(i);
+    if (code < 0x20 || code === 0x7f) return null;
+  }
   return raw;
 }
 
