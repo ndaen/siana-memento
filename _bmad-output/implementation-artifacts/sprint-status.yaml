@@ -89,7 +89,7 @@ development_status:
   6-3-layout-et-navigation-admin: done
   6-4-logs-de-generation-et-historique-erreurs-ia: done
   6-5-alertes-automatiques-admin: done
-  6-6-renvoi-manuel-de-designs-et-backups-db: review
+  6-6-renvoi-manuel-de-designs-et-backups-db: done
   6-7-gestion-des-testimonials-crud-admin: backlog
   6-8-survey-de-satisfaction-post-achat: backlog
   epic-6-retrospective: optional

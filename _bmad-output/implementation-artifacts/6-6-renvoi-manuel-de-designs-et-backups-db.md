@@ -6,7 +6,7 @@ baseline_commit: dd2519988d7eb455c55a13f3fe3e7deb4355155b
 
 # Story 6.6: Renvoi Manuel de Designs et Backups DB
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -239,3 +239,4 @@ claude-opus-4-8[1m] (Claude Opus 4.8, 1M context)
 | 2026-06-02 | 0.1 | Story 6.6 créée (ready-for-dev) — renvoi manuel email depuis `/admin/orders` (statut `email_failed`, endpoint resend, traçabilité Pino) + backups PostgreSQL délégués à Railway managed. | create-story |
 | 2026-06-02 | 1.0 | Implémentation 6.6 (review) : statut `email_failed` (migration + webhook), `OrdersAdminService` + endpoints admin orders/resend + log Pino, page `/admin/orders`, runbook backups Railway. Tests : API 9/9 ciblés, suite API 181/181, E2E 6/6. | Amelia (dev-story) |
 | 2026-06-02 | 1.1 | Revue adverse BMAD (full) + résolution F1-F5 : garde de statut `email_failed` (409) sur le renvoi, test webhook AC4, fix `down()` migration, `Set` d'ids en cours (anti double-envoi), retrait de ligne sous filtre. Tests : suite API 183/183, E2E 7/7. | review-fixes |
+| 2026-06-02 | 1.2 | Story passée en `done` (revue résolue) et mergée sur `main` (rebase au-dessus de la 6.5, fast-forward `6ffb5ba`). Suite API intégrée 189/189. | review-fixes |
