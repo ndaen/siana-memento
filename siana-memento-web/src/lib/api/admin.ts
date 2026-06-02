@@ -115,3 +115,87 @@ export async function getAdminLogs(params: {
     }
   }
 }
+
+export type OrderStatus = 'pending' | 'paid' | 'failed' | 'email_failed'
+
+export interface AdminOrder {
+  id: number
+  createdAt: string // ISO — formatée fr-FR à l'affichage
+  status: OrderStatus
+  amountCents: number // centimes → /100 pour formatEur
+  userId: number
+  userEmail: string | null
+  template: string | null
+  emailSentAt: string | null
+}
+
+export interface AdminOrdersData {
+  meta: { total: number; perPage: number; currentPage: number; lastPage: number }
+  items: AdminOrder[]
+}
+
+type OrdersResult =
+  | { success: true; data: AdminOrdersData }
+  | { success: false; errorCode: string; message: string }
+
+export async function getAdminOrders(params: {
+  status?: OrderStatus
+  page?: number
+  perPage?: number
+}): Promise<OrdersResult> {
+  const qs = new URLSearchParams()
+  if (params.status) qs.set('status', params.status)
+  if (params.page) qs.set('page', String(params.page))
+  if (params.perPage) qs.set('perPage', String(params.perPage))
+
+  try {
+    const res = await fetch(`${API_URL}/api/admin/orders?${qs.toString()}`, {
+      method: 'GET',
+      credentials: 'include',
+    })
+    const json = await res.json()
+    if (json.success) {
+      return { success: true, data: json.data }
+    }
+    return {
+      success: false,
+      errorCode: json.error?.code ?? 'ORDERS_FAILED',
+      message: json.error?.message ?? 'Impossible de charger les commandes.',
+    }
+  } catch {
+    return {
+      success: false,
+      errorCode: 'NETWORK_ERROR',
+      message: 'Service indisponible. Vérifiez votre connexion et réessayez.',
+    }
+  }
+}
+
+type ResendResult =
+  | { success: true; status: OrderStatus }
+  | { success: false; errorCode: string; message: string }
+
+/** Renvoi manuel du design par email pour une commande (Story 6.6, AC1). */
+export async function resendOrderEmail(orderId: number): Promise<ResendResult> {
+  try {
+    const res = await fetch(`${API_URL}/api/admin/orders/${orderId}/resend-email`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+    const json = await res.json()
+    if (json.success) {
+      return { success: true, status: json.data.status }
+    }
+    return {
+      success: false,
+      errorCode: json.error?.code ?? 'RESEND_FAILED',
+      message: json.error?.message ?? "Le renvoi de l'email a échoué.",
+    }
+  } catch {
+    return {
+      success: false,
+      errorCode: 'NETWORK_ERROR',
+      message: 'Service indisponible. Vérifiez votre connexion et réessayez.',
+    }
+  }
+}

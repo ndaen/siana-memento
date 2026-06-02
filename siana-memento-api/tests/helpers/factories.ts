@@ -84,7 +84,7 @@ export async function createPaidOrderWithDesign(
     paidAt: DateTime
     cloudinaryPublicId: string | null
     emailSentAt: DateTime | null
-    status: 'pending' | 'paid' | 'failed'
+    status: 'pending' | 'paid' | 'failed' | 'email_failed'
   }>
 ) {
   const design = await Design.create({

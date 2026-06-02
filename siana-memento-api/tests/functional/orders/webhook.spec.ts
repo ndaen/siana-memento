@@ -6,6 +6,7 @@ import Order from '#models/order'
 import StripeEvent from '#models/stripe_event'
 import { randomBytes } from 'node:crypto'
 import { DateTime } from 'luxon'
+import { handleCheckoutCompleted } from '#services/stripe_service'
 
 test.group('POST /api/webhooks/stripe', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
@@ -122,5 +123,45 @@ test.group('Order + Design ACID transaction', (group) => {
     assert.equal(order.status, 'paid')
     assert.isNotNull(order.paidAt)
     assert.equal(design.status, 'paid')
+  })
+})
+
+test.group('handleCheckoutCompleted — email delivery failure (AC4)', (group) => {
+  group.each.setup(() => testUtils.db().withGlobalTransaction())
+
+  test('marks the order email_failed when delivery fails, without data loss', async ({
+    assert,
+  }) => {
+    const user = await User.create({
+      email: `webhook-fail-${Date.now()}@example.com`,
+      password: 'motdepasse123',
+      provider: 'email',
+    })
+    // cloudinaryPublicId: null → sendDesignDelivery échoue immédiatement (sans réseau).
+    const design = await Design.create({
+      userId: user.id,
+      sessionToken: randomBytes(32).toString('hex'),
+      status: 'completed',
+      cloudinaryPublicId: null,
+      expiresAt: DateTime.now().plus({ days: 7 }),
+    })
+    const order = await Order.create({
+      userId: user.id,
+      designId: design.id,
+      amount: 1990,
+      status: 'pending',
+    })
+
+    await handleCheckoutCompleted({
+      client_reference_id: String(order.id),
+      id: `cs_test_${Date.now()}`,
+      payment_intent: `pi_test_${Date.now()}`,
+    } as any)
+
+    // Paiement encaissé mais livraison échouée → statut récupérable, aucune perte de données.
+    await order.refresh()
+    assert.equal(order.status, 'email_failed')
+    assert.isNull(order.emailSentAt)
+    assert.isNotNull(order.paidAt)
   })
 })

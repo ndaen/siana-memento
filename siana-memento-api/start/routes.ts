@@ -84,6 +84,8 @@ router
     router.get('/metrics', [AdminController, 'metrics'])
     router.get('/metrics/export-csv', [AdminController, 'exportCsv'])
     router.get('/logs', [AdminController, 'logs'])
+    router.get('/orders', [AdminController, 'orders'])
+    router.post('/orders/:id/resend-email', [AdminController, 'resendEmail'])
   })
   .prefix('/api/admin')
   .use([middleware.auth(), middleware.admin()])

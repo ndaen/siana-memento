@@ -7,6 +7,9 @@ import env from '#start/env'
 import Order from '#models/order'
 import MetricsService from '#services/metrics_service'
 import LogsService from '#services/logs_service'
+import OrdersAdminService, { type OrderStatus } from '#services/orders_admin_service'
+
+const ORDER_STATUSES: OrderStatus[] = ['pending', 'paid', 'failed', 'email_failed']
 
 const PERIOD_DAYS = 30
 const DEFAULT_GEMINI_COST_EUR = 0.5
@@ -29,7 +32,8 @@ function centsToEur(cents: number): string {
 export default class AdminController {
   constructor(
     protected metricsService: MetricsService,
-    protected logsService: LogsService
+    protected logsService: LogsService,
+    protected ordersService: OrdersAdminService
   ) {}
 
   /**
@@ -123,5 +127,69 @@ export default class AdminController {
 
     const data = await this.logsService.listGenerations({ page, perPage, failedOnly })
     return response.ok({ success: true, data })
+  }
+
+  /**
+   * GET /api/admin/orders — liste paginée des commandes (Story 6.6).
+   * Query : page, perPage (≤100), status (filtre, notamment `email_failed`).
+   * Protégé par middleware auth + admin (NFR-S10).
+   */
+  async orders({ request, auth, response }: HttpContext) {
+    const user = auth.getUserOrFail()
+    logger.info({ event: 'admin_orders_view', userId: user.id }, 'Admin orders viewed')
+
+    const page = Number(request.input('page', 1))
+    const perPage = Number(request.input('perPage', 20))
+    const statusInput = request.input('status')
+    const status = ORDER_STATUSES.includes(statusInput) ? (statusInput as OrderStatus) : undefined
+
+    const data = await this.ordersService.listOrders({ page, perPage, status })
+    return response.ok({ success: true, data })
+  }
+
+  /**
+   * POST /api/admin/orders/:id/resend-email — renvoi manuel du design par email (Story 6.6, AC1).
+   * Trace l'action (event + adminId + timestamp) en log Pino structuré (AC2, NFR-R8).
+   */
+  async resendEmail({ params, auth, response }: HttpContext) {
+    const user = auth.getUserOrFail()
+    const orderId = Number(params.id)
+
+    const result = await this.ordersService.resendDelivery(orderId)
+
+    if (!result.ok) {
+      logger.warn(
+        {
+          event: 'email_resent_manual',
+          orderId,
+          adminId: user.id,
+          outcome: 'failed',
+          code: result.code,
+          timestamp: DateTime.now().toISO(),
+        },
+        'Manual design resend failed'
+      )
+      const httpStatus =
+        result.code === 'NOT_FOUND' ? 404 : result.code === 'INVALID_STATUS' ? 409 : 502
+      return response
+        .status(httpStatus)
+        .send({ success: false, error: { code: result.code, message: result.message } })
+    }
+
+    logger.info(
+      {
+        event: 'email_resent_manual',
+        orderId,
+        adminId: user.id,
+        outcome: 'success',
+        status: result.status,
+        timestamp: DateTime.now().toISO(),
+      },
+      'Manual design resend succeeded'
+    )
+    return response.ok({
+      success: true,
+      data: { id: orderId, status: result.status, emailSentAt: result.emailSentAt },
+    })
   }
 }

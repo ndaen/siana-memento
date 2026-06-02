@@ -111,6 +111,16 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session) 
   if (result.success) {
     order.emailSentAt = DateTime.now()
     await order.save()
+  } else {
+    // Échec d'envoi après paiement confirmé : la commande est conservée et passée en
+    // `email_failed` (récupérable) pour permettre un renvoi manuel depuis l'admin (Story 6.6,
+    // AC4). Aucune perte de données — `emailSentAt` reste null.
+    order.status = 'email_failed'
+    await order.save()
+    logger.error(
+      { event: 'delivery_email_failed_marked', orderId: order.id },
+      'Delivery email failed — order marked email_failed for manual resend'
+    )
   }
 }
 

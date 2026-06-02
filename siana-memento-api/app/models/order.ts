@@ -23,8 +23,9 @@ export default class Order extends BaseModel {
   @column()
   declare amount: number
 
+  // 'email_failed' : payée mais livraison email échouée — récupérable via renvoi admin (Story 6.6).
   @column()
-  declare status: 'pending' | 'paid' | 'failed'
+  declare status: 'pending' | 'paid' | 'failed' | 'email_failed'
 
   @column.dateTime()
   declare paidAt: DateTime | null
