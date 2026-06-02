@@ -83,6 +83,7 @@ router
   .group(() => {
     router.get('/metrics', [AdminController, 'metrics'])
     router.get('/metrics/export-csv', [AdminController, 'exportCsv'])
+    router.get('/logs', [AdminController, 'logs'])
   })
   .prefix('/api/admin')
   .use([middleware.auth(), middleware.admin()])

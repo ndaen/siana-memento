@@ -281,6 +281,21 @@ async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+/**
+ * Résultat d'une tentative de génération, avec les métadonnées à persister/logguer
+ * (Story 6.4). Ne lève PAS d'exception sur échec Gemini : l'appelant décide quoi faire
+ * et dispose d'`attempts`/`durationMs`/`error` pour la ligne `Generation` + le log Pino.
+ */
+export interface GenerationOutcome {
+  success: boolean
+  imageDataUrl?: string
+  error?: string
+  attempts: number
+  durationMs: number
+  promptUsed: string
+  geminiModel: string
+}
+
 export async function generateDesignImage(
   photos: PhotoInput[],
   theme: TemplateConfig,
@@ -289,27 +304,25 @@ export async function generateDesignImage(
   iterationNumber: number,
   feedback?: string,
   previousImage?: PhotoInput
-): Promise<string> {
+): Promise<GenerationOutcome> {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! })
 
-  const isIteration = iterationNumber > 1 && feedback && previousImage
-  const parts: any[] = []
+  const isIteration = iterationNumber > 1 && feedback !== undefined && previousImage !== undefined
+  const promptUsed = isIteration
+    ? buildIterationPrompt(theme, palette, weddingData, feedback as string)
+    : buildInitialPrompt(theme, palette, weddingData)
 
-  if (isIteration) {
+  const parts: any[] = []
+  if (isIteration && previousImage) {
     // Itération : image précédente d'abord, puis photos de référence, puis prompt de modification
     parts.push({ inlineData: { data: previousImage.base64, mimeType: previousImage.mimeType } })
-    for (const photo of photos) {
-      parts.push({ inlineData: { data: photo.base64, mimeType: photo.mimeType } })
-    }
-    parts.push({ text: buildIterationPrompt(theme, palette, weddingData, feedback) })
-  } else {
-    // Première génération : photos de référence + prompt initial
-    for (const photo of photos) {
-      parts.push({ inlineData: { data: photo.base64, mimeType: photo.mimeType } })
-    }
-    parts.push({ text: buildInitialPrompt(theme, palette, weddingData) })
   }
+  for (const photo of photos) {
+    parts.push({ inlineData: { data: photo.base64, mimeType: photo.mimeType } })
+  }
+  parts.push({ text: promptUsed })
 
+  const startedAt = Date.now()
   let lastError: unknown
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
@@ -326,8 +339,17 @@ export async function generateDesignImage(
       })
 
       for (const part of response.candidates?.[0]?.content?.parts ?? []) {
-        if (part.inlineData) {
-          return `data:${part.inlineData.mimeType ?? 'image/png'};base64,${part.inlineData.data}`
+        // Vérifier `.data` : sans elle, l'interpolation produirait `base64,undefined`
+        // → image corrompue uploadée vers Cloudinary comme un faux succès.
+        if (part.inlineData?.data) {
+          return {
+            success: true,
+            imageDataUrl: `data:${part.inlineData.mimeType ?? 'image/png'};base64,${part.inlineData.data}`,
+            attempts: attempt,
+            durationMs: Date.now() - startedAt,
+            promptUsed,
+            geminiModel: GEMINI_MODEL,
+          }
         }
       }
 
@@ -342,5 +364,12 @@ export async function generateDesignImage(
     }
   }
 
-  throw lastError
+  return {
+    success: false,
+    error: lastError instanceof Error ? lastError.message : String(lastError),
+    attempts: MAX_ATTEMPTS,
+    durationMs: Date.now() - startedAt,
+    promptUsed,
+    geminiModel: GEMINI_MODEL,
+  }
 }

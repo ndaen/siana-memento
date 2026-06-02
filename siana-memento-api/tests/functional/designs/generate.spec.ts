@@ -18,9 +18,7 @@ test.group('POST /api/designs/:id/generate', (group) => {
   test('retourne 403 sans authentification et sans sessionToken', async ({ client }) => {
     const design = await createConfiguredDesign(SESSION_TOKEN)
 
-    const response = await client
-      .post(`/api/designs/${design.id}/generate`)
-      .json({})
+    const response = await client.post(`/api/designs/${design.id}/generate`).json({})
 
     response.assertStatus(403)
   })

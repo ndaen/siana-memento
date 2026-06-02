@@ -7,10 +7,13 @@ import {
 } from '#validators/design_validator'
 import Design from '#models/design'
 import Photo from '#models/photo'
+import Generation from '#models/generation'
 import { generateDesignImage, getPalette, getTemplate } from '#services/generation_service'
 import { uploadDesign } from '#services/cloudinary_service'
 import { randomBytes } from 'node:crypto'
 import { DateTime } from 'luxon'
+import logger from '@adonisjs/core/services/logger'
+import env from '#start/env'
 
 export default class DesignsController {
   /**
@@ -251,15 +254,13 @@ export default class DesignsController {
       // Pour les itérations, charger l'image précédente pour que Gemini la modifie
       let previousImage: { base64: string; mimeType: string } | undefined
       if (iterationNumber > 1 && payload.feedback && design.generatedImageUrl) {
-        const dataUrlMatch = design.generatedImageUrl.match(
-          /^data:(image\/\w+);base64,(.+)$/
-        )
+        const dataUrlMatch = design.generatedImageUrl.match(/^data:(image\/\w+);base64,(.+)$/)
         if (dataUrlMatch) {
           previousImage = { mimeType: dataUrlMatch[1], base64: dataUrlMatch[2] }
         }
       }
 
-      const imageDataUrl = await generateDesignImage(
+      const outcome = await generateDesignImage(
         photoInputs,
         theme,
         palette,
@@ -269,8 +270,70 @@ export default class DesignsController {
         previousImage
       )
 
+      const costEurEstimate = env.get('GEMINI_COST_EUR_ESTIMATE') ?? 0.5
+
+      // Échec de génération (après les 3 tentatives) : journaliser, persister la ligne
+      // d'échec, repasser en draft pour autoriser un retry.
+      if (!outcome.success) {
+        await this.recordGeneration(design.id, iterationNumber, payload.feedback ?? null, {
+          status: 'failed',
+          promptUsed: outcome.promptUsed,
+          geminiModel: outcome.geminiModel,
+          generationDurationMs: outcome.durationMs,
+          attempts: outcome.attempts,
+          errorMessage: (outcome.error ?? 'Génération échouée').slice(0, 500),
+        })
+        logger.error(
+          {
+            event: 'generation_failed',
+            designId: design.id,
+            userId,
+            template: design.template,
+            iterationNumber,
+            attempts: outcome.attempts,
+            durationMs: outcome.durationMs,
+            error: outcome.error,
+          },
+          'Generation failed'
+        )
+        await design.merge({ status: 'draft' }).save()
+        return response.internalServerError({
+          success: false,
+          error: {
+            code: 'GENERATION_FAILED',
+            message: 'La génération a échoué. Veuillez réessayer.',
+          },
+        })
+      }
+
+      const imageDataUrl = outcome.imageDataUrl!
+
       // Upload vers Cloudinary et récupération de la preview watermarquée
       const { publicId, previewUrl } = await uploadDesign(imageDataUrl, design.id)
+
+      // Persister la génération réussie (logs admin — Story 6.4) puis journaliser.
+      await this.recordGeneration(design.id, iterationNumber, payload.feedback ?? null, {
+        status: 'completed',
+        promptUsed: outcome.promptUsed,
+        geminiModel: outcome.geminiModel,
+        generationDurationMs: outcome.durationMs,
+        attempts: outcome.attempts,
+        cloudinaryPublicId: publicId,
+        cloudinaryUrl: previewUrl,
+      })
+      logger.info(
+        {
+          event: 'generation_succeeded',
+          designId: design.id,
+          userId,
+          template: design.template,
+          iterationNumber,
+          attempts: outcome.attempts,
+          durationMs: outcome.durationMs,
+          costEurEstimate,
+        },
+        'Generation completed'
+      )
 
       // Mettre à jour le design avec les références Cloudinary et incrémenter le compteur
       await design
@@ -293,7 +356,18 @@ export default class DesignsController {
         },
       })
     } catch (error) {
-      // Remettre le status à 'draft' pour permettre un retry
+      // Erreur d'infrastructure (chargement photos, upload Cloudinary…) — distincte d'un
+      // échec Gemini (géré ci-dessus). Journaliser et repasser en draft pour un retry.
+      logger.error(
+        {
+          event: 'generation_failed',
+          designId: design.id,
+          userId,
+          template: design.template,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        'Generation pipeline error'
+      )
       await design.merge({ status: 'draft' }).save()
 
       return response.internalServerError({
@@ -303,6 +377,55 @@ export default class DesignsController {
           message: 'La génération a échoué. Veuillez réessayer.',
         },
       })
+    }
+  }
+
+  /**
+   * Persiste une ligne `Generation` (logs admin — Story 6.4) de façon DÉFENSIVE :
+   * une écriture de log qui échoue ne doit jamais faire échouer une génération
+   * réussie ni masquer l'erreur d'origine. UNE seule ligne par appel `generate`
+   * (le nombre de tentatives Gemini est porté par `attempts`).
+   * Note : `geminiCostUsd` laissé null — coût réel réservé (cf. Story 6.4 Dev Notes),
+   * le coût affiché/loggé est une estimation EUR.
+   */
+  private async recordGeneration(
+    designId: number,
+    iterationNumber: number,
+    feedback: string | null,
+    fields: {
+      status: 'completed' | 'failed'
+      promptUsed: string
+      geminiModel: string
+      generationDurationMs: number
+      attempts: number
+      cloudinaryPublicId?: string
+      cloudinaryUrl?: string
+      errorMessage?: string
+    }
+  ): Promise<void> {
+    try {
+      await Generation.create({
+        designId,
+        iterationNumber,
+        feedback,
+        promptUsed: fields.promptUsed,
+        geminiModel: fields.geminiModel,
+        status: fields.status,
+        generationDurationMs: fields.generationDurationMs,
+        attempts: fields.attempts,
+        cloudinaryPublicId: fields.cloudinaryPublicId ?? null,
+        cloudinaryUrl: fields.cloudinaryUrl ?? null,
+        errorMessage: fields.errorMessage ?? null,
+      })
+    } catch (err) {
+      logger.error(
+        {
+          event: 'generation_record_failed',
+          designId,
+          error: err instanceof Error ? err.message : String(err),
+        },
+        'Failed to persist generation log row'
+      )
     }
   }
 

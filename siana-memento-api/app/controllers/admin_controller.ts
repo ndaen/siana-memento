@@ -6,6 +6,7 @@ import logger from '@adonisjs/core/services/logger'
 import env from '#start/env'
 import Order from '#models/order'
 import MetricsService from '#services/metrics_service'
+import LogsService from '#services/logs_service'
 
 const PERIOD_DAYS = 30
 const DEFAULT_GEMINI_COST_EUR = 0.5
@@ -26,7 +27,10 @@ function centsToEur(cents: number): string {
 
 @inject()
 export default class AdminController {
-  constructor(protected metricsService: MetricsService) {}
+  constructor(
+    protected metricsService: MetricsService,
+    protected logsService: LogsService
+  ) {}
 
   /**
    * GET /api/admin/metrics — métriques business sur 30 jours (AC1/AC2).
@@ -102,5 +106,22 @@ export default class AdminController {
     response.header('Content-Type', 'text/csv; charset=utf-8')
     response.header('Content-Disposition', `attachment; filename="${filename}"`)
     return response.send(body)
+  }
+
+  /**
+   * GET /api/admin/logs — liste paginée des générations + historique des erreurs IA (Story 6.4).
+   * Query : page, perPage (≤100), failedOnly=true (filtre « échecs seulement »).
+   * Protégé par middleware auth + admin (NFR-S10).
+   */
+  async logs({ request, auth, response }: HttpContext) {
+    const user = auth.getUserOrFail()
+    logger.info({ event: 'admin_logs_view', userId: user.id }, 'Admin generation logs viewed')
+
+    const page = Number(request.input('page', 1))
+    const perPage = Number(request.input('perPage', 20))
+    const failedOnly = request.input('failedOnly') === 'true'
+
+    const data = await this.logsService.listGenerations({ page, perPage, failedOnly })
+    return response.ok({ success: true, data })
   }
 }

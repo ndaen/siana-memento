@@ -1,5 +1,17 @@
 # Deferred Work
 
+## Deferred from: story 6.4 (2026-06-02)
+
+- **Test d'intégration de la persistance de génération** — `designs_controller.generate` crée désormais une ligne `Generation` (succès/échec). Tester ce wiring de bout en bout nécessite de mocker `generateDesignImage`/`GoogleGenAI` (fonction plate, pas d'injection DI → non swappable via le conteneur AdonisJS). À outiller : soit refactorer `generation_service` en classe injectable, soit introduire un mock de module Japa. Aujourd'hui : chemin d'échec exercé par les tests photo-fail existants, persistance validée par revue + tests de l'endpoint `/api/admin/logs`. Non bloquant.
+- **Coût Gemini réel par génération** — `generations.gemini_cost_usd` reste `null` (réservé). Le coût affiché/loggé est une estimation EUR (`GEMINI_COST_EUR_ESTIMATE`). Persister le coût réel nécessite un prix unitaire Gemini + taux USD→EUR (arbitrage produit). Voir aussi la dette 6.2 sur la sémantique coût/marge, désormais alimentée par les lignes `generations`.
+
+## Deferred from: code review of story-6.4 (2026-06-02)
+
+- **Échecs d'infrastructure non persistés en ligne `Generation`** — Le `catch` du pipeline (`designs_controller.ts:360-372`) journalise `generation_failed` via Pino mais n'appelle pas `recordGeneration` ; seuls les échecs Gemini (3 tentatives épuisées) créent une ligne `failed`. Un échec d'upload Cloudinary survenant après une génération Gemini réussie (coût engagé) ou un échec de chargement photo n'apparaît donc pas dans la table admin des logs. **Reporté (décision Aldo)** : AC2 vise l'historique des erreurs IA (Gemini) ; les erreurs infra sont suffisamment tracées par Pino — à revoir si le volume d'échecs upload le justifie. [siana-memento-api/app/controllers/designs_controller.ts:360]
+- **Course concurrente sur `iterationsUsed`** — Deux appels `generate` simultanés sur le même design lisent la même valeur `iterationsUsed` et passent tous deux en `generating`, pouvant double-dépenser une itération. Pré-existant : non introduit par la Story 6.4 (qui n'ajoute que la persistance/le logging). Un verrou (transaction `FOR UPDATE` sur la ligne design) résoudrait la course. Non bloquant au MVP. [siana-memento-api/app/controllers/designs_controller.ts:215]
+- **État vide filtré (« Aucun échec ») non couvert par e2e** — Le composant `AdminGenerationLogs` affiche bien « Aucun échec » quand `failedOnly` est actif et la liste vide, mais `admin-logs.spec.ts` n'assert que l'état vide non filtré (« Aucune génération »). Ajouter une assertion sur le copy filtré. Lacune de couverture, pas un défaut. [siana-memento-web/e2e/admin-logs.spec.ts]
+- **Test write-side de `recordGeneration`** — Mapping des champs persistés (succès/échec) non couvert par un test automatisé (déjà tracé sous « Deferred from: story 6.4 » ci-dessus : nécessite de mocker `generateDesignImage`/`GoogleGenAI`). Couverture actuelle : revue + tests read-side de `/api/admin/logs`. [siana-memento-api/app/controllers/designs_controller.ts:193]
+
 ## Deferred from: code review of story-6.3 (2026-06-02)
 
 - **Double appel `/auth/me` par page admin** — `SiteHeader` exécute son propre `getMe()` au mount sur toutes les routes (y compris `/admin/*`), en parallèle du garde de `AdminShell` → 2 requêtes `/auth/me` concurrentes par chargement de page admin, sans cache partagé. Pré-existant : `SiteHeader.tsx` n'est pas modifié par la Story 6.3. Mutualiser l'état d'auth (contexte/SWR) éliminerait le doublon. Non bloquant. [siana-memento-web/src/components/siana/SiteHeader.tsx:41]

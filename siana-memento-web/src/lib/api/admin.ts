@@ -54,3 +54,64 @@ export async function getAdminMetrics(): Promise<MetricsResult> {
 export function getExportCsvUrl(): string {
   return `${API_URL}/api/admin/metrics/export-csv`
 }
+
+export type GenerationStatus = 'pending' | 'generating' | 'completed' | 'failed'
+
+export interface GenerationLog {
+  id: number
+  createdAt: string // ISO — formatée fr-FR à l'affichage
+  status: GenerationStatus
+  iterationNumber: number
+  attempts: number
+  durationMs: number | null
+  geminiModel: string | null
+  apiCostCents: number // centimes → /100 pour formatEur
+  costEstimated: boolean
+  errorMessage: string | null
+  template: string | null
+  userId: number | null
+  promptUsed: string // contexte/payload (tronqué côté API)
+  feedback: string | null
+}
+
+export interface GenerationLogsData {
+  meta: { total: number; perPage: number; currentPage: number; lastPage: number }
+  items: GenerationLog[]
+}
+
+type LogsResult =
+  | { success: true; data: GenerationLogsData }
+  | { success: false; errorCode: string; message: string }
+
+export async function getAdminLogs(params: {
+  failedOnly?: boolean
+  page?: number
+  perPage?: number
+}): Promise<LogsResult> {
+  const qs = new URLSearchParams()
+  if (params.failedOnly) qs.set('failedOnly', 'true')
+  if (params.page) qs.set('page', String(params.page))
+  if (params.perPage) qs.set('perPage', String(params.perPage))
+
+  try {
+    const res = await fetch(`${API_URL}/api/admin/logs?${qs.toString()}`, {
+      method: 'GET',
+      credentials: 'include',
+    })
+    const json = await res.json()
+    if (json.success) {
+      return { success: true, data: json.data }
+    }
+    return {
+      success: false,
+      errorCode: json.error?.code ?? 'LOGS_FAILED',
+      message: json.error?.message ?? 'Impossible de charger les logs.',
+    }
+  } catch {
+    return {
+      success: false,
+      errorCode: 'NETWORK_ERROR',
+      message: 'Service indisponible. Vérifiez votre connexion et réessayez.',
+    }
+  }
+}

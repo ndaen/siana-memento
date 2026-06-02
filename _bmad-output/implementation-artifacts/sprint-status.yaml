@@ -87,7 +87,7 @@ development_status:
   6-1-healthcheck-endpoint-et-monitoring: done
   6-2-dashboard-metriques-business-et-export-csv: done
   6-3-layout-et-navigation-admin: done
-  6-4-logs-de-generation-et-historique-erreurs-ia: backlog
+  6-4-logs-de-generation-et-historique-erreurs-ia: done
   6-5-alertes-automatiques-admin: backlog
   6-6-renvoi-manuel-de-designs-et-backups-db: backlog
   6-7-gestion-des-testimonials-crud-admin: backlog
