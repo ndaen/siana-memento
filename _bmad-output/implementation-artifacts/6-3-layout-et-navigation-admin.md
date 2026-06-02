@@ -6,7 +6,7 @@ baseline_commit: 56cdfc3eb12b4d5d09754649ff3cc4245eab1027
 
 # Story 6.3: Layout & Navigation Admin
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -284,3 +284,4 @@ claude-opus-4-8[1m] (Claude Opus 4.8, 1M context)
 | 2026-06-01 | 1.2 | Revue adversariale (4 lentilles) → 3 findings en scope corrigés : (1) **focus ring invisible** sur l'onglet actif (`--ring`==`--primary`) → ajout `ring-offset-2 ring-offset-background` (WCAG 2.4.7/2.4.11) ; (2) `getMe()` redondant à chaque sous-route admin → flag ref, un seul appel au montage ; (3) `isAdminArea` / `ConditionalFooter` durcis en frontière de segment `/admin/`. tsc + eslint + 17 e2e (dont 7 admin) verts, 0 régression. Finding #4 (redirect post-login non consommé) = dette pré-6.2, soumise à décision. | Amelia (review-fixes) |
 | 2026-06-01 | 1.3 | Finding #4 corrigé (décision Aldo) : `login/page.tsx` consomme `?redirect=` (`useSearchParams` sous `<Suspense>`) avec validation chemin interne (anti open-redirect) + transmission `GoogleButton.returnTo`. Le garde admin ramène désormais l'utilisateur sur la page demandée après login. +2 e2e (19/20 verts ; seul échec = `home › hero` préexistant). tsc + eslint OK. | Amelia (review-fixes) |
 | 2026-06-02 | 1.4 | Code review formelle (3 couches) traitée : décision conservée (changements voulus, `.gitignore` ajouté au File List) + 6 patchs appliqués (drawer ferme sur toute nav via `key={pathname}` ; bouton Réessayer sur erreur réseau ; skeleton neutre ; `safeInternalPath` rejette les caractères de contrôle ; `SheetDescription` a11y ; libellés de landmark distincts). +1 e2e (retry réseau). tsc + eslint + 20/21 e2e verts (seul échec = `home › hero` préexistant). Deferred : double `getMe` `SiteHeader` (pré-existant). | Amelia (review-fixes) |
+| 2026-06-02 | 1.5 | Story passée en `done` (review formelle résolue) et mergée sur `main`. | Aldo |

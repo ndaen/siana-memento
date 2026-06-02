@@ -34,7 +34,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-05
-last_updated: 2026-06-01
+last_updated: 2026-06-02
 # 6.1 done ; 6.2 done ; 6.3 layout admin inséré via correct-course (2026-06-01), ex-6.3..6.7 → 6.4..6.8
 project: poster-generator
 project_key: NOKEY
@@ -86,7 +86,7 @@ development_status:
   epic-6: in-progress
   6-1-healthcheck-endpoint-et-monitoring: done
   6-2-dashboard-metriques-business-et-export-csv: done
-  6-3-layout-et-navigation-admin: review
+  6-3-layout-et-navigation-admin: done
   6-4-logs-de-generation-et-historique-erreurs-ia: backlog
   6-5-alertes-automatiques-admin: backlog
   6-6-renvoi-manuel-de-designs-et-backups-db: backlog
