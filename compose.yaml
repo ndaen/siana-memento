@@ -63,6 +63,7 @@ services:
     container_name: siana_web
     environment:
       WATCHPACK_POLLING: "true" # fiabilise le HMR Next.js sur bind mount macOS
+      API_INTERNAL_URL: "http://api:3333" # fetch serveur (landing force-dynamic) : localhost injoignable depuis le conteneur web
     ports:
       - "3000:3000"
     volumes:

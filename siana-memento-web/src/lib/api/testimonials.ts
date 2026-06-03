@@ -1,5 +1,11 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
 
+// URL utilisée pour les fetch côté serveur (landing en `force-dynamic`). En local Docker,
+// le conteneur web ne peut pas joindre l'API via `localhost` : il faut l'URL réseau interne
+// (`http://api:3333`). En prod (Vercel/Railway), `API_INTERNAL_URL` est absent → on retombe
+// sur l'URL publique, joignable aussi bien côté serveur que navigateur.
+const SERVER_API_URL = process.env.API_INTERNAL_URL ?? API_URL
+
 /** Testimonial complet (vue admin — inclut isActive). */
 export interface Testimonial {
   id: number
@@ -129,7 +135,7 @@ export async function deleteTestimonial(id: number): Promise<MutationResult> {
  */
 export async function getPublicTestimonials(): Promise<PublicTestimonial[]> {
   try {
-    const res = await fetch(`${API_URL}/api/testimonials`, {
+    const res = await fetch(`${SERVER_API_URL}/api/testimonials`, {
       method: 'GET',
       cache: 'no-store',
     })
