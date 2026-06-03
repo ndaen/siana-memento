@@ -18,6 +18,7 @@ const OrdersController = () => import('#controllers/orders_controller')
 const WebhooksController = () => import('#controllers/webhooks_controller')
 const HealthController = () => import('#controllers/health_controller')
 const AdminController = () => import('#controllers/admin_controller')
+const TestimonialsController = () => import('#controllers/testimonials_controller')
 
 const registerThrottle = limiter.define('register', () => limiter.allowRequests(3).every('1 hour'))
 
@@ -41,6 +42,9 @@ const downloadThrottle = limiter.define('download', () =>
 // /api/health/live : liveness publique légère → cible du healthcheck de déploiement (Railway / Docker)
 router.get('/api/health', [HealthController, 'index'])
 router.get('/api/health/live', [HealthController, 'live'])
+
+// Testimonials — lecture publique (landing). Aucune auth : ne retourne que les actifs (Story 6.7).
+router.get('/api/testimonials', [TestimonialsController, 'publicIndex'])
 
 // API routes — upload et designs
 router.get('/api/upload/sign', [UploadController, 'sign'])
@@ -86,6 +90,12 @@ router
     router.get('/logs', [AdminController, 'logs'])
     router.get('/orders', [AdminController, 'orders'])
     router.post('/orders/:id/resend-email', [AdminController, 'resendEmail'])
+
+    // CRUD testimonials (Story 6.7, FR50)
+    router.get('/testimonials', [TestimonialsController, 'index'])
+    router.post('/testimonials', [TestimonialsController, 'store'])
+    router.patch('/testimonials/:id', [TestimonialsController, 'update'])
+    router.delete('/testimonials/:id', [TestimonialsController, 'destroy'])
   })
   .prefix('/api/admin')
   .use([middleware.auth(), middleware.admin()])

@@ -1,5 +1,16 @@
 # Deferred Work
 
+## Deferred from: code review of 6-7-gestion-des-testimonials-crud-admin (2026-06-03)
+
+- **Endpoint public `GET /api/testimonials` non throttlé + landing `force-dynamic`/`no-store`** — chaque affichage de la landing déclenche un fetch serveur non caché → une requête DB. Compromis MVP assumé (volume faible, immédiateté AC#3). Growth : ISR `revalidate` court + throttle léger sur l'endpoint public. [siana-memento-api/start/routes.ts:46 ; siana-memento-web/src/app/page.tsx ; siana-memento-web/src/lib/api/testimonials.ts]
+- **`aria-labelledby="testimonials-heading"` sans `id` cible (préexistant `main`, hors 6.7)** — la section témoignages référence un heading-id absent. Régression a11y préexistante (présente avant 6.7). Correctif : ajouter `id="testimonials-heading"` au heading `ScrollFloat` ou retirer l'attribut. [siana-memento-web/src/app/page.tsx:181]
+
+## Deferred from: story 6.7 (2026-06-02)
+
+- **Note (rating/étoiles) éditable par testimonial = Growth (D1)** — Le modèle `Testimonial` ne porte que `author_name`, `content`, `is_active`, `display_order` — pas de colonne `rating`. La landing affiche **5★ en dur** pour chaque testimonial. Permettre à l'admin de définir une note par testimonial nécessiterait une colonne `rating` + champ formulaire + branchement de l'affichage des étoiles sur cette valeur. Hors AC FR50 (qui ne mentionne que prénom/texte/statut). [siana-memento-api/app/models/testimonial.ts ; siana-memento-web/src/app/page.tsx (section témoignages)]
+- **Landing en rendu dynamique (`force-dynamic`) — compromis LCP (D2)** — Pour satisfaire AC#2/#3 (« sans redéploiement Vercel »), `page.tsx` passe en `export const dynamic = 'force-dynamic'` et fetch `/api/testimonials` en `cache: 'no-store'` à chaque requête. Cela retire la home du rendu statique buildé (léger coût LCP/serveur). Acceptable au MVP (volume faible). Growth : si le LCP régresse, passer en ISR `revalidate: 60` (compromis « immédiateté absolue de l'AC#3 » vs cache court). [siana-memento-web/src/app/page.tsx ; siana-memento-web/src/lib/api/testimonials.ts:getPublicTestimonials]
+- **E2E admin testimonials non automatisé** — Le parcours UI create→toggle→delete de `AdminTestimonials` n'est pas couvert par Playwright (suite e2e admin légère au MVP). Couverture actuelle : tests fonctionnels API complets (11 specs, AC#1-#4 + NFR-S10) + typecheck/lint front. Ajouter un e2e si le besoin de non-régression UI le justifie. [siana-memento-web/src/components/siana/AdminTestimonials.tsx]
+
 ## Deferred from: story 6.5 (2026-06-02)
 
 - **« Quota restant » exact Gemini non mesurable (AC#3, proxy D4)** — L'alerte rate-limit (`alerts_service.checkRateLimit`) est un **proxy MVP** : elle compte les générations `failed` dont `error_message` matche `429|RESOURCE_EXHAUSTED|quota|rate limit` sur 24h, et reporte ce **nombre d'erreurs** dans l'email. Le « quota restant » exact demandé par l'AC#3 n'est pas exposé par l'API Gemini de façon exploitable au MVP et n'est pas compté localement. Growth : maintenir un compteur de requêtes Gemini (ou exploiter les quotas Cloud) pour reporter le quota restant réel. [siana-memento-api/app/services/alerts_service.ts:checkRateLimit]

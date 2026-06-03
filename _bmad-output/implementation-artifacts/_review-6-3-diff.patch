@@ -1,0 +1,871 @@
+diff --git a/.gitignore b/.gitignore
+index c34c716..7110d41 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -27,6 +27,8 @@ dist/
+ 
+ # ─── Logs ────────────────────────────────────────────────────────────────────
+ logs/
++# Exception : la route admin /admin/logs n'est pas un dossier de logs runtime.
++!siana-memento-web/src/app/admin/logs/
+ *.log
+ npm-debug.log*
+ yarn-debug.log*
+diff --git a/siana-memento-web/e2e/admin-layout.spec.ts b/siana-memento-web/e2e/admin-layout.spec.ts
+new file mode 100644
+index 0000000..f88605b
+--- /dev/null
++++ b/siana-memento-web/e2e/admin-layout.spec.ts
+@@ -0,0 +1,159 @@
++import { test, expect, type Page } from '@playwright/test'
++
++const ADMIN_USER = { id: 1, email: 'aldo@test.com', fullName: 'Aldo Test', isAdmin: true }
++const REGULAR_USER = { id: 2, email: 'user@test.com', fullName: 'User Test', isAdmin: false }
++
++const MOCK_METRICS = {
++  periodDays: 30,
++  revenue: 19900,
++  ordersCount: 10,
++  avgApiCost: 50,
++  grossMargin: 14900,
++  conversionRate: 0.05,
++  apiCostEstimated: true,
++  cac: { utmAvailable: false, channels: { organique: null, paid: null, social: null, referral: null } },
++}
++
++/** Mocke /auth/me (et les métriques admin) au niveau context pour couvrir le cross-origin. */
++async function mockSession(
++  page: Page,
++  session: { user?: typeof ADMIN_USER | typeof REGULAR_USER } | null
++) {
++  const context = page.context()
++  await context.route('**/auth/me', (route) => {
++    if (session?.user) {
++      return route.fulfill({ json: { success: true, data: { user: session.user } } })
++    }
++    return route.fulfill({ json: { success: false, error: { code: 'UNAUTHORIZED' } } })
++  })
++  await context.route('**/api/admin/metrics', (route) =>
++    route.fulfill({ json: { success: true, data: MOCK_METRICS } })
++  )
++}
++
++test.describe('Layout & navigation admin', () => {
++  test('visiteur anonyme sur /admin/dashboard est redirigé vers /login avec redirect', async ({
++    page,
++  }) => {
++    await mockSession(page, null)
++    await page.goto('/admin/dashboard')
++    await page.waitForURL('**/login**')
++    await expect(page).toHaveURL(/\/login\?redirect=/)
++    // Le paramètre redirect pointe vers la page admin demandée (encodée).
++    expect(decodeURIComponent(page.url())).toContain('redirect=/admin/dashboard')
++  })
++
++  test('utilisateur non-admin est redirigé vers /orders', async ({ page }) => {
++    await mockSession(page, { user: REGULAR_USER })
++    await page.goto('/admin/dashboard')
++    await page.waitForURL('**/orders')
++    await expect(page).toHaveURL(/\/orders$/)
++  })
++
++  test('/admin redirige vers /admin/dashboard', async ({ page }) => {
++    await mockSession(page, { user: ADMIN_USER })
++    await page.goto('/admin')
++    await page.waitForURL('**/admin/dashboard')
++    await expect(page).toHaveURL(/\/admin\/dashboard$/)
++    await expect(page.getByRole('navigation', { name: 'Navigation admin' })).toBeVisible()
++  })
++
++  test('le raccourci « Mes commandes » du header est masqué sous /admin', async ({ page }) => {
++    await mockSession(page, { user: ADMIN_USER })
++    await page.goto('/admin/dashboard')
++    await expect(page.getByRole('navigation', { name: 'Navigation admin' })).toBeVisible()
++    // Le lien marketing « Mes commandes » (aria-label) ne doit pas apparaître en admin.
++    await expect(page.getByRole('link', { name: 'Mes commandes' })).toHaveCount(0)
++  })
++
++  test('admin voit la sidebar avec les 4 sections et Dashboard actif', async ({ page }) => {
++    await mockSession(page, { user: ADMIN_USER })
++    await page.goto('/admin/dashboard')
++
++    const nav = page.getByRole('navigation', { name: 'Navigation admin' })
++    await expect(nav).toBeVisible()
++    await expect(nav.getByRole('link', { name: 'Dashboard' })).toBeVisible()
++    await expect(nav.getByRole('link', { name: 'Logs' })).toBeVisible()
++    await expect(nav.getByRole('link', { name: 'Commandes' })).toBeVisible()
++    await expect(nav.getByRole('link', { name: 'Testimonials' })).toBeVisible()
++
++    // Section active = Dashboard (aria-current="page")
++    await expect(nav.getByRole('link', { name: 'Dashboard' })).toHaveAttribute(
++      'aria-current',
++      'page'
++    )
++  })
++
++  test('cliquer Logs navigue vers le placeholder « bientôt disponible » sans erreur (AC#5)', async ({
++    page,
++  }) => {
++    await mockSession(page, { user: ADMIN_USER })
++    await page.goto('/admin/dashboard')
++
++    const nav = page.getByRole('navigation', { name: 'Navigation admin' })
++    await nav.getByRole('link', { name: 'Logs' }).click()
++
++    await page.waitForURL('**/admin/logs')
++    await expect(page.getByText('Bientôt disponible')).toBeVisible()
++    // Logs devient la section active après navigation.
++    await expect(nav.getByRole('link', { name: 'Logs' })).toHaveAttribute('aria-current', 'page')
++  })
++
++  test('mobile : la sidebar est masquée et le drawer s’ouvre au hamburger (AC#4)', async ({
++    page,
++  }) => {
++    await page.setViewportSize({ width: 375, height: 667 })
++    await mockSession(page, { user: ADMIN_USER })
++    await page.goto('/admin/dashboard')
++
++    // La sidebar desktop est masquée (< md).
++    await expect(page.getByRole('navigation', { name: 'Navigation admin' })).toBeHidden()
++
++    // Ouvrir le drawer via le bouton hamburger.
++    const trigger = page.getByRole('button', { name: 'Ouvrir la navigation admin' })
++    await expect(trigger).toBeVisible()
++    await trigger.click()
++
++    // Le drawer affiche la navigation, accessible au clavier.
++    const drawerNav = page.getByRole('navigation', { name: 'Navigation admin' })
++    await expect(drawerNav).toBeVisible()
++    await drawerNav.getByRole('link', { name: 'Commandes' }).click()
++    await page.waitForURL('**/admin/orders')
++    await expect(page.getByText('Bientôt disponible')).toBeVisible()
++  })
++
++  test('après login depuis le garde admin, retour à la page admin demandée', async ({ page }) => {
++    const context = page.context()
++    await context.route('**/auth/login', (route) =>
++      route.fulfill({ json: { success: true, data: { user: ADMIN_USER } } })
++    )
++    await mockSession(page, { user: ADMIN_USER })
++
++    await page.goto('/login?redirect=/admin/dashboard')
++    await page.locator('#login-email').fill('aldo@test.com')
++    await page.locator('#login-password').fill('secret123')
++    await page.getByRole('button', { name: /^se connecter$/i }).click()
++
++    await page.waitForURL('**/admin/dashboard')
++    await expect(page.getByRole('navigation', { name: 'Navigation admin' })).toBeVisible()
++  })
++
++  test('redirect externe ignoré après login (anti open-redirect)', async ({ page }) => {
++    const context = page.context()
++    await context.route('**/auth/login', (route) =>
++      route.fulfill({ json: { success: true, data: { user: REGULAR_USER } } })
++    )
++    await context.route('**/auth/me', (route) =>
++      route.fulfill({ json: { success: true, data: { user: REGULAR_USER } } })
++    )
++
++    await page.goto('/login?redirect=//evil.example.com')
++    await page.locator('#login-email').fill('user@test.com')
++    await page.locator('#login-password').fill('secret123')
++    await page.getByRole('button', { name: /^se connecter$/i }).click()
++
++    // Le chemin externe est rejeté → retour à l'accueil interne, pas vers evil.example.com.
++    await page.waitForURL('http://localhost:3000/')
++    expect(new URL(page.url()).host).toBe('localhost:3000')
++  })
++})
+diff --git a/siana-memento-web/src/app/(auth)/login/page.tsx b/siana-memento-web/src/app/(auth)/login/page.tsx
+index 290ad6f..878b374 100644
+--- a/siana-memento-web/src/app/(auth)/login/page.tsx
++++ b/siana-memento-web/src/app/(auth)/login/page.tsx
+@@ -1,12 +1,24 @@
+ "use client";
+ 
+-import { useRouter } from "next/navigation";
++import { Suspense } from "react";
++import { useRouter, useSearchParams } from "next/navigation";
+ import FocusCard from "@/components/siana/FocusCard";
+ import LoginForm from "@/components/siana/LoginForm";
+ import GoogleButton from "@/components/siana/GoogleButton";
+ 
+-export default function LoginPage() {
++// Retour post-login : n'autorise que les chemins internes absolus.
++// Rejette les URLs absolues (https://…) et protocol-relative (//host) → anti open-redirect.
++function safeInternalPath(raw: string | null): string | null {
++  if (!raw || !raw.startsWith("/")) return null;
++  if (raw.startsWith("//") || raw.startsWith("/\\")) return null;
++  return raw;
++}
++
++function LoginPageInner() {
+   const router = useRouter();
++  const searchParams = useSearchParams();
++  const redirectTo = safeInternalPath(searchParams.get("redirect"));
++  const target = redirectTo ?? "/";
+ 
+   return (
+     <FocusCard>
+@@ -21,7 +33,7 @@ export default function LoginPage() {
+         </div>
+ 
+         <div className="flex flex-col gap-3 mb-4">
+-          <GoogleButton label="Continuer avec Google" />
++          <GoogleButton label="Continuer avec Google" returnTo={redirectTo ?? undefined} />
+           <div className="relative flex items-center gap-3 py-1">
+             <div className="h-px flex-1 bg-border" />
+             <span className="text-xs text-muted-foreground">ou</span>
+@@ -29,7 +41,7 @@ export default function LoginPage() {
+           </div>
+         </div>
+ 
+-        <LoginForm onSuccess={() => router.push("/")} />
++        <LoginForm onSuccess={() => router.push(target)} />
+ 
+         <p className="mt-4 text-center text-sm text-muted-foreground">
+           Pas encore de compte ?{" "}
+@@ -44,3 +56,11 @@ export default function LoginPage() {
+     </FocusCard>
+   );
+ }
++
++export default function LoginPage() {
++  return (
++    <Suspense fallback={null}>
++      <LoginPageInner />
++    </Suspense>
++  );
++}
+diff --git a/siana-memento-web/src/app/admin/layout.tsx b/siana-memento-web/src/app/admin/layout.tsx
+new file mode 100644
+index 0000000..16c884b
+--- /dev/null
++++ b/siana-memento-web/src/app/admin/layout.tsx
+@@ -0,0 +1,11 @@
++import type { Metadata } from 'next'
++import AdminShell from '@/components/siana/AdminShell'
++
++export const metadata: Metadata = {
++  title: 'Administration — Siana Memento',
++  robots: { index: false, follow: false },
++}
++
++export default function AdminLayout({ children }: { children: React.ReactNode }) {
++  return <AdminShell>{children}</AdminShell>
++}
+diff --git a/siana-memento-web/src/app/admin/logs/page.tsx b/siana-memento-web/src/app/admin/logs/page.tsx
+new file mode 100644
+index 0000000..b5fb4b3
+--- /dev/null
++++ b/siana-memento-web/src/app/admin/logs/page.tsx
+@@ -0,0 +1,12 @@
++import type { Metadata } from 'next'
++import AdminComingSoon from '@/components/siana/AdminComingSoon'
++
++export const metadata: Metadata = {
++  title: 'Logs de génération — Siana Memento',
++  robots: { index: false, follow: false },
++}
++
++// Placeholder — remplacé par la Story 6.4 (Logs de Génération et Historique Erreurs IA).
++export default function AdminLogsRoute() {
++  return <AdminComingSoon title="Logs de génération" />
++}
+diff --git a/siana-memento-web/src/app/admin/orders/page.tsx b/siana-memento-web/src/app/admin/orders/page.tsx
+new file mode 100644
+index 0000000..8ba5d7b
+--- /dev/null
++++ b/siana-memento-web/src/app/admin/orders/page.tsx
+@@ -0,0 +1,12 @@
++import type { Metadata } from 'next'
++import AdminComingSoon from '@/components/siana/AdminComingSoon'
++
++export const metadata: Metadata = {
++  title: 'Commandes — Siana Memento',
++  robots: { index: false, follow: false },
++}
++
++// Placeholder — remplacé par la Story 6.6 (Renvoi Manuel de Designs et Backups DB).
++export default function AdminOrdersRoute() {
++  return <AdminComingSoon title="Commandes" />
++}
+diff --git a/siana-memento-web/src/app/admin/page.tsx b/siana-memento-web/src/app/admin/page.tsx
+new file mode 100644
+index 0000000..46c4302
+--- /dev/null
++++ b/siana-memento-web/src/app/admin/page.tsx
+@@ -0,0 +1,6 @@
++import { redirect } from 'next/navigation'
++
++// /admin n'a pas d'écran propre : on envoie directement vers le dashboard.
++export default function AdminIndexRoute() {
++  redirect('/admin/dashboard')
++}
+diff --git a/siana-memento-web/src/app/admin/testimonials/page.tsx b/siana-memento-web/src/app/admin/testimonials/page.tsx
+new file mode 100644
+index 0000000..d70fedc
+--- /dev/null
++++ b/siana-memento-web/src/app/admin/testimonials/page.tsx
+@@ -0,0 +1,12 @@
++import type { Metadata } from 'next'
++import AdminComingSoon from '@/components/siana/AdminComingSoon'
++
++export const metadata: Metadata = {
++  title: 'Testimonials — Siana Memento',
++  robots: { index: false, follow: false },
++}
++
++// Placeholder — remplacé par la Story 6.7 (Gestion des Testimonials — CRUD Admin).
++export default function AdminTestimonialsRoute() {
++  return <AdminComingSoon title="Testimonials" />
++}
+diff --git a/siana-memento-web/src/components/siana/AdminComingSoon.tsx b/siana-memento-web/src/components/siana/AdminComingSoon.tsx
+new file mode 100644
+index 0000000..c0d02d9
+--- /dev/null
++++ b/siana-memento-web/src/components/siana/AdminComingSoon.tsx
+@@ -0,0 +1,21 @@
++import { Clock } from 'lucide-react'
++
++/**
++ * État neutre « bientôt disponible » pour les sections admin dont la story
++ * n'est pas encore implémentée (Logs → 6.4, Commandes → 6.6, Testimonials → 6.7).
++ * La navigation fonctionne sans erreur jusqu'à leur livraison (AC#5).
++ */
++export default function AdminComingSoon({ title }: { title: string }) {
++  return (
++    <>
++      <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
++      <div className="mt-16 flex flex-col items-center text-center">
++        <Clock className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
++        <h2 className="mt-3 font-display text-lg font-semibold">Bientôt disponible</h2>
++        <p className="mt-1 max-w-xs text-sm text-muted-foreground">
++          Cette section est en cours de préparation et sera accessible prochainement.
++        </p>
++      </div>
++    </>
++  )
++}
+diff --git a/siana-memento-web/src/components/siana/AdminDashboard.tsx b/siana-memento-web/src/components/siana/AdminDashboard.tsx
+index 1c26a15..c4267a5 100644
+--- a/siana-memento-web/src/components/siana/AdminDashboard.tsx
++++ b/siana-memento-web/src/components/siana/AdminDashboard.tsx
+@@ -1,9 +1,7 @@
+ 'use client'
+ 
+ import { useEffect, useState } from 'react'
+-import { useRouter } from 'next/navigation'
+ import { toast } from 'sonner'
+-import { getMe } from '@/lib/api/auth'
+ import { getAdminMetrics, getExportCsvUrl, type DashboardMetrics } from '@/lib/api/admin'
+ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+ import { Button } from '@/components/ui/button'
+@@ -34,38 +32,14 @@ function MetricCard({ label, value, hint }: { label: string; value: string; hint
+   )
+ }
+ 
++// L'accès admin est garanti en amont par AdminShell (layout /admin) — ce composant
++// suppose un admin authentifié et ne charge que les métriques.
+ export default function AdminDashboard() {
+-  const router = useRouter()
+-  const [authChecked, setAuthChecked] = useState(false)
+-  const [authError, setAuthError] = useState(false)
+   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
+   const [loading, setLoading] = useState(true)
+   const [error, setError] = useState(false)
+ 
+-  // Garde admin (UX uniquement — la vraie barrière est l'API, NFR-S10).
+   useEffect(() => {
+-    getMe().then((result) => {
+-      if (!result.success) {
+-        // Distinguer une panne réseau d'un vrai « non authentifié » : ne pas rediriger
+-        // vers /login sur un simple souci de connexion (sinon faux logout perçu).
+-        if (result.errorCode === 'NETWORK_ERROR') {
+-          toast.error('Service indisponible. Vérifiez votre connexion et réessayez.')
+-          setAuthError(true)
+-          return
+-        }
+-        router.replace('/login?redirect=/admin/dashboard')
+-        return
+-      }
+-      if (!result.user.isAdmin) {
+-        router.replace('/orders')
+-        return
+-      }
+-      setAuthChecked(true)
+-    })
+-  }, [router])
+-
+-  useEffect(() => {
+-    if (!authChecked) return
+     getAdminMetrics().then((result) => {
+       if (result.success) {
+         setMetrics(result.metrics)
+@@ -75,36 +49,10 @@ export default function AdminDashboard() {
+       }
+       setLoading(false)
+     })
+-  }, [authChecked])
+-
+-  if (authError) {
+-    return (
+-      <main className="mx-auto max-w-4xl px-4 py-10 sm:py-16">
+-        <div className="flex flex-col items-center py-16 text-center">
+-          <h2 className="font-display text-lg font-semibold">Connexion impossible</h2>
+-          <p className="mt-1 max-w-xs text-sm text-muted-foreground">
+-            Vérifiez votre connexion et rechargez la page.
+-          </p>
+-        </div>
+-      </main>
+-    )
+-  }
+-
+-  if (!authChecked) {
+-    return (
+-      <main className="mx-auto max-w-4xl px-4 py-10 sm:py-16">
+-        <div className="h-8 w-56 rounded bg-muted animate-pulse" />
+-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+-          {[1, 2, 3, 4, 5].map((i) => (
+-            <div key={i} className="h-28 rounded-xl bg-muted animate-pulse" />
+-          ))}
+-        </div>
+-      </main>
+-    )
+-  }
++  }, [])
+ 
+   return (
+-    <main className="mx-auto max-w-4xl px-4 py-10 sm:py-16">
++    <>
+       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+         <div>
+           <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+@@ -181,6 +129,6 @@ export default function AdminDashboard() {
+           </section>
+         </>
+       )}
+-    </main>
++    </>
+   )
+ }
+diff --git a/siana-memento-web/src/components/siana/AdminShell.tsx b/siana-memento-web/src/components/siana/AdminShell.tsx
+new file mode 100644
+index 0000000..a990195
+--- /dev/null
++++ b/siana-memento-web/src/components/siana/AdminShell.tsx
+@@ -0,0 +1,86 @@
++'use client'
++
++import { useEffect, useRef, useState } from 'react'
++import { usePathname, useRouter } from 'next/navigation'
++import { toast } from 'sonner'
++import { getMe } from '@/lib/api/auth'
++import { AdminSidebar, AdminMobileNav } from '@/components/siana/AdminSidebar'
++
++/**
++ * Coquille partagée de l'espace admin : protège toutes les routes /admin et
++ * fournit la navigation (sidebar desktop + drawer mobile) ainsi que le <main>
++ * unique de la page. Le garde est UX uniquement — la vraie barrière reste le
++ * middleware API `admin` (NFR-S10). Centralise la garde auparavant dupliquée
++ * dans AdminDashboard (Story 6.2).
++ */
++export default function AdminShell({ children }: { children: React.ReactNode }) {
++  const router = useRouter()
++  const pathname = usePathname()
++  const [authChecked, setAuthChecked] = useState(false)
++  const [authError, setAuthError] = useState(false)
++
++  // L'identité ne change pas en circulant entre sous-pages /admin : on ne vérifie
++  // l'accès qu'une fois. Un flag ref (écrit dans l'effet) garantit un seul getMe()
++  // même si le pathname change pendant la vérification → évite les /auth/me redondants
++  // à chaque navigation de sous-route admin.
++  const hasChecked = useRef(false)
++
++  useEffect(() => {
++    if (hasChecked.current) return
++    hasChecked.current = true
++    getMe().then((result) => {
++      if (!result.success) {
++        // Distinguer une panne réseau d'un vrai « non authentifié » : ne pas
++        // rediriger vers /login sur un simple souci de connexion (faux logout perçu).
++        if (result.errorCode === 'NETWORK_ERROR') {
++          toast.error('Service indisponible. Vérifiez votre connexion et réessayez.')
++          setAuthError(true)
++          return
++        }
++        router.replace(`/login?redirect=${encodeURIComponent(pathname ?? '/admin/dashboard')}`)
++        return
++      }
++      if (!result.user.isAdmin) {
++        router.replace('/orders')
++        return
++      }
++      setAuthChecked(true)
++    })
++  }, [router, pathname])
++
++  if (authError) {
++    return (
++      <main className="mx-auto max-w-4xl px-4 py-10 sm:py-16">
++        <div className="flex flex-col items-center py-16 text-center">
++          <h2 className="font-display text-lg font-semibold">Connexion impossible</h2>
++          <p className="mt-1 max-w-xs text-sm text-muted-foreground">
++            Vérifiez votre connexion et rechargez la page.
++          </p>
++        </div>
++      </main>
++    )
++  }
++
++  if (!authChecked) {
++    return (
++      <main className="mx-auto max-w-4xl px-4 py-10 sm:py-16">
++        <div className="h-8 w-56 rounded bg-muted animate-pulse" />
++        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
++          {[1, 2, 3, 4, 5].map((i) => (
++            <div key={i} className="h-28 rounded-xl bg-muted animate-pulse" />
++          ))}
++        </div>
++      </main>
++    )
++  }
++
++  return (
++    <div className="flex min-h-[calc(100vh-4rem)]">
++      <AdminSidebar />
++      <div className="min-w-0 flex-1">
++        <AdminMobileNav />
++        <main className="mx-auto max-w-4xl px-4 py-10 sm:py-16">{children}</main>
++      </div>
++    </div>
++  )
++}
+diff --git a/siana-memento-web/src/components/siana/AdminSidebar.tsx b/siana-memento-web/src/components/siana/AdminSidebar.tsx
+new file mode 100644
+index 0000000..ee9357b
+--- /dev/null
++++ b/siana-memento-web/src/components/siana/AdminSidebar.tsx
+@@ -0,0 +1,110 @@
++'use client'
++
++import { useState } from 'react'
++import Link from 'next/link'
++import { usePathname } from 'next/navigation'
++import {
++  LayoutDashboard,
++  FileText,
++  ShoppingBag,
++  MessageSquareQuote,
++  Menu,
++  type LucideIcon,
++} from 'lucide-react'
++import {
++  Sheet,
++  SheetContent,
++  SheetHeader,
++  SheetTitle,
++  SheetTrigger,
++} from '@/components/ui/sheet'
++import { Button } from '@/components/ui/button'
++import { cn } from '@/lib/utils'
++
++interface AdminSection {
++  href: string
++  label: string
++  icon: LucideIcon
++}
++
++const adminSections: AdminSection[] = [
++  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
++  { href: '/admin/logs', label: 'Logs', icon: FileText },
++  { href: '/admin/orders', label: 'Commandes', icon: ShoppingBag },
++  { href: '/admin/testimonials', label: 'Testimonials', icon: MessageSquareQuote },
++]
++
++function isActive(pathname: string | null, href: string): boolean {
++  if (!pathname) return false
++  return pathname === href || pathname.startsWith(href + '/')
++}
++
++/** Liste de liens partagée entre la sidebar desktop et le drawer mobile. */
++function AdminNavList({ onNavigate }: { onNavigate?: () => void }) {
++  const pathname = usePathname()
++
++  return (
++    <nav aria-label="Navigation admin" className="flex flex-col gap-1">
++      {adminSections.map((section) => {
++        const active = isActive(pathname, section.href)
++        const Icon = section.icon
++        return (
++          <Link
++            key={section.href}
++            href={section.href}
++            onClick={onNavigate}
++            aria-current={active ? 'page' : undefined}
++            className={cn(
++              'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
++              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
++              active
++                ? 'bg-primary font-semibold text-primary-foreground'
++                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
++            )}
++          >
++            <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
++            {section.label}
++          </Link>
++        )
++      })}
++    </nav>
++  )
++}
++
++/** Sidebar persistante visible sur desktop (≥ md). */
++export function AdminSidebar() {
++  return (
++    <aside className="hidden w-56 shrink-0 border-r border-border/60 px-3 py-6 md:block">
++      <p className="px-3 pb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
++        Administration
++      </p>
++      <AdminNavList />
++    </aside>
++  )
++}
++
++/** Barre mobile (< md) avec bouton hamburger ouvrant un drawer. */
++export function AdminMobileNav() {
++  const [open, setOpen] = useState(false)
++
++  return (
++    <div className="flex items-center gap-2 border-b border-border/60 px-4 py-2 md:hidden">
++      <Sheet open={open} onOpenChange={setOpen}>
++        <SheetTrigger asChild>
++          <Button variant="ghost" size="sm" aria-label="Ouvrir la navigation admin">
++            <Menu className="h-5 w-5" />
++          </Button>
++        </SheetTrigger>
++        <SheetContent side="left" className="w-64 p-0">
++          <SheetHeader>
++            <SheetTitle>Administration</SheetTitle>
++          </SheetHeader>
++          <div className="px-3 pb-6">
++            <AdminNavList onNavigate={() => setOpen(false)} />
++          </div>
++        </SheetContent>
++      </Sheet>
++      <span className="text-sm font-medium text-muted-foreground">Administration</span>
++    </div>
++  )
++}
+diff --git a/siana-memento-web/src/components/siana/ConditionalFooter.tsx b/siana-memento-web/src/components/siana/ConditionalFooter.tsx
+index 8d06010..9d13a46 100644
+--- a/siana-memento-web/src/components/siana/ConditionalFooter.tsx
++++ b/siana-memento-web/src/components/siana/ConditionalFooter.tsx
+@@ -9,6 +9,7 @@ import Footer from '@/components/siana/Footer'
+  */
+ export default function ConditionalFooter() {
+   const pathname = usePathname()
+-  if (pathname?.startsWith('/admin')) return null
++  // Frontière de segment : masquer sur /admin et /admin/* sans matcher un futur /admin-help.
++  if (pathname === '/admin' || pathname?.startsWith('/admin/')) return null
+   return <Footer />
+ }
+diff --git a/siana-memento-web/src/components/siana/UserMenu.tsx b/siana-memento-web/src/components/siana/UserMenu.tsx
+index dc48219..3a5bad7 100644
+--- a/siana-memento-web/src/components/siana/UserMenu.tsx
++++ b/siana-memento-web/src/components/siana/UserMenu.tsx
+@@ -1,7 +1,7 @@
+ 'use client'
+ 
+ import { useState } from 'react'
+-import { useRouter } from 'next/navigation'
++import { useRouter, usePathname } from 'next/navigation'
+ import Link from 'next/link'
+ import { useTheme } from 'next-themes'
+ import { ShoppingBag, Settings, Sun, Moon, LogOut } from 'lucide-react'
+@@ -19,9 +19,15 @@ import { toast } from 'sonner'
+ 
+ export default function UserMenu() {
+   const router = useRouter()
++  const pathname = usePathname()
+   const { theme, setTheme } = useTheme()
+   const [isLoggingOut, setIsLoggingOut] = useState(false)
+ 
++  // L'espace admin a sa propre navigation (sidebar) ; on masque le raccourci
++  // « Mes commandes » du header marketing quand on est sous /admin.
++  // Frontière de segment pour ne pas matcher une future route type /admin-help.
++  const isAdminArea = pathname === '/admin' || (pathname?.startsWith('/admin/') ?? false)
++
+   async function handleLogout() {
+     setIsLoggingOut(true)
+     const result = await logoutUser()
+@@ -36,14 +42,16 @@ export default function UserMenu() {
+ 
+   return (
+     <div className="flex items-center gap-2">
+-      <Link
+-        href="/orders"
+-        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+-        aria-label="Mes commandes"
+-      >
+-        <ShoppingBag className="h-4 w-4" />
+-        <span className="hidden md:inline">Mes commandes</span>
+-      </Link>
++      {!isAdminArea && (
++        <Link
++          href="/orders"
++          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
++          aria-label="Mes commandes"
++        >
++          <ShoppingBag className="h-4 w-4" />
++          <span className="hidden md:inline">Mes commandes</span>
++        </Link>
++      )}
+ 
+       <DropdownMenu>
+         <DropdownMenuTrigger asChild>
+diff --git a/siana-memento-web/src/components/ui/sheet.tsx b/siana-memento-web/src/components/ui/sheet.tsx
+new file mode 100644
+index 0000000..abd6729
+--- /dev/null
++++ b/siana-memento-web/src/components/ui/sheet.tsx
+@@ -0,0 +1,139 @@
++"use client"
++
++import * as React from "react"
++import { XIcon } from "lucide-react"
++import { Dialog as SheetPrimitive } from "radix-ui"
++
++import { cn } from "@/lib/utils"
++
++function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
++  return <SheetPrimitive.Root data-slot="sheet" {...props} />
++}
++
++function SheetTrigger({
++  ...props
++}: React.ComponentProps<typeof SheetPrimitive.Trigger>) {
++  return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />
++}
++
++function SheetClose({
++  ...props
++}: React.ComponentProps<typeof SheetPrimitive.Close>) {
++  return <SheetPrimitive.Close data-slot="sheet-close" {...props} />
++}
++
++function SheetPortal({
++  ...props
++}: React.ComponentProps<typeof SheetPrimitive.Portal>) {
++  return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />
++}
++
++function SheetOverlay({
++  className,
++  ...props
++}: React.ComponentProps<typeof SheetPrimitive.Overlay>) {
++  return (
++    <SheetPrimitive.Overlay
++      data-slot="sheet-overlay"
++      className={cn(
++        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
++        className
++      )}
++      {...props}
++    />
++  )
++}
++
++function SheetContent({
++  className,
++  children,
++  side = "right",
++  ...props
++}: React.ComponentProps<typeof SheetPrimitive.Content> & {
++  side?: "top" | "right" | "bottom" | "left"
++}) {
++  return (
++    <SheetPortal>
++      <SheetOverlay />
++      <SheetPrimitive.Content
++        data-slot="sheet-content"
++        className={cn(
++          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
++          side === "right" &&
++            "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",
++          side === "left" &&
++            "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm",
++          side === "top" &&
++            "data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 top-0 h-auto border-b",
++          side === "bottom" &&
++            "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t",
++          className
++        )}
++        {...props}
++      >
++        {children}
++        <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
++          <XIcon className="size-4" />
++          <span className="sr-only">Fermer</span>
++        </SheetPrimitive.Close>
++      </SheetPrimitive.Content>
++    </SheetPortal>
++  )
++}
++
++function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
++  return (
++    <div
++      data-slot="sheet-header"
++      className={cn("flex flex-col gap-1.5 p-4", className)}
++      {...props}
++    />
++  )
++}
++
++function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
++  return (
++    <div
++      data-slot="sheet-footer"
++      className={cn("mt-auto flex flex-col gap-2 p-4", className)}
++      {...props}
++    />
++  )
++}
++
++function SheetTitle({
++  className,
++  ...props
++}: React.ComponentProps<typeof SheetPrimitive.Title>) {
++  return (
++    <SheetPrimitive.Title
++      data-slot="sheet-title"
++      className={cn("text-foreground font-semibold", className)}
++      {...props}
++    />
++  )
++}
++
++function SheetDescription({
++  className,
++  ...props
++}: React.ComponentProps<typeof SheetPrimitive.Description>) {
++  return (
++    <SheetPrimitive.Description
++      data-slot="sheet-description"
++      className={cn("text-muted-foreground text-sm", className)}
++      {...props}
++    />
++  )
++}
++
++export {
++  Sheet,
++  SheetTrigger,
++  SheetClose,
++  SheetContent,
++  SheetHeader,
++  SheetFooter,
++  SheetTitle,
++  SheetDescription,
++}
