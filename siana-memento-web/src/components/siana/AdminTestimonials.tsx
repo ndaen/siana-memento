@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { Pencil, Trash2 } from 'lucide-react'
 import {
   getAdminTestimonials,
   createTestimonial,
@@ -252,17 +253,23 @@ export default function AdminTestimonials() {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => openEdit(t)}>
-                        Modifier
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEdit(t)}
+                        aria-label={`Modifier le témoignage de ${t.authorName}`}
+                      >
+                        <Pencil className="size-4" aria-hidden="true" />
                       </Button>
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant="ghost"
+                        size="icon"
                         onClick={() => setToDelete(t)}
                         aria-label={`Supprimer le témoignage de ${t.authorName}`}
+                        className="text-destructive hover:text-destructive"
                       >
-                        Supprimer
+                        <Trash2 className="size-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </TableCell>
