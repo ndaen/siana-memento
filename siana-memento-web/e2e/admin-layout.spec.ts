@@ -84,18 +84,18 @@ test.describe('Layout & navigation admin', () => {
     )
   })
 
-  test('cliquer une section non implémentée navigue vers le placeholder « bientôt disponible » sans erreur (AC#5)', async ({
+  test('cliquer une section de la nav y navigue et la marque active (aria-current) sans erreur (AC#5)', async ({
     page,
   }) => {
     await mockSession(page, { user: ADMIN_USER })
     await page.goto('/admin/dashboard')
 
-    // Testimonials reste un placeholder (Logs est implémentée par la Story 6.4).
+    // Toutes les sections de la nav sont désormais implémentées (Stories 6.4/6.6/6.7) :
+    // on vérifie la navigation client + l'état actif (le placeholder « bientôt disponible » n'existe plus).
     const nav = page.getByRole('navigation', { name: 'Navigation admin' })
     await nav.getByRole('link', { name: 'Testimonials' }).click()
 
     await page.waitForURL('**/admin/testimonials')
-    await expect(page.getByText('Bientôt disponible')).toBeVisible()
     await expect(nav.getByRole('link', { name: 'Testimonials' })).toHaveAttribute(
       'aria-current',
       'page'
@@ -122,7 +122,6 @@ test.describe('Layout & navigation admin', () => {
     await expect(drawerNav).toBeVisible()
     await drawerNav.getByRole('link', { name: 'Commandes' }).click()
     await page.waitForURL('**/admin/orders')
-    await expect(page.getByText('Bientôt disponible')).toBeVisible()
   })
 
   test('après login depuis le garde admin, retour à la page admin demandée', async ({ page }) => {

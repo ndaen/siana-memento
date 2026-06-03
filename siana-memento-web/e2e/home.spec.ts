@@ -11,7 +11,7 @@ test.describe("Landing page", () => {
 
   test("hero section displays heading, tagline, price and CTA", async ({ page }) => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.getByText("15 minutes")).toBeVisible();
+    await expect(page.getByText(/Save the Date qui vous ressemble/i)).toBeVisible();
     await expect(page.getByText("par design")).toBeVisible();
     await expect(page.locator("#main-content").getByRole("link", { name: /créer mon save the date/i })).toBeVisible();
   });
