@@ -199,11 +199,15 @@ export default async function Home() {
                   className="flex flex-col rounded-xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                 >
                   <div role="img" aria-label={`${testimonial.rating} étoile${testimonial.rating > 1 ? 's' : ''} sur 5`} className="mb-3 flex gap-0.5">
-                    {Array.from({ length: testimonial.rating }).map((_, i) => (
+                    {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
                         aria-hidden="true"
-                        className="h-4 w-4 fill-current text-primary"
+                        className={
+                          i < testimonial.rating
+                            ? 'h-4 w-4 fill-current text-primary'
+                            : 'h-4 w-4 text-muted-foreground/40'
+                        }
                       />
                     ))}
                   </div>

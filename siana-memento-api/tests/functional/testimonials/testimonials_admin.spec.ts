@@ -217,4 +217,74 @@ test.group('Testimonials — CRUD admin (Story 6.7)', (group) => {
     assert.include(ids, active.id)
     assert.include(ids, inactive.id)
   })
+
+  // --- Note en étoiles (extension FR50) ---
+
+  test('rating defaults to 5 when omitted at creation', async ({ client, assert }) => {
+    const { cookie } = await loginAs(client, { isAdmin: true })
+    const response = await client
+      .post('/api/admin/testimonials')
+      .header('Cookie', cookie)
+      .json({ authorName: 'Sans note', content: 'La note doit valoir 5 par défaut.' })
+
+    response.assertStatus(201)
+    assert.equal(response.body().data.rating, 5)
+  })
+
+  test('admin can create and update a testimonial with a custom rating', async ({
+    client,
+    assert,
+  }) => {
+    const { cookie } = await loginAs(client, { isAdmin: true })
+    const created = await client
+      .post('/api/admin/testimonials')
+      .header('Cookie', cookie)
+      .json({ authorName: 'Note 4', content: 'Très bien mais perfectible.', rating: 4 })
+    created.assertStatus(201)
+    assert.equal(created.body().data.rating, 4)
+
+    const patched = await client
+      .patch(`/api/admin/testimonials/${created.body().data.id}`)
+      .header('Cookie', cookie)
+      .json({ rating: 3 })
+    patched.assertStatus(200)
+    assert.equal(patched.body().data.rating, 3)
+  })
+
+  test('rating out of the 1-5 range is rejected (422)', async ({ client }) => {
+    const { cookie } = await loginAs(client, { isAdmin: true })
+
+    const tooLow = await client
+      .post('/api/admin/testimonials')
+      .header('Cookie', cookie)
+      .json({ authorName: 'Léa', content: 'texte', rating: 0 })
+    tooLow.assertStatus(422)
+
+    const tooHigh = await client
+      .post('/api/admin/testimonials')
+      .header('Cookie', cookie)
+      .json({ authorName: 'Léa', content: 'texte', rating: 6 })
+    tooHigh.assertStatus(422)
+
+    const decimal = await client
+      .post('/api/admin/testimonials')
+      .header('Cookie', cookie)
+      .json({ authorName: 'Léa', content: 'texte', rating: 4.5 })
+    decimal.assertStatus(422)
+  })
+
+  test('public endpoint exposes the rating', async ({ client, assert }) => {
+    const created = await Testimonial.create({
+      authorName: 'Public note',
+      content: 'Visible avec sa note.',
+      isActive: true,
+      displayOrder: 0,
+      rating: 4,
+    })
+
+    const response = await client.get('/api/testimonials')
+    response.assertStatus(200)
+    const item = (response.body().data as any[]).find((t) => t.id === created.id)
+    assert.equal(item.rating, 4)
+  })
 })
