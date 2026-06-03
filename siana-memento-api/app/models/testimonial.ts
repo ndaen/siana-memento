@@ -6,7 +6,7 @@ import { BaseModel, column } from '@adonisjs/lucid/orm'
  *
  * Géré par l'admin via le CRUD `/api/admin/testimonials`. L'endpoint public
  * `GET /api/testimonials` ne retourne que les lignes `isActive = true`.
- * Pas de champ `rating`/`stars` (hors AC — Growth) : la landing affiche 5★ en dur.
+ * `rating` (1-5) pilote les étoiles affichées sur la landing.
  */
 export default class Testimonial extends BaseModel {
   @column({ isPrimary: true })
@@ -23,6 +23,9 @@ export default class Testimonial extends BaseModel {
 
   @column()
   declare displayOrder: number
+
+  @column()
+  declare rating: number
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime

@@ -198,8 +198,8 @@ export default async function Home() {
                   key={testimonial.id}
                   className="flex flex-col rounded-xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                 >
-                  <div role="img" aria-label="5 étoiles sur 5" className="mb-3 flex gap-0.5">
-                    {Array.from({ length: 5 }).map((_, i) => (
+                  <div role="img" aria-label={`${testimonial.rating} étoile${testimonial.rating > 1 ? 's' : ''} sur 5`} className="mb-3 flex gap-0.5">
+                    {Array.from({ length: testimonial.rating }).map((_, i) => (
                       <Star
                         key={i}
                         aria-hidden="true"

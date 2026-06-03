@@ -13,16 +13,18 @@ export interface Testimonial {
   content: string
   isActive: boolean
   displayOrder: number
+  rating: number
 }
 
 /** Testimonial public (landing) — pas d'exposition de isActive/timestamps. */
-export type PublicTestimonial = Pick<Testimonial, 'id' | 'authorName' | 'content'>
+export type PublicTestimonial = Pick<Testimonial, 'id' | 'authorName' | 'content' | 'rating'>
 
 export interface TestimonialPayload {
   authorName?: string
   content?: string
   isActive?: boolean
   displayOrder?: number
+  rating?: number
 }
 
 type ListResult =

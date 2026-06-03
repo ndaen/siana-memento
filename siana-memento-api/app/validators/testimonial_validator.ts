@@ -11,6 +11,7 @@ export const createTestimonialValidator = vine.compile(
     content: vine.string().trim().minLength(1).maxLength(2000),
     isActive: vine.boolean().optional(),
     displayOrder: vine.number().withoutDecimals().min(0).optional(),
+    rating: vine.number().withoutDecimals().min(1).max(5).optional(),
   })
 )
 
@@ -24,5 +25,6 @@ export const updateTestimonialValidator = vine.compile(
     content: vine.string().trim().minLength(1).maxLength(2000).optional(),
     isActive: vine.boolean().optional(),
     displayOrder: vine.number().withoutDecimals().min(0).optional(),
+    rating: vine.number().withoutDecimals().min(1).max(5).optional(),
   })
 )

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Star, Trash2 } from 'lucide-react'
 import {
   getAdminTestimonials,
   createTestimonial,
@@ -40,9 +40,64 @@ interface FormState {
   authorName: string
   content: string
   isActive: boolean
+  rating: number
 }
 
-const EMPTY_FORM: FormState = { authorName: '', content: '', isActive: true }
+const EMPTY_FORM: FormState = { authorName: '', content: '', isActive: true, rating: 5 }
+
+/** Affichage en lecture seule d'une note (étoiles pleines / vides) — utilisé dans la table. */
+function RatingStars({ value }: { value: number }) {
+  return (
+    <div role="img" aria-label={`${value} étoile${value > 1 ? 's' : ''} sur 5`} className="flex gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          aria-hidden="true"
+          className={
+            i < value ? 'size-4 fill-current text-primary' : 'size-4 text-muted-foreground/40'
+          }
+        />
+      ))}
+    </div>
+  )
+}
+
+/** Sélecteur de note interactif (boutons étoile) pour le formulaire. */
+function RatingPicker({
+  value,
+  onChange,
+}: {
+  value: number
+  onChange: (rating: number) => void
+}) {
+  return (
+    <div className="flex gap-1" role="radiogroup" aria-label="Note en étoiles">
+      {Array.from({ length: 5 }).map((_, i) => {
+        const star = i + 1
+        return (
+          <button
+            key={star}
+            type="button"
+            role="radio"
+            aria-checked={value === star}
+            aria-label={`${star} étoile${star > 1 ? 's' : ''}`}
+            onClick={() => onChange(star)}
+            className="rounded p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Star
+              aria-hidden="true"
+              className={
+                star <= value
+                  ? 'size-6 fill-current text-primary'
+                  : 'size-6 text-muted-foreground/40'
+              }
+            />
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 
 // L'accès admin est garanti par AdminShell (layout /admin) — ce composant suppose un
 // admin authentifié et ne re-vérifie pas l'auth.
@@ -104,7 +159,7 @@ export default function AdminTestimonials() {
 
   function openEdit(t: Testimonial) {
     setEditing(t)
-    setForm({ authorName: t.authorName, content: t.content, isActive: t.isActive })
+    setForm({ authorName: t.authorName, content: t.content, isActive: t.isActive, rating: t.rating })
     setFormErrors({})
     setFormOpen(true)
   }
@@ -130,6 +185,7 @@ export default function AdminTestimonials() {
       authorName: form.authorName.trim(),
       content: form.content.trim(),
       isActive: form.isActive,
+      rating: form.rating,
     }
 
     const result = editing
@@ -223,6 +279,7 @@ export default function AdminTestimonials() {
               <TableRow>
                 <TableHead scope="col">Prénom</TableHead>
                 <TableHead scope="col">Témoignage</TableHead>
+                <TableHead scope="col">Note</TableHead>
                 <TableHead scope="col">Actif</TableHead>
                 <TableHead scope="col">Statut</TableHead>
                 <TableHead scope="col" className="text-right">
@@ -236,6 +293,9 @@ export default function AdminTestimonials() {
                   <TableCell className="font-medium">{t.authorName}</TableCell>
                   <TableCell className="max-w-md">
                     <span className="line-clamp-2 text-sm text-muted-foreground">{t.content}</span>
+                  </TableCell>
+                  <TableCell>
+                    <RatingStars value={t.rating} />
                   </TableCell>
                   <TableCell>
                     <Checkbox
@@ -327,6 +387,16 @@ export default function AdminTestimonials() {
                     {formErrors.content}
                   </p>
                 )}
+              </div>
+
+              <div className="space-y-2">
+                <Label asChild>
+                  <span>Note</span>
+                </Label>
+                <RatingPicker
+                  value={form.rating}
+                  onChange={(rating) => setForm((f) => ({ ...f, rating }))}
+                />
               </div>
 
               <label className="flex cursor-pointer items-center gap-2 text-sm">

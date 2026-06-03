@@ -32,6 +32,7 @@ export default class TestimonialsController {
         id: t.id,
         authorName: t.authorName,
         content: t.content,
+        rating: t.rating,
       })),
     })
   }
@@ -62,6 +63,7 @@ export default class TestimonialsController {
       content: payload.content,
       isActive: payload.isActive ?? true,
       displayOrder: payload.displayOrder ?? 0,
+      rating: payload.rating ?? 5,
     })
 
     logger.info(
