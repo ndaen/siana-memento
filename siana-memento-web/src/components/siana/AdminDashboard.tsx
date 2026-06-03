@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { getAdminMetrics, getExportCsvUrl, type DashboardMetrics } from '@/lib/api/admin'
+import {
+  getAdminMetrics,
+  getAdminSurvey,
+  getExportCsvUrl,
+  type DashboardMetrics,
+  type SurveyStats,
+} from '@/lib/api/admin'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
@@ -16,6 +22,11 @@ function formatEur(value: number | null): string {
 function formatPercent(ratio: number | null): string {
   if (ratio === null) return 'N/A'
   return `${(ratio * 100).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} %`
+}
+
+function formatScore(value: number | null): string {
+  if (value === null) return 'N/A'
+  return `${value.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} / 5`
 }
 
 function MetricCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
@@ -36,6 +47,7 @@ function MetricCard({ label, value, hint }: { label: string; value: string; hint
 // suppose un admin authentifié et ne charge que les métriques.
 export default function AdminDashboard() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
+  const [survey, setSurvey] = useState<SurveyStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
@@ -48,6 +60,17 @@ export default function AdminDashboard() {
         setError(true)
       }
       setLoading(false)
+    })
+  }, [])
+
+  useEffect(() => {
+    // La satisfaction est secondaire : un échec ne bloque pas le dashboard (toast seul).
+    getAdminSurvey().then((result) => {
+      if (result.success) {
+        setSurvey(result.data)
+      } else {
+        toast.error(result.message)
+      }
     })
   }, [])
 
@@ -125,6 +148,68 @@ export default function AdminDashboard() {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          </section>
+
+          <section className="mt-10" aria-label="Satisfaction client">
+            <h2 className="font-display text-lg font-semibold">Satisfaction client</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {survey && survey.count > 0
+                ? `Sur ${survey.count} réponse${survey.count > 1 ? 's' : ''} au survey post-achat.`
+                : 'Aucune réponse au survey pour le moment.'}
+            </p>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <MetricCard
+                label="Satisfaction globale"
+                value={formatScore(survey?.avgOverallSatisfaction ?? null)}
+              />
+              <MetricCard
+                label="Qualité du design"
+                value={formatScore(survey?.avgDesignQuality ?? null)}
+              />
+              <MetricCard
+                label="Taux de recommandation"
+                value={formatPercent(survey?.recommendRate ?? null)}
+              />
+            </div>
+
+            <div className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Distribution des notes (satisfaction globale)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {survey && survey.count > 0 ? (
+                    <ul className="space-y-2" aria-label="Distribution des notes de 1 à 5">
+                      {(['5', '4', '3', '2', '1'] as const).map((note) => {
+                        const n = survey.distribution[note]
+                        const pct = survey.count > 0 ? (n / survey.count) * 100 : 0
+                        return (
+                          <li key={note} className="flex items-center gap-3 text-sm">
+                            <span className="w-10 shrink-0 tabular-nums">{note} ★</span>
+                            <span
+                              className="h-3 flex-1 overflow-hidden rounded-full bg-muted"
+                              aria-hidden="true"
+                            >
+                              <span
+                                className="block h-full rounded-full"
+                                style={{ width: `${pct}%`, backgroundColor: SAGE }}
+                              />
+                            </span>
+                            <span className="w-8 shrink-0 text-right tabular-nums text-muted-foreground">
+                              {n}
+                            </span>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">N/A</p>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </section>
         </>

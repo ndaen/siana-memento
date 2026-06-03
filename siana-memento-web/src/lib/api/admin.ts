@@ -171,6 +171,43 @@ export async function getAdminOrders(params: {
   }
 }
 
+export interface SurveyStats {
+  count: number
+  avgOverallSatisfaction: number | null
+  avgDesignQuality: number | null
+  recommendRate: number | null // ratio 0..1 (N/A si 0 réponse)
+  distribution: Record<'1' | '2' | '3' | '4' | '5', number>
+}
+
+type SurveyResult =
+  | { success: true; data: SurveyStats }
+  | { success: false; errorCode: string; message: string }
+
+/** Agrégat satisfaction client pour le dashboard admin (Story 6.8, AC#3). */
+export async function getAdminSurvey(): Promise<SurveyResult> {
+  try {
+    const res = await fetch(`${API_URL}/api/admin/survey`, {
+      method: 'GET',
+      credentials: 'include',
+    })
+    const json = await res.json()
+    if (json.success) {
+      return { success: true, data: json.data }
+    }
+    return {
+      success: false,
+      errorCode: json.error?.code ?? 'SURVEY_FAILED',
+      message: json.error?.message ?? 'Impossible de charger la satisfaction client.',
+    }
+  } catch {
+    return {
+      success: false,
+      errorCode: 'NETWORK_ERROR',
+      message: 'Service indisponible. Vérifiez votre connexion et réessayez.',
+    }
+  }
+}
+
 type ResendResult =
   | { success: true; status: OrderStatus }
   | { success: false; errorCode: string; message: string }

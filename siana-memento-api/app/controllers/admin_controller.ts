@@ -8,6 +8,7 @@ import Order from '#models/order'
 import MetricsService from '#services/metrics_service'
 import LogsService from '#services/logs_service'
 import OrdersAdminService, { type OrderStatus } from '#services/orders_admin_service'
+import SurveyService from '#services/survey_service'
 
 const ORDER_STATUSES: OrderStatus[] = ['pending', 'paid', 'failed', 'email_failed']
 
@@ -33,8 +34,22 @@ export default class AdminController {
   constructor(
     protected metricsService: MetricsService,
     protected logsService: LogsService,
-    protected ordersService: OrdersAdminService
+    protected ordersService: OrdersAdminService,
+    protected surveyService: SurveyService
   ) {}
+
+  /**
+   * GET /api/admin/survey — agrégat satisfaction client (Story 6.8, AC#3).
+   * Score moyen, qualité, taux de recommandation, distribution 1..5 (N/A jamais 0).
+   * Protégé par middleware auth + admin (NFR-S10).
+   */
+  async survey({ auth, response }: HttpContext) {
+    const user = auth.getUserOrFail()
+    logger.info({ event: 'admin_survey_view', userId: user.id }, 'Admin survey stats viewed')
+
+    const data = await this.surveyService.getSurveyStats()
+    return response.ok({ success: true, data })
+  }
 
   /**
    * GET /api/admin/metrics — métriques business sur 30 jours (AC1/AC2).

@@ -6,7 +6,9 @@ import type Order from '#models/order'
 import type User from '#models/user'
 import type Design from '#models/design'
 
-const resend = new Resend(env.get('RESEND_API_KEY'))
+// Exporté pour permettre aux tests de stubber `resend.emails.send` (pas d'appel réseau réel
+// en test, comme la philosophie des specs delivery qui n'envoient jamais réellement).
+export const resend = new Resend(env.get('RESEND_API_KEY'))
 
 /**
  * Builds the delivery email HTML body.
@@ -125,6 +127,101 @@ export async function sendDesignDelivery(
     logger.error(
       { event: 'delivery_email_failed', orderId: order.id, error: String(err) },
       'Unexpected error sending delivery email'
+    )
+    return { success: false }
+  }
+}
+
+/**
+ * Builds the satisfaction survey invite email HTML body (Story 6.8, FR48).
+ * Inline template, Vert Sauge #2D4A3E, un seul CTA vers la page publique de réponse.
+ */
+function buildSurveyHtml(design: Design, surveyUrl: string): string {
+  const partner1 = design.partner1Name || ''
+  const partner2 = design.partner2Name || ''
+  const names = partner1 && partner2 ? `${partner1} & ${partner2}` : partner1 || partner2 || ''
+
+  return `
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"></head>
+<body style="font-family: 'Helvetica Neue', Arial, sans-serif; color: #2D4A3E; max-width: 600px; margin: 0 auto; padding: 24px;">
+  <h1 style="font-size: 24px; color: #2D4A3E;">Comment s'est passée votre expérience ?</h1>
+
+  <p style="font-size: 16px; line-height: 1.6;">
+    ${names ? `Bonjour ${names},` : 'Bonjour,'}
+  </p>
+
+  <p style="font-size: 16px; line-height: 1.6;">
+    Nous espérons que votre Save the Date vous plaît ! Votre avis nous aide énormément à
+    améliorer Siana Memento. Cela ne prend qu'une minute :
+  </p>
+
+  <ul style="font-size: 15px; line-height: 1.6; padding-left: 20px;">
+    <li>Votre satisfaction globale (de 1 à 5)</li>
+    <li>La qualité de votre design (de 1 à 5)</li>
+    <li>Nous recommanderiez-vous ? (Oui / Non)</li>
+  </ul>
+
+  <p style="text-align: center; margin: 32px 0;">
+    <a href="${surveyUrl}" style="display: inline-block; background-color: #2D4A3E; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-size: 16px;">
+      Donner mon avis (1 min)
+    </a>
+  </p>
+
+  <p style="font-size: 13px; color: #888; line-height: 1.5;">
+    Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br />
+    <a href="${surveyUrl}" style="color: #2D4A3E;">${surveyUrl}</a>
+  </p>
+
+  <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 32px 0;" />
+
+  <p style="font-size: 12px; color: #888;">
+    Siana Memento — Votre Save the Date personnalisé par l'IA
+  </p>
+</body>
+</html>`.trim()
+}
+
+/**
+ * Sends the satisfaction survey invite email via Resend (Story 6.8, AC#1).
+ * Returns success status and Resend message ID.
+ * Does NOT throw on failure — logs the error and returns { success: false }
+ * (la commande survey:send ne marquera alors PAS survey_sent_at → réessai au run suivant, D3).
+ */
+export async function sendSurveyInvite(
+  order: Order,
+  user: User,
+  design: Design,
+  surveyUrl: string
+): Promise<{ success: boolean; resendId?: string }> {
+  const toEmail = user.email.trim()
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: env.get('RESEND_FROM_EMAIL'),
+      to: toEmail,
+      subject: "Comment s'est passée votre expérience ? — Siana Memento",
+      html: buildSurveyHtml(design, surveyUrl),
+    })
+
+    if (error) {
+      logger.error(
+        { event: 'survey_email_failed', orderId: order.id, resendError: error },
+        'Resend API returned an error for survey invite'
+      )
+      return { success: false }
+    }
+
+    logger.info(
+      { event: 'survey_email_sent', orderId: order.id, resendId: data?.id, to: toEmail },
+      'Survey invite email sent successfully'
+    )
+    return { success: true, resendId: data?.id }
+  } catch (err) {
+    logger.error(
+      { event: 'survey_email_failed', orderId: order.id, error: String(err) },
+      'Unexpected error sending survey invite email'
     )
     return { success: false }
   }
