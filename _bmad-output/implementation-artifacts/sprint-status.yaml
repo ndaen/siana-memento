@@ -35,7 +35,7 @@
 
 generated: 2026-04-05
 last_updated: 2026-06-02
-# 6.1 done ; 6.2 done ; 6.3 layout admin inséré via correct-course (2026-06-01), ex-6.3..6.7 → 6.4..6.8 ; 6.4 done ; 6.5 ready-for-dev (create-story 2026-06-02)
+# 6.1 done ; 6.2 done ; 6.3 layout admin inséré via correct-course (2026-06-01), ex-6.3..6.7 → 6.4..6.8 ; 6.4 done ; 6.5 done ; 6.7 ready-for-dev (create-story 2026-06-02, worktree feat/admin-testimonials)
 project: poster-generator
 project_key: NOKEY
 tracking_system: file-system
@@ -90,6 +90,6 @@ development_status:
   6-4-logs-de-generation-et-historique-erreurs-ia: done
   6-5-alertes-automatiques-admin: done
   6-6-renvoi-manuel-de-designs-et-backups-db: backlog
-  6-7-gestion-des-testimonials-crud-admin: backlog
+  6-7-gestion-des-testimonials-crud-admin: ready-for-review
   6-8-survey-de-satisfaction-post-achat: backlog
   epic-6-retrospective: optional

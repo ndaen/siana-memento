@@ -5,6 +5,12 @@ import ScrollFloat from "@/components/ScrollFloat";
 import GlareHover from "@/components/GlareHover";
 import ScrollReveal from "@/components/siana/landing/ScrollReveal";
 import StarBorder from "@/components/StarBorder";
+import { getPublicTestimonials } from "@/lib/api/testimonials";
+
+// Rendu dynamique : la landing fetch les testimonials à chaque requête pour refléter
+// immédiatement les changements admin (activer/désactiver/ajouter/supprimer) sans
+// redéploiement Vercel (Story 6.7, AC#2/#3).
+export const dynamic = "force-dynamic";
 
 const examples = [
   {
@@ -60,25 +66,10 @@ const steps = [
   },
 ];
 
-const testimonials = [
-  {
-    name: "Claire & Maxime",
-    text: "On a reçu notre Save the Date en moins de 10 minutes, et le résultat est bluffant. Le style Bohème correspond parfaitement à notre mariage en Provence. Nos invités adorent !",
-    stars: 5,
-  },
-  {
-    name: "Manon & Romain",
-    text: "Très sceptiques au départ sur l'IA, on a été agréablement surpris. L'illustration Moderne est élégante et ressemble vraiment à nos photos. Un rapport qualité-prix imbattable.",
-    stars: 4,
-  },
-  {
-    name: "Julie & Alexandre",
-    text: "Simple, rapide et magnifique. On a choisi le style Classique et le rendu fait très professionnel. On recommande à 100% pour les couples qui veulent quelque chose d'unique sans se ruiner.",
-    stars: 5,
-  },
-];
+export default async function Home() {
+  // Témoignages actifs récupérés depuis l'API (dégradation gracieuse : [] si l'API échoue).
+  const testimonials = await getPublicTestimonials();
 
-export default function Home() {
   return (
     <div className="relative min-h-screen bg-background">
       <main className="relative z-10">
@@ -204,23 +195,23 @@ export default function Home() {
             <ScrollReveal className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {testimonials.map((testimonial) => (
                 <article
-                  key={testimonial.name}
+                  key={testimonial.id}
                   className="flex flex-col rounded-xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                 >
-                  <div role="img" aria-label={`${testimonial.stars} étoiles sur 5`} className="mb-3 flex gap-0.5">
+                  <div role="img" aria-label="5 étoiles sur 5" className="mb-3 flex gap-0.5">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
                         aria-hidden="true"
-                        className={`h-4 w-4 ${i < testimonial.stars ? "fill-current text-primary" : "text-muted-foreground/30"}`}
+                        className="h-4 w-4 fill-current text-primary"
                       />
                     ))}
                   </div>
                   <blockquote className="mb-4 flex-1 text-sm leading-relaxed text-muted-foreground">
-                    &laquo;&nbsp;{testimonial.text}&nbsp;&raquo;
+                    &laquo;&nbsp;{testimonial.content}&nbsp;&raquo;
                   </blockquote>
                   <p className="text-sm font-semibold text-foreground">
-                    {testimonial.name}
+                    {testimonial.authorName}
                   </p>
                 </article>
               ))}
