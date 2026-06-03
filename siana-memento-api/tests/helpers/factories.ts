@@ -85,6 +85,8 @@ export async function createPaidOrderWithDesign(
     cloudinaryPublicId: string | null
     emailSentAt: DateTime | null
     status: 'pending' | 'paid' | 'failed' | 'email_failed'
+    surveySentAt: DateTime | null
+    surveyToken: string | null
   }>
 ) {
   const design = await Design.create({
@@ -110,6 +112,8 @@ export async function createPaidOrderWithDesign(
     status: overrides?.status ?? 'paid',
     paidAt: overrides?.paidAt ?? DateTime.now(),
     emailSentAt: overrides?.emailSentAt !== undefined ? overrides.emailSentAt : DateTime.now(),
+    surveySentAt: overrides?.surveySentAt !== undefined ? overrides.surveySentAt : null,
+    surveyToken: overrides?.surveyToken !== undefined ? overrides.surveyToken : null,
     stripeSessionId: `cs_test_${Date.now()}_${Math.random().toString(36).slice(2)}`,
   })
 
@@ -119,6 +123,25 @@ export async function createPaidOrderWithDesign(
   }
 
   return { order, design }
+}
+
+export async function createSurveyResponse(
+  orderId: number,
+  overrides?: Partial<{
+    overallSatisfaction: number
+    designQuality: number
+    wouldRecommend: boolean
+    submittedAt: DateTime
+  }>
+) {
+  const { default: SurveyResponse } = await import('#models/survey_response')
+  return SurveyResponse.create({
+    orderId,
+    overallSatisfaction: overrides?.overallSatisfaction ?? 5,
+    designQuality: overrides?.designQuality ?? 5,
+    wouldRecommend: overrides?.wouldRecommend ?? true,
+    submittedAt: overrides?.submittedAt ?? DateTime.now(),
+  })
 }
 
 export async function createGeneration(

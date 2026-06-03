@@ -111,4 +111,15 @@ export default await Env.create(new URL('../', import.meta.url), {
   GEMINI_QUOTA_ALERT_MIN_HITS: Env.schema.number.optional(),
   // Cooldown anti-spam entre deux alertes du même type (minutes). Défaut applicatif 60.
   ALERT_COOLDOWN_MINUTES: Env.schema.number.optional(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring satisfaction survey (Story 6.8)
+  |----------------------------------------------------------
+  */
+  // Délai (heures) après paiement avant l'envoi du survey. Défaut applicatif 24.
+  SURVEY_DELAY_HOURS: Env.schema.number.optional(),
+  // Fenêtre haute (jours) : on n'enquête pas les commandes payées il y a plus de N jours
+  // (anti-flood rétroactif au 1er run). Défaut applicatif 30.
+  SURVEY_RETRO_WINDOW_DAYS: Env.schema.number.optional(),
 })

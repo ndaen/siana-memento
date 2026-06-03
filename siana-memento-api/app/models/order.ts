@@ -1,8 +1,9 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
-import type { BelongsTo } from '@adonisjs/lucid/types/relations'
+import { BaseModel, column, belongsTo, hasOne } from '@adonisjs/lucid/orm'
+import type { BelongsTo, HasOne } from '@adonisjs/lucid/types/relations'
 import User from '#models/user'
 import Design from '#models/design'
+import SurveyResponse from '#models/survey_response'
 
 export default class Order extends BaseModel {
   @column({ isPrimary: true })
@@ -33,6 +34,14 @@ export default class Order extends BaseModel {
   @column.dateTime()
   declare emailSentAt: DateTime | null
 
+  // Survey de satisfaction (Story 6.8). `surveySentAt` set après envoi réussi (idempotence D3) ;
+  // `surveyToken` = lien public opaque vers la page de réponse (D5).
+  @column.dateTime()
+  declare surveySentAt: DateTime | null
+
+  @column()
+  declare surveyToken: string | null
+
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
@@ -44,4 +53,7 @@ export default class Order extends BaseModel {
 
   @belongsTo(() => Design)
   declare design: BelongsTo<typeof Design>
+
+  @hasOne(() => SurveyResponse)
+  declare surveyResponse: HasOne<typeof SurveyResponse>
 }

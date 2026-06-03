@@ -18,6 +18,7 @@ const OrdersController = () => import('#controllers/orders_controller')
 const WebhooksController = () => import('#controllers/webhooks_controller')
 const HealthController = () => import('#controllers/health_controller')
 const AdminController = () => import('#controllers/admin_controller')
+const SurveyController = () => import('#controllers/survey_controller')
 
 const registerThrottle = limiter.define('register', () => limiter.allowRequests(3).every('1 hour'))
 
@@ -35,6 +36,11 @@ const ordersThrottle = limiter.define('orders', () => limiter.allowRequests(5).e
 const downloadThrottle = limiter.define('download', () =>
   limiter.allowRequests(10).every('15 minutes')
 )
+
+// Survey public (Story 6.8) — soumission sans auth, throttle léger contre l'abus de la route ouverte.
+// Appliqué uniquement au POST (write) : le GET (lecture, findBy indexé) reste libre pour ne pas
+// bloquer le chargement de page derrière une IP partagée (NAT/CGNAT). Cf. les autres routes write-only.
+const surveyThrottle = limiter.define('survey', () => limiter.allowRequests(20).every('15 minutes'))
 
 // Healthcheck — pas de rate limiter ni d'auth utilisateur (cf. Story 6.1)
 // /api/health      : readiness détaillée (DB + Cloudinary + Resend) protégée par MONITORING_SECRET → cible UptimeRobot
@@ -77,6 +83,11 @@ router.get('/api/orders/:id', [OrdersController, 'show']).use(middleware.auth())
 // Stripe webhook — pas d'auth, pas de rate limiter, signature validée dans le controller
 router.post('/api/webhooks/stripe', [WebhooksController, 'handle'])
 
+// Survey de satisfaction (Story 6.8) — PUBLIC, sans auth, résolu par token opaque (D5).
+// Throttle uniquement sur la soumission (POST) ; le GET (lecture) reste libre.
+router.get('/api/survey/:token', [SurveyController, 'show'])
+router.post('/api/survey/:token', [SurveyController, 'submit']).use(surveyThrottle)
+
 // Admin — dashboard métriques + export CSV. Protégé serveur (NFR-S10) : auth() puis admin().
 // L'ordre importe : auth() peuple auth.user, admin() vérifie isAdmin (403 sinon).
 router
@@ -86,6 +97,7 @@ router
     router.get('/logs', [AdminController, 'logs'])
     router.get('/orders', [AdminController, 'orders'])
     router.post('/orders/:id/resend-email', [AdminController, 'resendEmail'])
+    router.get('/survey', [AdminController, 'survey'])
   })
   .prefix('/api/admin')
   .use([middleware.auth(), middleware.admin()])
