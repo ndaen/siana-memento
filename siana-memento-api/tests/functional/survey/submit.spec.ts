@@ -93,6 +93,51 @@ test.group('POST /api/survey/:token', (group) => {
       .json({ ...VALID_PAYLOAD, wouldRecommend: 'peut-etre' })
     response.assertStatus(422)
   })
+
+  test('note sous la borne basse (0) → 422', async ({ client }) => {
+    const user = await createUser()
+    const token = randomBytes(32).toString('hex')
+    await createPaidOrderWithDesign(user.id, { surveyToken: token })
+
+    const response = await client
+      .post(`/api/survey/${token}`)
+      .json({ ...VALID_PAYLOAD, overallSatisfaction: 0 })
+    response.assertStatus(422)
+  })
+
+  test('note décimale (4.5) → 422 (withoutDecimals)', async ({ client }) => {
+    const user = await createUser()
+    const token = randomBytes(32).toString('hex')
+    await createPaidOrderWithDesign(user.id, { surveyToken: token })
+
+    const response = await client
+      .post(`/api/survey/${token}`)
+      .json({ ...VALID_PAYLOAD, overallSatisfaction: 4.5 })
+    response.assertStatus(422)
+  })
+
+  test('designQuality hors bornes (6) → 422 (le 2ᵉ champ est aussi validé)', async ({ client }) => {
+    const user = await createUser()
+    const token = randomBytes(32).toString('hex')
+    await createPaidOrderWithDesign(user.id, { surveyToken: token })
+
+    const response = await client
+      .post(`/api/survey/${token}`)
+      .json({ ...VALID_PAYLOAD, designQuality: 6 })
+    response.assertStatus(422)
+  })
+
+  test('bornes valides (1 et 5) → 201', async ({ client, assert }) => {
+    const user = await createUser()
+    const token = randomBytes(32).toString('hex')
+    await createPaidOrderWithDesign(user.id, { surveyToken: token })
+
+    const response = await client
+      .post(`/api/survey/${token}`)
+      .json({ overallSatisfaction: 1, designQuality: 5, wouldRecommend: false })
+    response.assertStatus(201)
+    assert.isTrue(response.body().success)
+  })
 })
 
 test.group('GET /api/survey/:token', (group) => {

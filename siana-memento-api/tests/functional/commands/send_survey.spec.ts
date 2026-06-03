@@ -70,6 +70,24 @@ test.group('survey:send', (group) => {
     assert.isNull(order.surveyToken)
   })
 
+  test('n’envoie pas pour une commande payée il y a 31j (hors fenêtre rétroactive 30j, anti-flood)', async ({
+    assert,
+    cleanup,
+  }) => {
+    cleanup(stubResendSuccess())
+    const { user } = await loginlessUser()
+    const { order } = await createPaidOrderWithDesign(user.id, {
+      paidAt: DateTime.now().minus({ days: 31 }),
+      emailSentAt: DateTime.now().minus({ days: 31 }),
+    })
+
+    await ace.exec('survey:send', [])
+
+    await order.refresh()
+    assert.isNull(order.surveySentAt)
+    assert.isNull(order.surveyToken)
+  })
+
   test('n’envoie pas si email non livré (emailSentAt null)', async ({ assert, cleanup }) => {
     cleanup(stubResendSuccess())
     const { user } = await loginlessUser()
