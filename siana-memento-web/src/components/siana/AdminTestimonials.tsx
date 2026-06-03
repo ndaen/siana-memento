@@ -273,14 +273,13 @@ export default function AdminTestimonials() {
           </p>
         </div>
       ) : (
-        <div className="mt-6 rounded-lg border border-border/60">
-          <Table>
+        <div className="mt-6 overflow-hidden rounded-lg border border-border/60">
+          <Table className="[&_td]:px-4 [&_td]:py-4 [&_th]:px-4 [&_th]:py-3.5">
             <TableHeader>
               <TableRow>
                 <TableHead scope="col">Prénom</TableHead>
                 <TableHead scope="col">Témoignage</TableHead>
                 <TableHead scope="col">Note</TableHead>
-                <TableHead scope="col">Actif</TableHead>
                 <TableHead scope="col">Statut</TableHead>
                 <TableHead scope="col" className="text-right">
                   Actions
@@ -291,26 +290,28 @@ export default function AdminTestimonials() {
               {items.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell className="font-medium">{t.authorName}</TableCell>
-                  <TableCell className="max-w-md">
-                    <span className="line-clamp-2 text-sm text-muted-foreground">{t.content}</span>
+                  <TableCell className="w-full min-w-[16rem] max-w-md">
+                    <span className="line-clamp-2 whitespace-normal text-sm text-muted-foreground">
+                      {t.content}
+                    </span>
                   </TableCell>
                   <TableCell>
                     <RatingStars value={t.rating} />
                   </TableCell>
                   <TableCell>
-                    <Checkbox
-                      checked={t.isActive}
-                      disabled={togglingIds.has(t.id)}
-                      onCheckedChange={(v) => handleToggle(t, v === true)}
-                      aria-label={`${t.isActive ? 'Désactiver' : 'Activer'} le témoignage de ${t.authorName}`}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {t.isActive ? (
-                      <Badge>Actif</Badge>
-                    ) : (
-                      <Badge variant="secondary">Inactif</Badge>
-                    )}
+                    <div className="flex items-center gap-2.5">
+                      <Checkbox
+                        checked={t.isActive}
+                        disabled={togglingIds.has(t.id)}
+                        onCheckedChange={(v) => handleToggle(t, v === true)}
+                        aria-label={`${t.isActive ? 'Désactiver' : 'Activer'} le témoignage de ${t.authorName}`}
+                      />
+                      {t.isActive ? (
+                        <Badge>Actif</Badge>
+                      ) : (
+                        <Badge variant="secondary">Inactif</Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
