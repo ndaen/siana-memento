@@ -34,8 +34,8 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-05
-last_updated: 2026-06-03
-# 6.1 done ; 6.2 done ; 6.3 layout admin inséré via correct-course (2026-06-01), ex-6.3..6.7 → 6.4..6.8 ; 6.4 done ; 6.5 done ; 6.6 done ; 6.7 done (dev+review en worktree feat/admin-testimonials, mergé 2026-06-03) ; 6.8 done (dev+review en worktree feat/satisfaction-survey, mergé 2026-06-03)
+last_updated: 2026-06-04
+# 6.1 done ; 6.2 done ; 6.3 layout admin inséré via correct-course (2026-06-01), ex-6.3..6.7 → 6.4..6.8 ; 6.4 done ; 6.5 done ; 6.6 done ; 6.7 done (dev+review en worktree feat/admin-testimonials, mergé 2026-06-03) ; 6.8 done (dev+review en worktree feat/satisfaction-survey, mergé 2026-06-03) ; epic-6 retro done (2026-06-04) — MVP scope complet, phase pré-launch (qualité IA + sécurité sessionToken + audit endpoints + feedback users)
 project: poster-generator
 project_key: NOKEY
 tracking_system: file-system
@@ -83,7 +83,7 @@ development_status:
   5-4-footer-contact-et-politique-rgpd: done
   epic-5-retrospective: done
 
-  epic-6: in-progress
+  epic-6: done
   6-1-healthcheck-endpoint-et-monitoring: done
   6-2-dashboard-metriques-business-et-export-csv: done
   6-3-layout-et-navigation-admin: done
@@ -92,4 +92,4 @@ development_status:
   6-6-renvoi-manuel-de-designs-et-backups-db: done
   6-7-gestion-des-testimonials-crud-admin: done
   6-8-survey-de-satisfaction-post-achat: done
-  epic-6-retrospective: optional
+  epic-6-retrospective: done
