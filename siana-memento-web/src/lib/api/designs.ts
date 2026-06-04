@@ -133,8 +133,8 @@ export async function pollDesignStatus(
   sessionToken?: string | null
 ): Promise<PollStatusResult> {
   try {
-    const params = sessionToken ? `?sessionToken=${encodeURIComponent(sessionToken)}` : ''
-    const res = await fetch(`${API_URL}/api/designs/${designId}/status${params}`, {
+    const res = await fetch(`${API_URL}/api/designs/${designId}/status`, {
+      headers: sessionToken ? { 'X-Session-Token': sessionToken } : {},
       credentials: 'include',
     })
     const json = await res.json()

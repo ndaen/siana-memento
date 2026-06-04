@@ -432,10 +432,20 @@ export default class DesignsController {
   /**
    * GET /api/designs/:id/status
    * Retourne le statut actuel du design pour le polling frontend.
-   * Auth optionnelle via sessionToken en query param.
+   * Auth optionnelle via header X-Session-Token (query param accepté en fallback rétro-compat).
    */
   async status({ params, request, auth, response }: HttpContext) {
-    const sessionToken = request.qs().sessionToken as string | undefined
+    const headerToken = request.header('x-session-token')
+    const queryToken = request.qs().sessionToken as string | undefined
+    let sessionToken: string | undefined =
+      typeof headerToken === 'string' && headerToken.length > 0 ? headerToken : undefined
+    if (!sessionToken && queryToken) {
+      sessionToken = queryToken
+      logger.warn(
+        { event: 'session_token_qs_fallback', designId: params.id },
+        'sessionToken reçu via query param — migration frontend incomplète'
+      )
+    }
     const design = await Design.find(params.id)
 
     if (!design) {
