@@ -8,6 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import CtaButton from "@/components/siana/landing/CtaButton";
+import DecorativeMotif from "@/components/siana/landing/DecorativeMotif";
+import { Sparkles } from "lucide-react";
+import Link from "next/link";
 
 const colors = [
   { name: "Sage Green", token: "sage-green", hex: "#2D4A3E", main: true },
@@ -238,6 +244,70 @@ export default function DesignSystemPage() {
               <Button className="w-full">Continuer →</Button>
             </div>
           </FocusCard>
+        </section>
+
+        {/* ── Refonte Landing (Epic 7) ── */}
+        <section>
+          <SectionTitle>Refonte Landing (Epic 7)</SectionTitle>
+
+          <div className="bg-card rounded-2xl p-8 shadow-sm space-y-8">
+            {/* Eyebrow */}
+            <div>
+              <SubTitle>Eyebrow labels</SubTitle>
+              <div className="space-y-2">
+                <Eyebrow>Comment ça marche</Eyebrow>
+                <Eyebrow variant="accent">Qualité & livraison</Eyebrow>
+              </div>
+            </div>
+
+            {/* Cartes à coins largement arrondis */}
+            <div>
+              <SubTitle>Cartes arrondies — Card + rounded-3xl / rounded-4xl</SubTitle>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Card className="rounded-3xl px-6">
+                  <Sparkles className="h-6 w-6 text-primary" aria-hidden="true" />
+                  <div className="space-y-1">
+                    <Eyebrow className="text-xs">Haute résolution</Eyebrow>
+                    <p className="text-sm text-muted-foreground">
+                      Fichier 3000×4000px, prêt à imprimer chez le professionnel de votre choix.
+                    </p>
+                  </div>
+                </Card>
+                <Card className="rounded-4xl overflow-hidden py-0">
+                  <div className="flex h-full min-h-40 items-center justify-center bg-muted">
+                    <span className="text-sm text-muted-foreground">Grande tuile image (bento)</span>
+                  </div>
+                </Card>
+              </div>
+            </div>
+
+            {/* CTA avec promesse de temps */}
+            <div>
+              <SubTitle>CTA — promesse de temps</SubTitle>
+              <div className="flex flex-wrap items-center gap-3">
+                <CtaButton href="/generate/upload">Créer mon Save the Date</CtaButton>
+                <CtaButton href="/generate/upload" timePromise={null}>
+                  Sans promesse de temps
+                </CtaButton>
+                <CtaButton asChild>
+                  <Link href="/generate/upload">Via asChild</Link>
+                </CtaButton>
+              </div>
+            </div>
+
+            {/* Motifs décoratifs */}
+            <div>
+              <SubTitle>Motifs décoratifs — currentColor, aria-hidden</SubTitle>
+              <div className="flex items-end gap-8">
+                <DecorativeMotif variant="branch" className="h-40 w-20 text-primary/15" />
+                <DecorativeMotif variant="leaf" className="h-32 w-16 text-primary/10" />
+                <DecorativeMotif variant="sprig" className="h-40 w-20 text-primary/15" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                À positionner en absolu depuis la section parente, opacité ≤ 15% recommandée.
+              </p>
+            </div>
+          </div>
         </section>
 
         <footer className="pb-8 text-center">

@@ -69,83 +69,92 @@ export default function SiteHeader() {
     return () => observers.forEach((o) => o.disconnect())
   }, [isHome])
 
+  // Forme "pill" flottante dès que le header n'est plus transparent
+  // (au scroll, et partout hors home). Largeur et hauteur constantes : seuls
+  // fond/bordure/ombre transitionnent → aucun saut de layout au seuil de scroll.
+  const pill = scrolled || !isHome
+
   return (
-    <header className={`sticky top-0 z-40 flex h-16 items-center px-4 transition-all duration-300 sm:px-6 ${
-      scrolled
-        ? 'border-b border-border/40 bg-background/80 backdrop-blur-sm'
-        : isHome
-          ? 'bg-transparent'
-          : 'border-b border-border/40 bg-background/80 backdrop-blur-sm'
-    }`}>
-      {/* Logo + nom — gauche */}
-      <Link href="/" className="flex items-center gap-2">
-        <Image src="/logo.svg" width={32} height={32} alt="" />
-        <span className="font-display text-sm font-semibold text-foreground">
-          Siana Memento
-        </span>
-      </Link>
+    <header className="sticky top-0 z-40 px-4 sm:px-6">
+      <div
+        className={`mx-auto mt-2 grid h-16 max-w-5xl grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-full border px-4 transition-colors duration-300 sm:px-6 ${
+          pill
+            ? 'border-border/40 bg-background/80 shadow-sm backdrop-blur-md'
+            : 'border-transparent bg-transparent'
+        }`}
+      >
+        {/* Logo + nom — colonne 1. Placement explicite des colonnes : la nav
+            passe en display:none sous lg, il ne faut pas que la zone droite
+            remonte dans la colonne centrale. */}
+        <Link href="/" className="col-start-1 flex shrink-0 items-center gap-2 justify-self-start">
+          <Image src="/logo.svg" width={32} height={32} alt="" />
+          <span className="font-display whitespace-nowrap text-sm font-semibold text-foreground">
+            Siana Memento
+          </span>
+        </Link>
 
-      {/* Nav ancres — centré en absolu */}
-      {isHome && (
-        <nav
-          className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 sm:flex"
-          aria-label="Sections de la page"
-        >
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className={`text-sm transition-colors hover:text-foreground ${
-                activeSection === link.id
-                  ? 'text-foreground font-medium'
-                  : 'text-muted-foreground'
-              }`}
-            >
-              {link.label}
-            </a>
-          ))}
-        </nav>
-      )}
-
-      {/* Zone droite */}
-      <div className="ml-auto flex items-center gap-2">
-        {loading ? (
-          <div className="h-9 w-24 animate-pulse rounded-md bg-muted/40" aria-hidden="true" />
-        ) : isLoggedIn ? (
-          <UserMenu />
-        ) : (
-          <>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/login">Connexion</Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/register">Inscription</Link>
-            </Button>
-            {(!isHome || scrolled) && (
-              <Button size="sm" asChild className="hidden sm:inline-flex">
-                <Link href="/generate/upload">Créer mon Save the Date</Link>
-              </Button>
-            )}
-            {/* Settings dropdown pour visiteurs */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" aria-label="Paramètres">
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-                  {theme === 'dark' ? (
-                    <Sun className="mr-2 h-4 w-4" />
-                  ) : (
-                    <Moon className="mr-2 h-4 w-4" />
-                  )}
-                  {theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </>
+        {/* Nav ancres — colonne 2 (home, ≥lg pour laisser la place aux boutons) */}
+        {isHome && (
+          <nav
+            className="col-start-2 hidden items-center gap-6 justify-self-center lg:flex"
+            aria-label="Sections de la page"
+          >
+            {navLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className={`whitespace-nowrap text-sm transition-colors hover:text-foreground ${
+                  activeSection === link.id
+                    ? 'text-foreground font-medium'
+                    : 'text-muted-foreground'
+                }`}
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
         )}
+
+        {/* Zone droite — colonne 3 */}
+        <div className="col-start-3 flex items-center gap-2 justify-self-end">
+          {loading ? (
+            <div className="h-9 w-24 animate-pulse rounded-md bg-muted/40" aria-hidden="true" />
+          ) : isLoggedIn ? (
+            <UserMenu />
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/login">Connexion</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/register">Inscription</Link>
+              </Button>
+              {(!isHome || scrolled) && (
+                <Button size="sm" asChild className="hidden lg:inline-flex">
+                  <Link href="/generate/upload">Créer mon Save the Date</Link>
+                </Button>
+              )}
+              {/* Settings dropdown pour visiteurs */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" aria-label="Paramètres">
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+                    {theme === 'dark' ? (
+                      <Sun className="mr-2 h-4 w-4" />
+                    ) : (
+                      <Moon className="mr-2 h-4 w-4" />
+                    )}
+                    {theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          )}
+        </div>
       </div>
     </header>
   )
