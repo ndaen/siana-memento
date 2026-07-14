@@ -1,8 +1,7 @@
-import Image from "next/image";
 import { Camera, Palette, Sparkles, Star } from "lucide-react";
 import HeroSection from "@/components/siana/landing/HeroSection";
+import Gallery from "@/components/siana/landing/Gallery";
 import ScrollFloat from "@/components/ScrollFloat";
-import GlareHover from "@/components/GlareHover";
 import ScrollReveal from "@/components/siana/landing/ScrollReveal";
 import StarBorder from "@/components/StarBorder";
 import { getPublicTestimonials } from "@/lib/api/testimonials";
@@ -11,39 +10,6 @@ import { getPublicTestimonials } from "@/lib/api/testimonials";
 // immédiatement les changements admin (activer/désactiver/ajouter/supprimer) sans
 // redéploiement Vercel (Story 6.7, AC#2/#3).
 export const dynamic = "force-dynamic";
-
-const examples = [
-  {
-    template: "Bohème",
-    couple: "Sophie & Thomas",
-    description: "Un mariage champêtre en Provence, style aquarelle douce aux tons terre cuite.",
-    image: "/home/sophie&thomas.png",
-  },
-  {
-    template: "Moderne",
-    couple: "Léa & Antoine",
-    description: "Un mariage urbain et graphique, lignes géométriques en noir et or.",
-    image: "/home/lea&antoine.png",
-  },
-  {
-    template: "Classique",
-    couple: "Marie & Hugo",
-    description: "Un mariage intemporel et raffiné, portrait dessiné aux tons bordeaux et crème.",
-    image: "/home/marie&hugo.png",
-  },
-  {
-    template: "Vintage",
-    couple: "Camille & Julien",
-    description: "Un mariage rétro inspiré des années 70, tons ocre et olive chaleureux.",
-    image: "/home/camille&julien.png",
-  },
-  {
-    template: "Minimaliste",
-    couple: "Emma & Lucas",
-    description: "Un mariage épuré et zen, dessin one-line sur fond nude tout en sobriété.",
-    image: "/home/emma&lucas.png",
-  },
-];
 
 const steps = [
   {
@@ -113,66 +79,8 @@ export default async function Home() {
           </ScrollReveal>
         </section>
 
-        {/* Galerie d'exemples */}
-        <section
-          id="gallery"
-          aria-labelledby="gallery-heading"
-          className="scroll-mt-20 mx-auto max-w-6xl px-6 py-16 sm:py-24"
-        >
-          <ScrollFloat
-            containerClassName="font-display mb-4 text-center font-bold tracking-tight text-foreground"
-            textClassName="text-3xl sm:text-4xl leading-[1.2]"
-          >
-            Des styles pour chaque histoire
-          </ScrollFloat>
-          <p className="mx-auto mb-12 max-w-2xl text-center text-base text-muted-foreground sm:mb-16 sm:text-lg">
-            Chaque couple est unique. Découvrez nos cinq univers artistiques,
-            conçus pour refléter votre personnalité et le ton de votre mariage.
-            Notre IA transforme vos photos en une illustration sur mesure.
-          </p>
-
-          <ScrollReveal className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {examples.map((example) => (
-              <GlareHover
-                key={example.template}
-                className="rounded-xl"
-                width="100%"
-                height="auto"
-                background="var(--card)"
-                borderRadius="0.75rem"
-                borderColor="var(--border)"
-                glareColor="#ffffff"
-                glareOpacity={0.3}
-                transitionDuration={800}
-              >
-                <article
-                  aria-label={`${example.couple} — Style ${example.template}`}
-                >
-                  <div className="relative aspect-[3/4] overflow-hidden">
-                    <Image
-                      src={example.image}
-                      alt={`Exemple de Save the Date style ${example.template} pour ${example.couple}`}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-sm font-semibold text-foreground">
-                      {example.couple}
-                    </h3>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Style {example.template}
-                    </p>
-                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                      {example.description}
-                    </p>
-                  </div>
-                </article>
-              </GlareHover>
-            ))}
-          </ScrollReveal>
-        </section>
+        {/* Galerie "même couple × 5 templates" (Story 7.4) */}
+        <Gallery />
 
         {/* Témoignages clients */}
         {testimonials.length > 0 && (
