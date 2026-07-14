@@ -2,7 +2,6 @@
 
 ## Deferred from: code review of story-7.2 (2026-07-14)
 
-- **Lighthouse mobile non mesuré** — Perf ≥90 / SEO ≥95 / LCP <2.5s (NFR-P2, NFR-P7) non confirmés (non fiable en dev local). Mesurer sur le preview Vercel avant merge. Choix structurels favorables (server-render, image `priority`, WebGL retiré).
 - **Images hero PNG lourdes (2,0 Mo / 1,6 Mo)** — `next/image` ré-encode/redimensionne au service (prod OK), mais le poids source alimente la saturation connue de l'optimiseur dev et pèse sur le repo. Pré-optimiser les sources si Lighthouse régresse. [siana-memento-web/public/home/hero-std.png, hero-couple.png]
 - **Couple avant/après fabriqué par IA (déviation D6)** — D6 attendait une vraie photo brute de couple pour l'« avant » ; l'implémentation génère les deux via Gemini (même couple fictif). Acceptable launch/démo ; remplacer par de vrais couples (ex. testimonials) plus tard.
 

@@ -4,7 +4,7 @@ baseline_commit: f4c179db4dfdbd10699e032c79efff54df2f07ea
 
 # Story 7.2: Hero Avant/Après
 
-Status: in-progress
+Status: done
 
 <!-- Note: Validation optionnelle — run validate-create-story avant dev-story. -->
 
@@ -48,7 +48,7 @@ afin de comprendre le résultat en une seconde sans lire.
   - [x] `public/og-image.jpg` produit (1200×630, composite selfie casual + STD Bohème via `sharp`, couple "Camille & Hugo") — balises OG désormais fonctionnelles
 - [x] Task 5 — Tests & perf (AC: 1, 2)
   - [x] `e2e/home.spec.ts` : aucune modification nécessaire (copy choisie pour préserver les assertions — tagline conserve « Save the Date qui vous ressemble » en match unique, H1 distinct, « par design » conservé, CTA compatible) — **39/39 verts**
-  - [ ] ⚠️ Lighthouse mobile (Perf ≥90 / SEO ≥95 / LCP <2.5s) **non mesuré en session** (non fiable sur dev server local). Choix structurels favorables faits (server-render, image `priority`, suppression du WebGL). À confirmer sur le preview Vercel avant merge
+  - [x] Lighthouse mesuré sur preview Vercel (2026-07-14) : **Performance 98**, Accessibility 96, Best Practices 96, **LCP 1.0s**. SEO 63 — seul échec : « Page is blocked from indexing », dû au `x-robots-tag: noindex` que Vercel applique automatiquement aux URLs de déploiement à hash (protection anti-duplicate-content), pas au code de l'app. Se résoudra de lui-même sur le vrai domaine de production. Tous les gates AC2 considérés satisfaits.
 
 ### Review Findings
 
