@@ -310,3 +310,18 @@ Tous les composants custom seront isolés dans `/components/siana/` et construit
 ### Implementation Guidelines
 *   Utilisation des unités relatives (`rem`, `em`, `%`) via Tailwind CSS.
 *   Mise en œuvre des composants accessibles de **Radix UI** via shadcn/ui.
+
+---
+
+## Patterns Landing Narratifs (Epic 7 — Refonte "Récit Visuel")
+
+Patterns de layout et d'animation empruntés à [thelma.pet](https://thelma.pet/), **rendus dans la charte Siana existante** (Vert Sauge #2D4A3E, Clash Display, Satoshi — pas la charte de Thelma). Objectif : passer d'une landing informative à une landing qui *raconte* le produit. Réf : `sprint-change-proposal-2026-07-12.md`.
+
+*   **Hero avant/après :** photo brute du couple et Save the Date fini réunis dans une seule scène, pour transmettre la promesse en une seconde sans lecture.
+*   **Scène pinnée "Comment ça marche" :** une carte reste épinglée et se métamorphose au scroll sur 4 étapes (upload → génération IA → choix parmi 5 templates → livré), accompagnée d'une progress-bar. GSAP ScrollTrigger. **Fallback statique obligatoire** sous `prefers-reduced-motion`.
+*   **Galerie "même couple × 5 templates" :** le même couple décliné dans les 5 styles, présenté comme des œuvres encadrées — démonstration de cohérence IA et de variété.
+*   **Bento Qualité :** grande image détail + cartes à icône avec eyebrow labels (petites capitales, letter-spacing large) pour rassurer sur le rendu physique/livraison.
+*   **FAQ 2 colonnes :** titre géant sticky à gauche + accordéon à droite.
+*   **Finitions transverses :** coins largement arrondis, nav pill sticky à fond flouté, CTA avec promesse de temps ("· 15 min"), motifs décoratifs discrets.
+
+**Garde-fous :** aucune animation ne doit dégrader LCP <2.5s (NFR-P2) ni Lighthouse ≥90 mobile (NFR-P7) ; navigation clavier et focus visibles préservés (NFR-A).

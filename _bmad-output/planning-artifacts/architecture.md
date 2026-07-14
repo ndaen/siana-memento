@@ -522,6 +522,13 @@ export default {
 }
 ```
 
+**Animations landing (Epic 7 — Refonte "Récit Visuel") :**
+
+- **GSAP + ScrollTrigger** pour les scènes scroll-driven de la landing (hero, scène pinnée "Comment ça marche"). Ajout `npm install gsap`.
+- Chargement **différé** (dynamic import / registration `ScrollTrigger` côté client uniquement) pour ne pas dégrader le bundle initial.
+- Respect obligatoire de `prefers-reduced-motion` (fallback statique) et `will-change` maîtrisé (pas de layout thrashing).
+- **Budget perf** : ces animations ne doivent pas dégrader LCP <2.5s (NFR-P2) ni Lighthouse ≥90 mobile (NFR-P7) — critère d'acceptation de chaque story visuelle Epic 7.
+
 ---
 
 #### Backend: AdonisJS 6 (API Kit) + PostgreSQL

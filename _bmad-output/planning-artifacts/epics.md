@@ -1116,3 +1116,136 @@ afin de partager mon expérience et aider Siana Memento à s'améliorer.
 **When** il s'exécute
 **Then** il n'envoie pas de survey aux commandes déjà enquêtées (idempotent — colonne `survey_sent_at`)
 
+---
+
+### Epic 7 : Refonte Landing "Récit Visuel"
+
+Les visiteurs découvrent Siana Memento à travers une landing narrative : hero avant/après, scène de génération animée au scroll, galerie des 5 templates mis en scène, et sections qualité/FAQ/avis élevées. Refonte visuelle des sections de l'Epic 5, dans la charte Siana existante (Sage Green #2D4A3E, Clash Display, Satoshi), inspirée des patterns de thelma.pet (layouts et animations uniquement — pas la charte de Thelma).
+
+FRs couverts : FR27, FR32, FR49, FR50 (aucun nouveau FR — refonte de présentation)
+NFRs clés : NFR-P2 (LCP <2.5s), NFR-P7 (Lighthouse ≥90 mobile, SEO ≥95), NFR-A (accessibilité + `prefers-reduced-motion`)
+Raffine : Epic 5 (Stories 5.1–5.4, restent "done" en prod jusqu'au remplacement section par section)
+Réf : `sprint-change-proposal-2026-07-12.md`
+
+---
+
+### Story 7.1 : Design System de Refonte
+
+En tant que développeur,
+je veux disposer des primitives visuelles partagées de la refonte,
+afin que toutes les sections de la nouvelle landing soient cohérentes et rapides à assembler.
+
+**Acceptance Criteria:**
+
+**Given** le design system Siana existant (Sage Green, Clash Display, Satoshi)
+**When** je crée les primitives de refonte
+**Then** je dispose de : eyebrow labels (petites capitales + letter-spacing large), cartes à coins largement arrondis, nav pill sticky à fond flouté, CTA avec promesse de temps ("· 15 min"), et motifs décoratifs discrets — tous dans la charte Siana
+
+**Given** ces primitives
+**When** je les intègre au thème
+**Then** elles réutilisent les tokens de couleur et typographie existants (aucune nouvelle palette, aucune nouvelle font)
+
+---
+
+### Story 7.2 : Hero Avant/Après
+
+En tant que visiteur arrivant sur le site,
+je veux voir immédiatement la promesse produit à travers un visuel avant/après,
+afin de comprendre le résultat en une seconde sans lire.
+
+**Acceptance Criteria:**
+
+**Given** un visiteur arrivant sur l'URL racine
+**When** la page se charge
+**Then** il voit une scène unique montrant une photo de couple et le Save the Date fini, avec titre, pricing 19.90€ et CTA "Créer mon Save the Date · 15 min" (FR27)
+
+**Given** la landing sur mobile
+**When** un visiteur la consulte
+**Then** le CTA est accessible sans scroll, LCP <2.5s (NFR-P2), et Lighthouse Perf ≥90 / SEO ≥95 (NFR-P7) — balises OG/meta préservées
+
+---
+
+### Story 7.3 : Scène Pinnée "Comment ça marche"
+
+En tant que visiteur curieux,
+je veux comprendre le processus à travers une scène animée au scroll,
+afin d'être convaincu du parcours de création avant de commander.
+
+**Acceptance Criteria:**
+
+**Given** un visiteur scrollant la section "Comment ça marche"
+**When** il progresse
+**Then** une carte reste épinglée et se métamorphose sur 4 étapes (upload photo → génération IA → choix parmi 5 templates → livré), avec une progress-bar de progression
+
+**Given** un utilisateur avec `prefers-reduced-motion` activé
+**When** il consulte la section
+**Then** un fallback statique équivalent est présenté sans animation (NFR-A)
+
+**Given** la section animée (GSAP ScrollTrigger, chargé en différé)
+**When** j'exécute Lighthouse mobile
+**Then** LCP <2.5s et Perf ≥90 sont préservés (NFR-P2, NFR-P7)
+
+---
+
+### Story 7.4 : Galerie "Même Couple × 5 Templates"
+
+En tant que visiteur hésitant,
+je veux voir le même couple décliné dans les 5 styles,
+afin de constater la cohérence et la variété du rendu IA.
+
+**Acceptance Criteria:**
+
+**Given** un visiteur atteignant la galerie
+**When** il la consulte
+**Then** il voit le même couple décliné dans les 5 templates (Bohème, Moderne, Classique, Vintage, Minimaliste), présentés comme des œuvres encadrées, chacun avec un CTA
+
+**Given** le contenu textuel de la landing
+**When** j'analyse le HTML
+**Then** au moins 300 mots indexables sont présents pour le SEO (NFR-P7)
+
+---
+
+### Story 7.5 : Bento Qualité / Livraison
+
+En tant que visiteur,
+je veux comprendre la qualité et les modalités de livraison,
+afin d'être rassuré sur ce que je reçois.
+
+**Acceptance Criteria:**
+
+**Given** un visiteur atteignant la section qualité
+**When** il la consulte
+**Then** il voit une grille bento : grande image + cartes à icône avec eyebrow labels couvrant fichier haute résolution (3000×4000), délai (15 min), formats, et conservation RGPD (7 jours) (FR32)
+
+---
+
+### Story 7.6 : FAQ 2 Colonnes
+
+En tant que visiteur,
+je veux trouver les réponses aux questions courantes,
+afin de lever mes dernières hésitations avant d'acheter.
+
+**Acceptance Criteria:**
+
+**Given** un visiteur atteignant la FAQ
+**When** il la consulte
+**Then** il voit un titre géant sticky à gauche et un accordéon de questions à droite (contenu FAQ existant), responsive et accessible au clavier (NFR-A)
+
+---
+
+### Story 7.7 : Section Avis Clients
+
+En tant que visiteur hésitant,
+je veux lire des avis de clients satisfaits,
+afin de me rassurer avant d'acheter.
+
+**Acceptance Criteria:**
+
+**Given** des testimonials activés (gérés via Epic 6)
+**When** un visiteur consulte la section avis refondue
+**Then** les testimonials actifs s'affichent avec prénom et témoignage, dans le nouveau style (FR50)
+
+**Given** aucun testimonial activé
+**When** la section est rendue
+**Then** elle est masquée proprement sans espace vide (raffine Story 5.3)
+
