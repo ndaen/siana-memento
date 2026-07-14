@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { useGenerationStore } from '@/stores/useGenerationStore'
+import type { TemplateId } from '@/lib/templates'
 import {
   getUploadSignature,
   uploadToCloudinary,
@@ -22,9 +23,9 @@ interface PhotoPreview {
   previewUrl: string
 }
 
-export default function UploadZone() {
+export default function UploadZone({ initialStyle }: { initialStyle?: TemplateId }) {
   const router = useRouter()
-  const { designId, setDesign, setPhotos, setStep, resetForPhotoChange, photos: storePhotos, _hasHydrated } = useGenerationStore()
+  const { designId, setDesign, setPhotos, setStep, setTemplate, resetForPhotoChange, photos: storePhotos, _hasHydrated } = useGenerationStore()
 
   // Reset le store une seule fois à l'hydration si un design d'une session précédente existe
   const didResetOnMount = useRef(false)
@@ -36,6 +37,22 @@ export default function UploadZone() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [_hasHydrated])
+
+  // Style choisi depuis la galerie landing (?style=). Effect séparé du reset ci-dessus :
+  // `resetForPhotoChange` conserve `selectedTemplate`, donc aucun conflit d'ordre.
+  //
+  // Le param est consommé UNE SEULE FOIS puis retiré de l'URL (`replace`, pas `push` :
+  // pas d'entrée d'historique en plus). Sans ça, un Back navigateur depuis une étape
+  // suivante remonterait sur `?style=<x>` et réappliquerait `<x>` par-dessus le template
+  // que l'utilisateur a choisi entre-temps — en réinitialisant sa palette au passage.
+  const didApplyInitialStyle = useRef(false)
+  useEffect(() => {
+    if (!_hasHydrated || !initialStyle || didApplyInitialStyle.current) return
+    didApplyInitialStyle.current = true
+    setTemplate(initialStyle)
+    router.replace('/generate/upload')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [_hasHydrated, initialStyle])
 
   const [previews, setPreviews] = useState<PhotoPreview[]>([])
   const [uploadProgress, setUploadProgress] = useState<number[]>([])

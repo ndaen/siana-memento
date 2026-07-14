@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { ChevronDown } from 'lucide-react'
 
 import { Eyebrow } from '@/components/ui/eyebrow'
 import CtaButton from '@/components/siana/landing/CtaButton'
@@ -14,8 +15,11 @@ import CtaButton from '@/components/siana/landing/CtaButton'
  */
 export default function HeroSection() {
   return (
-    <section className="relative -mt-16 px-6 pb-16 pt-28 sm:pt-32">
-      <div className="mx-auto grid max-w-5xl items-center gap-10 lg:grid-cols-2 lg:gap-14">
+    <section
+      id="hero"
+      className="relative -mt-16 flex min-h-svh flex-col justify-center px-6 pb-20 pt-28 sm:pt-32"
+    >
+      <div className="mx-auto grid w-full max-w-5xl items-center gap-10 lg:grid-cols-2 lg:gap-14">
         {/* Texte + CTA — rendu en premier pour que le CTA soit above the fold sur mobile */}
         <div className="text-center lg:text-left">
           <Eyebrow className="mb-4">Faire-part de mariage par IA</Eyebrow>
@@ -29,7 +33,7 @@ export default function HeroSection() {
             <CtaButton href="/generate/upload">Créer mon Save the Date</CtaButton>
             <p className="flex items-baseline gap-1.5">
               <span className="font-display text-3xl font-bold text-foreground">19,90&nbsp;€</span>
-              <span className="text-sm text-muted-foreground">par design</span>
+              <span className="whitespace-nowrap text-sm text-muted-foreground">par design</span>
             </p>
           </div>
         </div>
@@ -76,6 +80,16 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
+
+      <a
+        href="#how-it-works"
+        aria-label="Découvrir comment ça marche"
+        className="absolute inset-x-0 bottom-6 mx-auto flex size-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+      >
+        {/* motion-safe: l'animation en boucle est coupée si l'utilisateur a demandé
+            moins de mouvement (WCAG 2.2.2 — aucun kill-switch global dans globals.css). */}
+        <ChevronDown className="size-6 motion-safe:animate-bounce" aria-hidden />
+      </a>
     </section>
   )
 }

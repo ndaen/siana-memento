@@ -49,6 +49,7 @@ export default async function Home() {
           className="scroll-mt-20 mx-auto max-w-5xl px-6 py-16 sm:py-24"
         >
           <ScrollFloat
+            id="how-it-works-heading"
             containerClassName="font-display mb-12 text-center font-bold tracking-tight text-foreground sm:mb-16"
             textClassName="text-3xl sm:text-4xl leading-[1.2]"
           >
@@ -90,6 +91,7 @@ export default async function Home() {
             className="scroll-mt-20 mx-auto max-w-5xl px-6 py-16 sm:py-24"
           >
             <ScrollFloat
+              id="testimonials-heading"
               containerClassName="font-display mb-4 text-center font-bold tracking-tight text-foreground"
               textClassName="text-3xl sm:text-4xl leading-[1.2]"
             >
@@ -134,6 +136,7 @@ export default async function Home() {
         {/* CTA secondaire */}
         <section aria-labelledby="cta-heading" className="px-6 py-16 text-center sm:py-24">
           <ScrollFloat
+            id="cta-heading"
             containerClassName="font-display mb-4 font-bold text-foreground text-center"
             textClassName="text-2xl sm:text-3xl leading-[1.2]"
           >

@@ -10,6 +10,8 @@ gsap.registerPlugin(ScrollTrigger);
 
 interface ScrollFloatProps {
   children: ReactNode;
+  /** Posé sur le <h2> rendu — cible des `aria-labelledby` de section. */
+  id?: string;
   scrollContainerRef?: RefObject<HTMLElement>;
   containerClassName?: string;
   textClassName?: string;
@@ -22,6 +24,7 @@ interface ScrollFloatProps {
 
 const ScrollFloat: React.FC<ScrollFloatProps> = ({
   children,
+  id,
   scrollContainerRef,
   containerClassName = '',
   textClassName = '',
@@ -80,7 +83,7 @@ const ScrollFloat: React.FC<ScrollFloatProps> = ({
   }, [scrollContainerRef, animationDuration, ease, scrollStart, scrollEnd, stagger]);
 
   return (
-    <h2 ref={containerRef} className={`scroll-float ${containerClassName}`}>
+    <h2 id={id} ref={containerRef} className={`scroll-float ${containerClassName}`}>
       <span className={`scroll-float-text ${textClassName}`}>{splitText}</span>
     </h2>
   );
