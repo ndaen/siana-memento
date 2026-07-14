@@ -73,7 +73,7 @@ export default async function Home() {
   return (
     <div className="relative min-h-screen bg-background">
       <main className="relative z-10">
-        {/* Hero section with LightRays background, BlurText, CountUp, StarBorder */}
+        {/* Hero avant/après (Story 7.2) — server-rendered, CtaButton + promesse de temps */}
         <HeroSection />
 
         {/* Comment ça marche */}

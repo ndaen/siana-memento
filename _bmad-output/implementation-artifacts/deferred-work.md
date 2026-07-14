@@ -1,5 +1,15 @@
 # Deferred Work
 
+## Deferred from: code review of story-7.2 (2026-07-14)
+
+- **Lighthouse mobile non mesuré** — Perf ≥90 / SEO ≥95 / LCP <2.5s (NFR-P2, NFR-P7) non confirmés (non fiable en dev local). Mesurer sur le preview Vercel avant merge. Choix structurels favorables (server-render, image `priority`, WebGL retiré).
+- **Images hero PNG lourdes (2,0 Mo / 1,6 Mo)** — `next/image` ré-encode/redimensionne au service (prod OK), mais le poids source alimente la saturation connue de l'optimiseur dev et pèse sur le repo. Pré-optimiser les sources si Lighthouse régresse. [siana-memento-web/public/home/hero-std.png, hero-couple.png]
+- **Couple avant/après fabriqué par IA (déviation D6)** — D6 attendait une vraie photo brute de couple pour l'« avant » ; l'implémentation génère les deux via Gemini (même couple fictif). Acceptable launch/démo ; remplacer par de vrais couples (ex. testimonials) plus tard.
+
+## Deferred from: code review of story-7.1 (2026-07-12)
+
+- **Flash transparent→pill à l'hydratation (home rechargée mi-page)** — `scrolled` est initialisé à `false` (le SSR ne connaît pas la position de scroll) ; si un visiteur recharge la home alors qu'il est déjà scrollé, le header est rendu transparent au premier paint puis « pop » en pill dès que l'effet scroll s'exécute. Préexistant (l'ancien header avait le même init pour son état bordé), légèrement amplifié par le passage transparent→pill (pop plus marqué). Fix éventuel : rendre l'état pill non-régressif au premier paint, ou accepter le pop. Non bloquant. [siana-memento-web/src/components/siana/SiteHeader.tsx:74]
+
 ## Deferred from: code review of 6-7-gestion-des-testimonials-crud-admin (2026-06-03)
 
 - **Endpoint public `GET /api/testimonials` non throttlé + landing `force-dynamic`/`no-store`** — chaque affichage de la landing déclenche un fetch serveur non caché → une requête DB. Compromis MVP assumé (volume faible, immédiateté AC#3). Growth : ISR `revalidate` court + throttle léger sur l'endpoint public. [siana-memento-api/start/routes.ts:46 ; siana-memento-web/src/app/page.tsx ; siana-memento-web/src/lib/api/testimonials.ts]

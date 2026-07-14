@@ -34,8 +34,9 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-05
-last_updated: 2026-06-04
-# 6.1 done ; 6.2 done ; 6.3 layout admin inséré via correct-course (2026-06-01), ex-6.3..6.7 → 6.4..6.8 ; 6.4 done ; 6.5 done ; 6.6 done ; 6.7 done (dev+review en worktree feat/admin-testimonials, mergé 2026-06-03) ; 6.8 done (dev+review en worktree feat/satisfaction-survey, mergé 2026-06-03) ; epic-6 retro done (2026-06-04) — MVP scope complet, phase pré-launch (qualité IA + sécurité sessionToken + audit endpoints + feedback users)
+last_updated: 2026-07-14
+# epic-7 "Refonte Landing Récit Visuel" ajoutée en backlog via correct-course (2026-07-12, inspi thelma.pet) — raffine epic-5, charte Siana conservée ; réf sprint-change-proposal-2026-07-12.md ; post pré-launch
+# 6.1 done ; 6.2 done ; 6.3 layout admin inséré via correct-course (2026-06-01), ex-6.3..6.7 → 6.4..6.8 ; 6.4 done ; 6.5 done ; 6.6 done ; 6.7 done (dev+review en worktree feat/admin-testimonials, mergé 2026-06-03) ; 6.8 done (dev+review en worktree feat/satisfaction-survey, mergé 2026-06-03) ; epic-6 retro done (2026-06-04, party-mode v6.8 réécrit) — MVP scope complet, phase pré-launch séquencée : Action 1 qualité IA → Action 2 sessionToken header → Action 3 audit sécu endpoints → Action 4 feedback users → go/no-go launch
 project: poster-generator
 project_key: NOKEY
 tracking_system: file-system
@@ -93,3 +94,13 @@ development_status:
   6-7-gestion-des-testimonials-crud-admin: done
   6-8-survey-de-satisfaction-post-achat: done
   epic-6-retrospective: done
+
+  epic-7: in-progress
+  7-1-design-system-de-refonte: done
+  7-2-hero-avant-apres: in-progress
+  7-3-scene-pinnee-comment-ca-marche: ready-for-dev
+  7-4-galerie-meme-couple-x-5-templates: ready-for-dev
+  7-5-bento-qualite-livraison: ready-for-dev
+  7-6-faq-2-colonnes: ready-for-dev
+  7-7-section-avis-clients: ready-for-dev
+  epic-7-retrospective: optional
